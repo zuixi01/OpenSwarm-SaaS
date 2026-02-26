@@ -84,6 +84,7 @@ After `install` + `npm install`, copy the whole `yinova` directory to a USB or a
 - [Contributing](CONTRIBUTING.en.md) · [中文](CONTRIBUTING.md)
 - [Security](SECURITY.en.md) · [中文](SECURITY.md)
 - [Changelog](CHANGELOG.md) · [中文更新日志](CHANGELOG.zh.md)
+- [Disclaimer](DISCLAIMER.md)
 
 ## License
 

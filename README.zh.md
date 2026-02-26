@@ -67,6 +67,7 @@ yinova/
 - [贡献指南](CONTRIBUTING.md)
 - [安全策略](SECURITY.md)
 - [更新日志](CHANGELOG.md)
+- [免责声明](DISCLAIMER.md)
 
 ## License
 
