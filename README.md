@@ -1,6 +1,6 @@
 # Yinova
 
-64-hexagram control panel · openclaw multi-instance · one-click deploy · v1.3
+64-hexagram control panel · openclaw multi-instance · one-click deploy · v1.3.1
 
 > Manage openclaw instances via a web panel (Yin main gateway + 64 hexagram nodes). Supports mainstream AI providers—fill in API Key and go.
 
@@ -38,8 +38,8 @@ The panel loads openclaw's built-in model catalog. Mainstream providers are cove
 | OS | Notes |
 |----|-------|
 | **macOS** | Supported. Run scripts in terminal, or double-click `start-panel.command` |
-| **Linux** | Supported. Run `./install.sh`, `./start-panel.sh` |
-| **Windows** | Requires [WSL](https://docs.microsoft.com/en-us/windows/wsl/) or Git Bash; follow Linux steps in WSL |
+| **Linux** | Supported. [Ubuntu](https://ubuntu.com/) and other distros: `./install.sh`, `./start-panel.sh` |
+| **Windows** | Via [WSL](https://docs.microsoft.com/en-us/windows/wsl/) (recommended: Ubuntu on WSL): run `./install.sh` then `./start-panel.sh` in WSL, or double-click `start-panel.bat`. See [docs/WINDOWS.md](docs/WINDOWS.md) |
 
 Requires **Node.js 18+** and **npm**. openclaw is fetched automatically by `install.sh`—no separate install.
 
@@ -56,6 +56,7 @@ yinova/
 ├── install.sh         # First-time install
 ├── start-panel.sh     # Start panel
 ├── start-panel.command # Mac double-click to start
+├── start-panel.bat     # Windows: launch via WSL
 ├── Dockerfile.panel   # Docker (panel only)
 └── docker-compose.yml # Docker Compose
 ```
@@ -87,7 +88,7 @@ After `install` + `npm install`, copy the whole `yinova` directory to a USB or a
 ## Links
 
 - [openclaw](https://github.com/openclaw/openclaw) - Underlying framework
-- [阴控制台](docs/YIN_CONSOLE.md) · [阳配置](docs/YANG.md) · [API 调用](docs/API.md) · [部署运维](docs/DEPLOY.md) · [安全实践](docs/SECURITY_BEST_PRACTICES.md) · [技术路线](docs/TECH_ROADMAP.md)
+- [阴控制台](docs/YIN_CONSOLE.md) · [阳配置](docs/YANG.md) · [API 调用](docs/API.md) · [部署运维](docs/DEPLOY.md) · [Windows/WSL](docs/WINDOWS.md) · [安全实践](docs/SECURITY_BEST_PRACTICES.md) · [技术路线](docs/TECH_ROADMAP.md)
 - [Contributing](CONTRIBUTING.en.md) · [中文](CONTRIBUTING.md)
 - [Security](SECURITY.en.md) · [中文](SECURITY.md)
 - [Changelog](CHANGELOG.md) · [中文更新日志](CHANGELOG.zh.md)

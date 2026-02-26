@@ -1,5 +1,14 @@
 # 更新日志
 
+## 1.3.1 (2026-02-27)
+
+### Windows 与 Ubuntu
+
+- **Windows 支持**：`start-panel.bat` 双击启动，`docs/WINDOWS.md` 使用说明
+- **Ubuntu**：明确支持 Ubuntu 及主流 Linux 发行版
+
+---
+
 ## 1.3 (2026-02-27)
 
 ### 阶段 7–9：文档、部署、安全

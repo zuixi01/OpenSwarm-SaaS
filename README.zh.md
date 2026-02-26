@@ -1,6 +1,6 @@
 # Yinova
 
-64 卦群控面板 · openclaw 多开 · 一键部署 · v1.3
+64 卦群控面板 · openclaw 多开 · 一键部署 · v1.3.1
 
 > 通过 Web 面板统一管理 openclaw 多实例（阴主网关 + 64 卦子节点），支持主流 AI 模型提供商，填写 API Key 即可使用。
 
@@ -31,8 +31,8 @@ chmod +x install.sh start-panel.sh
 | 系统 | 说明 |
 |------|------|
 | **macOS** | ✅ 支持。终端执行脚本，或双击 `start-panel.command` |
-| **Linux** | ✅ 支持。执行 `./install.sh`、`./start-panel.sh` |
-| **Windows** | ⚠️ 需 WSL 或 Git Bash |
+| **Linux** | ✅ 支持。[Ubuntu](https://ubuntu.com/) 等发行版：`./install.sh`、`./start-panel.sh` |
+| **Windows** | ✅ 支持（需 WSL，推荐 Ubuntu on WSL）。在 WSL 中执行 `./install.sh`、`./start-panel.sh`，或双击 `start-panel.bat`。详见 [docs/WINDOWS.md](docs/WINDOWS.md) |
 
 依赖 **Node.js 18+**、**npm**。openclaw 由 `install.sh` 自动拉取。
 
@@ -47,7 +47,8 @@ yinova/
 ├── panel-web/         # Web 面板（端口 3999）
 ├── install.sh         # 首次安装
 ├── start-panel.sh     # 启动面板
-└── start-panel.command # Mac 双击启动
+├── start-panel.command # Mac 双击启动
+└── start-panel.bat    # Windows 通过 WSL 启动
 ```
 
 ## 常见问题
@@ -70,7 +71,7 @@ yinova/
 
 ## 链接
 
-- [阴控制台](docs/YIN_CONSOLE.md) · [阳配置](docs/YANG.md) · [API 调用](docs/API.md) · [部署运维](docs/DEPLOY.md) · [安全实践](docs/SECURITY_BEST_PRACTICES.md) · [技术路线](docs/TECH_ROADMAP.md)
+- [阴控制台](docs/YIN_CONSOLE.md) · [阳配置](docs/YANG.md) · [API 调用](docs/API.md) · [部署运维](docs/DEPLOY.md) · [Windows/WSL](docs/WINDOWS.md) · [安全实践](docs/SECURITY_BEST_PRACTICES.md) · [技术路线](docs/TECH_ROADMAP.md)
 - [使用手册](docs/USER_GUIDE.zh.md)
 - [项目架构](docs/ARCHITECTURE.zh.md)
 - [English README](README.md)
