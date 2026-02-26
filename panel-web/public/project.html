@@ -380,6 +380,10 @@
       font-size: 0.9rem;
     }
     .hex-switch-item .hex-name { color: var(--gold); font-weight: 500; min-width: 2em; }
+    .hex-switch-item .hex-label-wrap { display: inline-flex; align-items: center; gap: 4px; max-width: 120px; }
+    .hex-switch-item .hex-label { font-size: 0.8rem; color: var(--gold-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .hex-switch-item .btn-edit-label { background: none; border: none; color: var(--text-dim); cursor: pointer; padding: 2px 4px; font-size: 0.75rem; flex-shrink: 0; }
+    .hex-switch-item .btn-edit-label:hover { color: var(--gold); }
     .hex-switch-item .hex-status { color: var(--text-dim); font-size: 0.8rem; }
     .hex-switch-item.running .hex-status { color: #4ade80; }
     .hex-switch-item .btn-hex-action {
@@ -1407,8 +1411,11 @@
         var btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'select-hex-btn' + (added ? ' added' : '');
-        btn.textContent = getHexDisplayName(h.id, h.name);
+        var name = getHexDisplayName(h.id, h.name);
+        var label = (h.label && String(h.label).trim()) ? String(h.label).trim() : '';
+        btn.textContent = label ? name + ' · ' + label : name;
         btn.dataset.hexId = h.id;
+        if (label) btn.title = name + '（' + label + '）';
         btn.addEventListener('click', function() { toggleHexInProject(h.id); });
         selectHexGrid.appendChild(btn);
       });
@@ -1475,11 +1482,16 @@
       hexIds.forEach(function(hexId) {
         var robot = robots.find(function(r) { return r.id === hexId; });
         var name = getHexDisplayName(hexId, (robot && robot.name) ? robot.name : hexId);
+        var label = (robot && robot.label) ? String(robot.label).trim() : '';
         var running = !!(robot && robot.running);
+        var labelWrap = label
+          ? '<span class="hex-label-wrap"><span class="hex-label" title="' + escapeHtml(label) + '">' + escapeHtml(label) + '</span><button type="button" class="btn-edit-label" data-robot="' + escapeHtml(hexId) + '" title="' + (t('hexLabelEdit') || '编辑标签') + '">\u270E</button></span>'
+          : '<span class="hex-label-wrap"><button type="button" class="btn-edit-label empty" data-robot="' + escapeHtml(hexId) + '" title="' + (t('hexLabelSet') || '设置标签') + '">+ ' + (t('hexLabel') || '标签') + '</button></span>';
         var item = document.createElement('div');
         item.className = 'hex-switch-item' + (running ? ' running' : '');
         item.innerHTML =
           '<span class="hex-name">' + escapeHtml(name) + '</span>' +
+          labelWrap +
           '<span class="hex-status">' + (running ? t('statusRunning') : t('statusStopped')) + '</span>' +
           (running
             ? '<button type="button" class="btn-hex-action stop" data-robot="' + escapeHtml(hexId) + '">' + t('btnStop') + '</button>'
@@ -1501,6 +1513,32 @@
               })
               .catch(function() { show(t('toastRequestFailedShort')); })
               .then(function() { btn.disabled = false; });
+          });
+        }
+        var editLabelBtn = item.querySelector('.btn-edit-label');
+        if (editLabelBtn) {
+          editLabelBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            var rid = editLabelBtn.dataset.robot;
+            var rob = robots.find(function(r) { return r.id === rid; });
+            var current = (rob && rob.label) ? String(rob.label).trim() : '';
+            var newLabel = window.prompt(t('hexLabelPrompt') || '编辑该卦的标签（方便区分角色，卦与卦可见）', current);
+            if (newLabel === null) return;
+            fetch('/api/hex/' + encodeURIComponent(rid) + '/label', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ label: newLabel }) })
+              .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+              .then(function(result) {
+                if (result.ok) {
+                  show(t('hexLabelSaved') || '标签已保存');
+                  return fetch('/api/robots?nocache=1').then(function(r) { return r.json(); });
+                }
+                show(result.data.error || '保存失败');
+                return null;
+              })
+              .then(function(list) {
+                if (list) { robots = list; renderHexSwitches(); }
+              })
+              .catch(function() { show(t('toastRequestFailedShort')); });
           });
         }
         hexSwitchesEl.appendChild(item);

@@ -357,6 +357,11 @@
       font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
     .card-hex .card-gateway { font-size: 0.6rem; color: var(--text-dim); margin: 0; text-align: center; word-break: break-all; }
+    .card-hex .card-label-row { display: flex; align-items: center; justify-content: center; gap: 4px; margin: 2px 0 0; min-height: 20px; }
+    .card-hex .card-label { font-size: 0.7rem; color: var(--gold-dim); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .card-hex .btn-edit-label { background: none; border: none; color: var(--text-dim); cursor: pointer; padding: 2px 4px; font-size: 0.75rem; border-radius: 3px; flex-shrink: 0; }
+    .card-hex .btn-edit-label:hover { color: var(--gold); }
+    .card-hex .btn-edit-label.empty { font-size: 0.65rem; }
     .card-hex .card-actions { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin-top: 4px; }
     .card-hex .btn-start,
     .card-hex .btn-stop {
@@ -472,10 +477,14 @@
 
   <script src="i18n.js"></script>
   <script>
-    // 未配置 API Key 时跳转到配置页
+    // 未配置 API Key 时跳转到配置页（本地模型如 Ollama/vLLM 无需 Key，不跳转）
     (function checkConfig() {
+      var noKeyProviders = ['ollama', 'vllm'];
       fetch('/api/config').then(function(r) { return r.json(); }).then(function(c) {
-        if (!c || !c.apiKey || (typeof c.apiKey === 'string' && !c.apiKey.trim())) {
+        if (!c) return;
+        var provider = (c.provider || '').toLowerCase();
+        if (noKeyProviders.indexOf(provider) >= 0) return;
+        if (!c.apiKey || (typeof c.apiKey === 'string' && !c.apiKey.trim())) {
           if (!/config\.html/.test(window.location.pathname + window.location.search)) {
             window.location.replace('config.html');
           }
@@ -508,6 +517,7 @@
 
     var t = window.YINOVA_I18N && window.YINOVA_I18N.t ? window.YINOVA_I18N.t.bind(window.YINOVA_I18N) : function(k) { return k; };
     var getHexDisplayName = window.YINOVA_I18N && window.YINOVA_I18N.getHexDisplayName ? function(id, name) { return window.YINOVA_I18N.getHexDisplayName(id, name); } : function(id, name) { return name || id; };
+    function esc(s) { if (s == null) return ''; var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
     function show(msg) {
       toast.textContent = msg;
       toast.classList.add('show');
@@ -712,19 +722,47 @@
         });
       });
 
-      grid64.innerHTML = hexagrams.map(robot => `
+      grid64.innerHTML = hexagrams.map(robot => {
+        var label = robot.label ? String(robot.label).trim() : '';
+        var labelRow = label
+          ? '<span class="card-label" title="' + esc(label) + '">' + esc(label) + '</span><button type="button" class="btn-edit-label" data-robot="' + esc(robot.id) + '" title="' + (window.YINOVA_I18N && window.YINOVA_I18N.t('hexLabelEdit') || '编辑标签') + '">\u270E</button>'
+          : '<button type="button" class="btn-edit-label empty" data-robot="' + esc(robot.id) + '" title="' + (window.YINOVA_I18N && window.YINOVA_I18N.t('hexLabelSet') || '设置标签') + '">+ ' + (window.YINOVA_I18N && window.YINOVA_I18N.t('hexLabel') || '标签') + '</button>';
+        return `
         <div class="card-hex" data-robot="${robot.id}" data-port="${robot.port != null ? robot.port : ''}">
           <span class="status-dot${robot.running ? ' running' : ''}" aria-label="${robot.running ? t('statusRunning') : t('statusStopped')}"></span>
           <p class="card-title">${getHexDisplayName(robot.id, robot.name)}</p>
+          <p class="card-label-row">${labelRow}</p>
           <p class="card-gateway">${(robot.gateway || '').replace('ws://', '')}</p>
           <div class="card-actions">
             <button type="button" class="btn-start" data-action="start">${t('btnStart')}</button>
             <button type="button" class="btn-stop" data-action="stop">${t('btnStop')}</button>
           </div>
         </div>
-      `).join('');
+      `;
+      }).join('');
       // 事件委托：点哪张卡用哪张卡的 robot/port，避免谦/蛊错位、坤/泰点不动
       grid64.addEventListener('click', async function(e) {
+        if (e.target.closest('.btn-edit-label')) {
+          e.preventDefault();
+          e.stopPropagation();
+          var editRobotId = e.target.closest('.btn-edit-label').dataset.robot;
+          var robotForLabel = (await fetchRobots()).find(function(r) { return r.id === editRobotId; });
+          var current = (robotForLabel && robotForLabel.label) ? String(robotForLabel.label).trim() : '';
+          var newLabel = window.prompt(window.YINOVA_I18N && window.YINOVA_I18N.t('hexLabelPrompt') || '编辑该卦的标签（方便区分角色，卦与卦可见）', current);
+          if (newLabel === null) return;
+          try {
+            var resp = await fetch('/api/hex/' + encodeURIComponent(editRobotId) + '/label', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ label: newLabel }) });
+            var data = await resp.json().catch(function() { return {}; });
+            if (resp.ok && !data.error) {
+              show(window.YINOVA_I18N && window.YINOVA_I18N.t('hexLabelSaved') || '标签已保存');
+              var next = await fetchRobots();
+              updateCardsRunning(next);
+              grid64.innerHTML = ''; // 重新渲染会重新绑定事件
+              render();
+            } else show(data.error || '保存失败');
+          } catch (err) { show((err.message || '请求失败')); }
+          return;
+        }
         const card = e.target.closest('.card-hex');
         if (!card) return;
         const robotId = card.dataset.robot;

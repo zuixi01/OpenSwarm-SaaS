@@ -319,7 +319,15 @@ function getRobotsList() {
     const port = w ? w.port : (18790 + h.workerId);
     const portNum = parseInt(port, 10);
     const gw = process.env['GATEWAY_' + h.id.toUpperCase()] || ('ws://127.0.0.1:' + port);
-    list.push({ id: h.id, name: h.name, desc: 'Yinova 卦', gateway: gw, port: portNum, running: inUse.has(portNum) });
+    list.push({
+      id: h.id,
+      name: h.name,
+      desc: 'Yinova 卦',
+      gateway: gw,
+      port: portNum,
+      running: inUse.has(portNum),
+      label: readHexLabel(h.id),
+    });
   });
   return list;
 }
@@ -811,6 +819,55 @@ app.post('/api/hex-definition/:hexId', (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message || '写入卦定义失败' });
   }
+});
+
+// ---------- 卦标签：每卦一个可编辑标签，卦可自改、主人可改，仅展示用不改记忆；卦与卦互见 ----------
+const LABEL_FILENAME = 'LABEL.txt';
+function readHexLabel(hexId) {
+  const worker = getWorkerByHex(hexId);
+  if (!worker || !worker.stateDir) return '';
+  const filePath = path.join(worker.stateDir, 'workspace', LABEL_FILENAME);
+  try {
+    if (!fs.existsSync(filePath)) return '';
+    const raw = fs.readFileSync(filePath, 'utf8');
+    return (raw.split('\n')[0] || '').trim();
+  } catch (_) {
+    return '';
+  }
+}
+function writeHexLabel(hexId, label) {
+  const worker = getWorkerByHex(hexId);
+  if (!worker || !worker.stateDir) return false;
+  const workspaceDir = path.join(worker.stateDir, 'workspace');
+  const filePath = path.join(workspaceDir, LABEL_FILENAME);
+  if (!path.resolve(filePath).startsWith(path.resolve(worker.stateDir))) return false;
+  try {
+    if (!fs.existsSync(workspaceDir)) fs.mkdirSync(workspaceDir, { recursive: true });
+    fs.writeFileSync(filePath, String(label == null ? '' : label).trim() + '\n', 'utf8');
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+/** 返回「卦名(标签)」或「卦名」，用于注入上下文让卦与卦互见 */
+function formatHexNameWithLabel(hexId) {
+  const hex = HEXAGRAM_ROBOTS.find((h) => h.id === hexId);
+  const name = hex ? hex.name : hexId;
+  const label = readHexLabel(hexId);
+  return label ? `${name}(${label})` : name;
+}
+
+app.get('/api/hex/:id/label', (req, res) => {
+  const hexId = req.params.id;
+  if (!HEXAGRAM_ROBOTS.some((h) => h.id === hexId)) return res.status(404).json({ error: '卦不存在' });
+  res.json({ id: hexId, label: readHexLabel(hexId) });
+});
+app.put('/api/hex/:id/label', (req, res) => {
+  const hexId = req.params.id;
+  if (!HEXAGRAM_ROBOTS.some((h) => h.id === hexId)) return res.status(404).json({ error: '卦不存在' });
+  const label = (req.body && req.body.label != null) ? String(req.body.label) : '';
+  if (!writeHexLabel(hexId, label)) return res.status(500).json({ error: '写入标签失败' });
+  res.json({ id: hexId, label: readHexLabel(hexId) });
 });
 
 // ---------- 阴升级 Phase 1：卦能力画像（64卦总控系统需求清单） ----------
@@ -1711,8 +1768,10 @@ function queuedWriteFile(filePath, data) {
 // GET /api/chat-history/:projectId/:mode — 读取聊天记录（projectId 不能为空，避免落成 default 串项目）
 app.get('/api/chat-history/:projectId/:mode', (req, res) => {
   const projectId = String(req.params.projectId || '').trim();
-  const mode = req.params.mode;
+  let mode = req.params.mode;
   if (!projectId) return res.status(400).json({ error: 'projectId 不能为空' });
+  // 兼容前端 agent 视图：agent 历史复用 discuss 通道
+  if (mode === 'agent') mode = 'discuss';
   if (!['discuss', 'single', 'yin'].includes(mode)) return res.status(400).json({ error: '无效的 mode' });
   const filePath = getChatHistoryPath(projectId, mode);
   try {
@@ -1728,8 +1787,9 @@ app.get('/api/chat-history/:projectId/:mode', (req, res) => {
 // POST /api/chat-history/:projectId/:mode — 保存聊天记录（队列写入，防并发覆盖）
 app.post('/api/chat-history/:projectId/:mode', (req, res) => {
   const projectId = String(req.params.projectId || '').trim();
-  const mode = req.params.mode;
+  let mode = req.params.mode;
   if (!projectId) return res.status(400).json({ error: 'projectId 不能为空' });
+  if (mode === 'agent') mode = 'discuss';
   if (!['discuss', 'single', 'yin'].includes(mode)) return res.status(400).json({ error: '无效的 mode' });
   const { messages } = req.body || {};
   if (!Array.isArray(messages)) return res.status(400).json({ error: 'messages 必须是数组' });
@@ -1795,8 +1855,9 @@ app.delete('/api/project-memory/:id', (req, res) => {
 // DELETE /api/chat-history/:projectId/:mode — 清空聊天记录
 app.delete('/api/chat-history/:projectId/:mode', (req, res) => {
   const projectId = String(req.params.projectId || '').trim();
-  const mode = req.params.mode;
+  let mode = req.params.mode;
   if (!projectId) return res.status(400).json({ error: 'projectId 不能为空' });
+  if (mode === 'agent') mode = 'discuss';
   if (!['discuss', 'single', 'yin', 'all'].includes(mode)) return res.status(400).json({ error: '无效的 mode' });
   try {
     if (mode === 'all') {
@@ -1885,16 +1946,13 @@ function buildYinMessages(projectId, history, text) {
       const projectList = readProjects();
       const project = projectList.find(p => p.id === projectId);
       if (project) {
-        const hexNames = project.hexIds && project.hexIds.length > 0
-          ? project.hexIds.map(id => {
-              const hex = HEXAGRAM_ROBOTS.find(h => h.id === id);
-              return hex ? hex.name : id;
-            }).join('、')
+        const hexNamesWithLabels = project.hexIds && project.hexIds.length > 0
+          ? project.hexIds.map(id => formatHexNameWithLabel(id)).join('、')
           : '无';
         let systemContent = `当前项目上下文：
 - 项目ID: ${project.id}
 - 项目名称: ${project.name}
-- 已选卦: ${hexNames}
+- 已选卦: ${hexNamesWithLabels}
 
 重要：用户正在项目"${project.name}"中与你对话。如果用户要求选卦、启动卦等操作，应该在这个项目中操作，而不是新建项目。只有在用户明确要求新建项目时，才创建新项目。`;
         const mem = readProjectMemory(projectId);
@@ -2106,22 +2164,16 @@ app.post('/api/hex/chat', (req, res) => {
     try {
       if (reqProjectId === HEX_DEFINITION_PROJECT_ID) {
         const hexDef = readHexDefinitionConfig();
-        const hexNames = (hexDef.hexIds || []).map((id) => {
-          const h = HEXAGRAM_ROBOTS.find((r) => r.id === id);
-          return h ? h.name : id;
-        }).join('、');
+        const hexNamesWithLabels = (hexDef.hexIds || []).map((id) => formatHexNameWithLabel(id)).join('、');
         projectSystemMsg = {
           role: 'system',
-          content: `当前是「卦的自定义」场景，参与卦：${hexNames || '无'}。你可通过写入 workspace/我的定义.md 来更新自己的人设（角色、擅长、边界等）。与用户或其它卦讨论后，若达成共识即可写入该文件。`
+          content: `当前是「卦的自定义」场景，参与卦：${hexNamesWithLabels || '无'}。你可通过写入 workspace/我的定义.md 来更新自己的人设（角色、擅长、边界等）。与用户或其它卦讨论后，若达成共识即可写入该文件。`
         };
       } else {
         const projectList = readProjects();
         const proj = projectList.find((p) => p.id === reqProjectId);
         if (proj) {
-          const hexNames = (proj.hexIds || []).map((id) => {
-            const h = HEXAGRAM_ROBOTS.find((r) => r.id === id);
-            return h ? h.name : id;
-          }).join('、');
+          const hexNamesWithLabels = (proj.hexIds || []).map((id) => formatHexNameWithLabel(id)).join('、');
           // 读取项目记忆，最多注入最近20条
           let memoryText = '';
           try {
@@ -2133,7 +2185,7 @@ app.post('/api/hex/chat', (req, res) => {
           } catch (e) { /* 记忆读取失败不影响主流程 */ }
           projectSystemMsg = {
             role: 'system',
-            content: `当前项目上下文：项目名称"${proj.name}"，参与卦：${hexNames || '无'}。你是该项目的参与者，请围绕项目背景作答。${memoryText}`
+            content: `当前项目上下文：项目名称"${proj.name}"，参与卦：${hexNamesWithLabels || '无'}。你是该项目的参与者，请围绕项目背景作答。${memoryText}`
           };
         }
       }
@@ -2506,7 +2558,7 @@ async function callHexAgentWS({ port, token, message, sessionKey, stateDir, time
         const ROLE = 'operator';
         const SCOPES = ['operator.admin'];
 
-        // 构建 device identity 参数（需要签名才能保留 scopes）
+        // 构建 device identity 参数（需要签名才能保留 scopes；新版要求必须带 device.nonce）
         let deviceParam = undefined;
         const identity = stateDir ? loadHexDeviceIdentity(stateDir) : null;
         if (identity) {
@@ -2527,7 +2579,12 @@ async function callHexAgentWS({ port, token, message, sessionKey, stateDir, time
           const privKey = nodeCrypto.createPrivateKey(identity.privateKeyPem);
           const sigBuf = nodeCrypto.sign(null, Buffer.from(payload, 'utf8'), privKey);
           const signature = base64UrlEncode(sigBuf);
-          deviceParam = { id: derivedId, publicKey: rawPubKey, signedAt: signedAtMs, signature };
+          const nonce = base64UrlEncode(nodeCrypto.randomBytes(16));
+          deviceParam = { id: derivedId, publicKey: rawPubKey, signedAt: signedAtMs, signature, nonce };
+        } else {
+          // 即使没有 identity（老环境），也要提供一个带 nonce 的 device，否则会报缺少 nonce
+          const fallbackNonce = base64UrlEncode(nodeCrypto.randomBytes(16));
+          deviceParam = { id: 'panel-device', nonce: fallbackNonce };
         }
 
         // 1. connect 握手（带 device identity 和 scopes）
