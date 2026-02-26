@@ -151,6 +151,8 @@ OPENSOURCE_CHECKLIST.md
 
 # 本地打的发布包（不纳入版本库）
 yinova-*.zip
+openclaw-offline.zip
+node*.pkg
 
 # 仅本地使用的指南（不上传）
 本地测试指南.md
