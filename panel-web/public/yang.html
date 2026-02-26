@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>阳 · 技能组装 · Yinova</title>
+  <script src="i18n.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --black: #000000;
+      --black-light: #0c0c0c;
+      --white: #f0eeec;
+      --white-dim: #a8a6a4;
+      --gold: #c9a227;
+      --gold-dim: #9a7b20;
+      --text: var(--white);
+      --text-dim: var(--white-dim);
+      --border: rgba(201, 162, 39, 0.3);
+      --glow: rgba(201, 162, 39, 0.45);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "Noto Serif SC", "PingFang SC", serif;
+      background: #000;
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+    #starfield {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .star {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255, 228, 200, 0.88);
+      animation: star-breathe var(--dur, 2.5s) ease-in-out var(--delay, 0s) infinite;
+    }
+    @keyframes star-breathe {
+      0%, 100% { filter: brightness(0.7); }
+      50% { filter: brightness(1.05); }
+    }
+    .page-content {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 720px;
+      padding: 24px 20px;
+    }
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .link-back {
+      color: var(--gold-dim);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .link-back:hover { color: var(--gold); }
+    h1 {
+      font-size: 1.2rem;
+      color: var(--gold);
+      letter-spacing: 0.15em;
+      margin: 0 0 8px 0;
+    }
+    .sub {
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      margin-bottom: 20px;
+    }
+    .form-card {
+      background: var(--black-light);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 0 24px rgba(0,0,0,0.3);
+    }
+    .form-row label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--gold-dim);
+      margin-bottom: 6px;
+    }
+    .form-row select {
+      width: 100%;
+      padding: 10px 12px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      background: rgba(0,0,0,0.4);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+      cursor: pointer;
+    }
+    .hex-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .hex-row:last-child { border-bottom: none; }
+    .hex-name {
+      font-weight: 600;
+      color: var(--gold);
+      min-width: 48px;
+    }
+    .skill-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      flex: 1;
+    }
+    .skill-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      font-size: 0.78rem;
+      background: rgba(0,0,0,0.4);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      cursor: pointer;
+      color: var(--text-dim);
+    }
+    .skill-chip.checked {
+      border-color: var(--gold);
+      color: var(--gold);
+      background: rgba(201, 162, 39, 0.1);
+    }
+    .skill-chip input {
+      margin: 0;
+      accent-color: var(--gold);
+    }
+    .btn-save {
+      padding: 10px 24px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      background: var(--gold);
+      color: #000;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 16px;
+    }
+    .btn-save:hover { filter: brightness(1.1); }
+    .btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-yang-auto {
+      padding: 8px 16px;
+      font-size: 0.85rem;
+      font-family: inherit;
+      background: transparent;
+      border: 1px solid var(--gold-dim);
+      border-radius: 4px;
+      color: var(--gold);
+      cursor: pointer;
+    }
+    .btn-yang-auto:hover { border-color: var(--gold); filter: brightness(1.1); }
+    .btn-yang-auto:disabled { opacity: 0.6; cursor: not-allowed; }
+    .yang-auto-hint { font-size: 0.78rem; color: var(--text-dim); margin-left: 10px; }
+    .empty-state {
+      color: var(--text-dim);
+      font-size: 0.9rem;
+      padding: 24px;
+      text-align: center;
+    }
+    .empty-state a { color: var(--gold-dim); }
+    .yin-offline-banner {
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      background: rgba(180, 80, 60, 0.15);
+      border: 1px solid rgba(180, 80, 60, 0.5);
+      border-radius: 6px;
+      font-size: 0.88rem;
+      color: #e8b8a8;
+    }
+    .yin-offline-banner a { color: var(--gold); }
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 12px 24px;
+      border-radius: 6px;
+      background: var(--black-light);
+      border: 1px solid var(--gold-dim);
+      color: var(--gold);
+      font-size: 0.875rem;
+      opacity: 0;
+      transition: opacity 0.2s;
+      pointer-events: none;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      z-index: 9999;
+    }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+  <div id="starfield"></div>
+  <div class="page-content">
+    <div class="top-bar">
+      <a href="index.html" class="link-back">← 面板首页</a>
+      <a href="projects.html" class="link-back" style="margin-left:12px;">返回项目</a>
+      <span id="yinova-lang-toggle-wrap"></span>
+    </div>
+    <h1>阳 · 技能组装</h1>
+    <p class="sub">按项目为卦配置技能，卦执行任务时将拥有所选技能。技能来源：ClawHub。</p>
+
+    <div id="yinOfflineBanner" class="yin-offline-banner" style="display:none;">
+      阴网关未启动。使用「阳·自动配置」前请先在<a href="index.html">面板首页</a>点击「阴·启动」。
+    </div>
+
+    <div class="form-card">
+      <div class="form-row">
+        <label>选择项目</label>
+        <select id="projectSelect">
+          <option value="">-- 请选择项目 --</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="hexSkillsPanel" class="form-card" style="display:none;">
+      <h3 style="margin:0 0 12px 0;font-size:0.95rem;color:var(--gold-dim);">本项目卦象 · 勾选技能</h3>
+      <div style="margin-bottom:10px;">
+        <button type="button" class="btn-yang-auto" id="btnYangAuto">阳 · 自动配置</button>
+        <span class="yang-auto-hint">阳调用阴的 LLM 推理配置（需先启动阴）</span>
+        <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <select id="skillTemplateSelect" style="padding:6px 10px;background:rgba(0,0,0,0.4);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:0.82rem;">
+            <option value="">应用技能模板</option>
+          </select>
+          <button type="button" class="btn-yang-auto" id="btnApplyTemplate" style="padding:4px 10px;font-size:0.78rem;">应用</button>
+        </div>
+        <div style="margin-top:8px;">
+          <input type="text" id="yangDescInput" placeholder="补充描述（可选）如：直播运营需内容策划、数据监控" style="width:100%;max-width:400px;padding:6px 10px;background:rgba(0,0,0,0.4);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:0.82rem;" />
+        </div>
+      </div>
+      <div id="hexSkillsList"></div>
+      <button type="button" class="btn-save" id="btnSave">保存配置</button>
+    </div>
+
+    <div id="emptyState" class="empty-state" style="display:none;">
+      暂无可选项目，或所选项目未选卦。<a href="projects.html">去项目空间</a>创建项目并选卦。
+    </div>
+  </div>
+  <div class="toast" id="toast"></div>
+
+  <script>
+    var t = window.YINOVA_I18N && window.YINOVA_I18N.t ? window.YINOVA_I18N.t.bind(window.YINOVA_I18N) : function(k) { return k; };
+    (function initStarfield() {
+      var c = document.getElementById('starfield');
+      if (!c) return;
+      for (var i = 0; i < 30; i++) {
+        var s = document.createElement('div');
+        s.className = 'star';
+        s.style.cssText = 'left:' + (Math.random()*100) + '%;top:' + (Math.random()*100) + '%;width:' + (1+Math.random()*2) + 'px;height:' + (1+Math.random()*2) + 'px;opacity:' + (0.4+Math.random()*0.4) + ';--dur:' + (1.5+Math.random()*2) + 's;--delay:' + (Math.random()*2) + 's;';
+        c.appendChild(s);
+      }
+    })();
+
+    var projectSelect = document.getElementById('projectSelect');
+    var hexSkillsPanel = document.getElementById('hexSkillsPanel');
+    var hexSkillsList = document.getElementById('hexSkillsList');
+    var btnSave = document.getElementById('btnSave');
+    var emptyState = document.getElementById('emptyState');
+    var toast = document.getElementById('toast');
+
+    var skills = [];
+    var projects = [];
+    var hexList = [];
+    var currentProject = null;
+
+    function show(msg) {
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(function() { toast.classList.remove('show'); }, 3000);
+    }
+
+    var FALLBACK_SKILLS = [
+      { id: 'summarize', name: 'Summarize' },
+      { id: 'github', name: 'GitHub' },
+      { id: 'wacli', name: 'Wacli' },
+      { id: 'byte-rover', name: 'ByteRover' },
+      { id: 'agent-browser', name: 'Agent Browser' },
+      { id: 'gog', name: 'Gog' },
+      { id: 'filesystem', name: 'Filesystem' }
+    ];
+    function loadSkills() {
+      return fetch('/api/skills').then(function(r) { return r.json(); })
+        .then(function(data) {
+          skills = (data && data.skills && data.skills.length) ? data.skills : FALLBACK_SKILLS;
+          return skills;
+        })
+        .catch(function() { skills = FALLBACK_SKILLS; return skills; });
+    }
+
+    function loadProjects() {
+      return fetch('/api/projects').then(function(r) { return r.json(); })
+        .then(function(data) {
+          projects = (data || []).filter(function(p) { return p.id !== 'hex-definition'; });
+          return projects;
+        });
+    }
+
+    function loadHexList() {
+      return fetch('/api/robots').then(function(r) { return r.json(); })
+        .then(function(data) {
+          hexList = (data || []).filter(function(r) { return r.id !== 'main' && r.id !== 'yang'; });
+          return hexList;
+        });
+    }
+
+    function getHexName(hexId) {
+      var h = hexList.find(function(x) { return x.id === hexId; });
+      return h ? h.name : hexId;
+    }
+
+    function renderProjectSelect() {
+      projectSelect.innerHTML = '<option value="">-- 请选择项目 --</option>';
+      projects.forEach(function(p) {
+        var opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = p.name + ' (' + (p.hexIds || []).length + ' 卦)';
+        projectSelect.appendChild(opt);
+      });
+    }
+
+    function renderHexSkills(project) {
+      var hexIds = project.hexIds || [];
+      var hexSkills = project.hexSkills || {};
+
+      if (hexIds.length === 0) {
+        hexSkillsPanel.style.display = 'none';
+        emptyState.style.display = 'block';
+        emptyState.textContent = '该项目未选卦。请先在项目内选卦。';
+        return;
+      }
+
+      hexSkillsPanel.style.display = 'block';
+      emptyState.style.display = 'none';
+      hexSkillsList.innerHTML = '';
+
+      hexIds.forEach(function(hexId) {
+        var row = document.createElement('div');
+        row.className = 'hex-row';
+        row.dataset.hexId = hexId;
+
+        var nameEl = document.createElement('span');
+        nameEl.className = 'hex-name';
+        nameEl.textContent = getHexName(hexId);
+        row.appendChild(nameEl);
+
+        var chips = document.createElement('div');
+        chips.className = 'skill-chips';
+        var selected = hexSkills[hexId] || [];
+
+        skills.forEach(function(skill) {
+          var chip = document.createElement('label');
+          chip.className = 'skill-chip' + (selected.indexOf(skill.id) >= 0 ? ' checked' : '');
+          var cb = document.createElement('input');
+          cb.type = 'checkbox';
+          cb.value = skill.id;
+          cb.checked = selected.indexOf(skill.id) >= 0;
+          cb.addEventListener('change', function() {
+            chip.classList.toggle('checked', cb.checked);
+          });
+          chip.appendChild(cb);
+          chip.appendChild(document.createTextNode(skill.name));
+          chips.appendChild(chip);
+        });
+        row.appendChild(chips);
+        hexSkillsList.appendChild(row);
+      });
+    }
+
+    function collectHexSkills() {
+      var result = {};
+      hexSkillsList.querySelectorAll('.hex-row').forEach(function(row) {
+        var hexId = row.dataset.hexId;
+        var checked = [];
+        row.querySelectorAll('.skill-chip input:checked').forEach(function(cb) {
+          checked.push(cb.value);
+        });
+        result[hexId] = checked;
+      });
+      return result;
+    }
+
+    function saveHexSkills() {
+      var projectId = projectSelect.value;
+      if (!projectId) { show('请先选择项目'); return; }
+      var hexSkills = collectHexSkills();
+      btnSave.disabled = true;
+      var ctrl = new AbortController();
+      var tid = setTimeout(function() { ctrl.abort(); }, 15000);
+      fetch('/api/projects/' + encodeURIComponent(projectId), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hexSkills: hexSkills }),
+        signal: ctrl.signal
+      })
+        .then(function(r) {
+          if (!r.ok) {
+            return r.text().then(function(t) {
+              var err;
+              try { err = JSON.parse(t); } catch (_) { err = {}; }
+              throw new Error(err.error || '保存失败 (' + r.status + ')');
+            });
+          }
+          return r.json();
+        })
+        .then(function() {
+          clearTimeout(tid);
+          show('已保存');
+          btnSave.disabled = false;
+          setTimeout(function() { location.href = 'projects.html'; }, 1200);
+        })
+        .catch(function(e) {
+          clearTimeout(tid);
+          show('保存失败：' + (e.name === 'AbortError' ? '请求超时' : (e.message || '网络错误')));
+          btnSave.disabled = false;
+        });
+    }
+
+    projectSelect.addEventListener('change', function() {
+      var id = projectSelect.value;
+      if (!id) {
+        hexSkillsPanel.style.display = 'none';
+        emptyState.style.display = 'block';
+        emptyState.innerHTML = '请选择项目。';
+        return;
+      }
+      fetch('/api/projects/' + encodeURIComponent(id))
+        .then(function(r) { return r.json(); })
+        .then(function(project) {
+          currentProject = project;
+          if (!project.hexSkills || typeof project.hexSkills !== 'object') project.hexSkills = {};
+          renderHexSkills(project);
+        })
+        .catch(function() { show('加载项目失败'); });
+    });
+
+    btnSave.addEventListener('click', saveHexSkills);
+
+    function loadSkillTemplates() {
+      fetch('/api/skills/templates').then(function(r) { return r.json(); })
+        .then(function(d) {
+          var sel = document.getElementById('skillTemplateSelect');
+          if (!sel) return;
+          sel.innerHTML = '<option value="">应用技能模板</option>';
+          (d.templates || []).forEach(function(t) {
+            var opt = document.createElement('option');
+            opt.value = t.id;
+            opt.textContent = t.name + ' (' + (t.skillIds || []).join(', ') + ')';
+            sel.appendChild(opt);
+          });
+        })
+        .catch(function() {});
+    }
+    loadSkillTemplates();
+
+    var btnApplyTemplate = document.getElementById('btnApplyTemplate');
+    if (btnApplyTemplate) {
+      btnApplyTemplate.addEventListener('click', function() {
+        var pid = projectSelect.value;
+        if (!pid) { show('请先选择项目'); return; }
+        var sel = document.getElementById('skillTemplateSelect');
+        var tid = sel ? sel.value : '';
+        if (!tid) { show('请选择模板'); return; }
+        fetch('/api/skills/templates').then(function(r) { return r.json(); })
+          .then(function(d) {
+            var tpl = (d.templates || []).find(function(t) { return t.id === tid; });
+            if (!tpl || !tpl.skillIds) { show('模板不存在'); return; }
+            var hexIds = (currentProject && currentProject.hexIds) ? currentProject.hexIds : [];
+            if (hexIds.length === 0) { show('项目未选卦'); return; }
+            var hexSkills = {};
+            hexIds.forEach(function(hid) { hexSkills[hid] = tpl.skillIds.slice(); });
+            fetch('/api/projects/' + encodeURIComponent(pid), {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ hexSkills: hexSkills })
+            }).then(function(r) { return r.json();             }).then(function(proj) {
+              if (proj && proj.hexSkills) { currentProject = proj; renderHexSkills(proj); }
+              show('已应用模板');
+            }).catch(function() { show('应用失败'); });
+          });
+      });
+    }
+
+    var btnYangAuto = document.getElementById('btnYangAuto');
+    if (btnYangAuto) {
+      btnYangAuto.addEventListener('click', function() {
+        var pid = projectSelect.value;
+        if (!pid) { show('请先选择项目'); return; }
+        btnYangAuto.disabled = true;
+        var descInput = document.getElementById('yangDescInput');
+        var extraDesc = descInput ? descInput.value.trim() : '';
+        fetch('/api/projects/' + encodeURIComponent(pid) + '/yang-configure', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ description: extraDesc, apply: true })
+        })
+        .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, status: r.status, data: d }; }); })
+        .then(function(result) {
+            btnYangAuto.disabled = false;
+            var d = result.data;
+            if (d && d.error) { show('配置失败：' + d.error + (result.status === 503 ? '（请先启动阴）' : '')); return; }
+            if (!result.ok) { show('请求失败'); return; }
+            show('已自动配置并应用');
+            fetch('/api/projects/' + encodeURIComponent(pid)).then(function(r) { return r.json(); })
+              .then(function(proj) {
+                if (proj) { if (!proj.hexSkills) proj.hexSkills = {}; renderHexSkills(proj); }
+              })
+              .catch(function() { projectSelect.dispatchEvent(new Event('change')); });
+          })
+          .catch(function(e) {
+            btnYangAuto.disabled = false;
+            show('请求失败：' + (e.message || ''));
+          });
+      });
+    }
+
+    function checkYinAndShowBanner() {
+      fetch('/api/yin/gateway/health').then(function(r) { return r.json(); })
+        .then(function(d) {
+          var banner = document.getElementById('yinOfflineBanner');
+          if (banner) banner.style.display = (d && d.ok) ? 'none' : 'block';
+        })
+        .catch(function() {
+          var banner = document.getElementById('yinOfflineBanner');
+          if (banner) banner.style.display = 'block';
+        });
+    }
+    checkYinAndShowBanner();
+    setInterval(checkYinAndShowBanner, 15000);
+
+    Promise.all([loadSkills(), loadProjects(), loadHexList()]).then(function() {
+      renderProjectSelect();
+      var hash = (location.hash || '').replace(/^#/, '');
+      if (hash) {
+        projectSelect.value = hash;
+        projectSelect.dispatchEvent(new Event('change'));
+      }
+    }).catch(function() { show('加载失败'); });
+  </script>
+</body>
+</html>

@@ -130,16 +130,16 @@
     }
     /* 未点击时透明，悬停略显 */
     .taiji-dot[data-robot="main"] { left: 50%; top: 32%; transform: translate(-50%, -50%); background: rgba(120,120,120,0.3); }
-    .taiji-dot[data-robot="lan"] { left: 50%; top: 68%; transform: translate(-50%, -50%); background: rgba(120,120,120,0.3); }
+    .taiji-dot[data-robot="yang"] { left: 50%; top: 68%; transform: translate(-50%, -50%); background: #0a0a0e; cursor: default; animation: breathe-dot-black 2s ease-in-out infinite; }
     .taiji-dot[data-robot="main"]:hover { background: rgba(140,140,140,0.45); }
-    .taiji-dot[data-robot="lan"]:hover { background: rgba(140,140,140,0.45); }
+    .taiji-dot[data-robot="yang"]:hover { background: #0a0a0e; }
     .taiji-dot.running { }
     /* 点击后：原黑钮(阴)变白+白呼吸光，原白钮(阳)变黑+黑呼吸光 */
     .taiji-dot[data-robot="main"].running {
       background: #f0ece8;
       animation: breathe-dot-white 2s ease-in-out infinite;
     }
-    .taiji-dot[data-robot="lan"].running {
+    .taiji-dot[data-robot="yang"].running {
       background: #0a0a0e;
       animation: breathe-dot-black 2s ease-in-out infinite;
     }
@@ -147,7 +147,7 @@
       background: #f0ece8;
       animation: breathe-dot-white 1.5s ease-in-out infinite;
     }
-    .taiji-dot[data-robot="lan"].starting {
+    .taiji-dot[data-robot="yang"].starting {
       background: #0a0a0e;
       animation: breathe-dot-black 1.5s ease-in-out infinite;
     }
@@ -178,13 +178,13 @@
       transition: box-shadow 0.2s, background 0.2s;
     }
     .taiji-dot[data-robot="main"] { left: 50%; top: 32%; transform: translate(-50%, -50%); }
-    .taiji-dot[data-robot="lan"] { left: 50%; top: 68%; transform: translate(-50%, -50%); }
+    .taiji-dot[data-robot="yang"] { left: 50%; top: 68%; transform: translate(-50%, -50%); background: #0a0a0e; cursor: default; }
     .taiji-dot:hover { background: rgba(140,140,140,0.45); }
     .taiji-dot[data-robot="main"].running {
       background: #f0ece8;
       animation: breathe-dot-white 2s ease-in-out infinite;
     }
-    .taiji-dot[data-robot="lan"].running {
+    .taiji-dot[data-robot="yang"].running {
       background: #0a0a0e;
       animation: breathe-dot-black 2s ease-in-out infinite;
     }
@@ -264,6 +264,7 @@
       flex-direction: column;
       padding: 16px;
     }
+    .yin-chat-hint { font-size: 0.75rem; color: var(--text-dim); margin: 0 0 8px 0; }
     .section-yin-chat h2 {
       font-size: 0.95rem;
       color: var(--gold-dim);
@@ -537,7 +538,7 @@
             <path class="stroke" d="M50 0 A25 25 0 0 1 50 50 A25 25 0 0 0 50 100"/>
           </svg>
           <button type="button" class="taiji-dot" data-robot="main" data-i18n-title="yinClickMain" title="阴 · 平台总控 · 点击启动/停止" aria-label="阴"></button>
-          <button type="button" class="taiji-dot" data-robot="lan" data-i18n-title="yangClickStart" title="阳 · 点击启动" aria-label="阳"></button>
+          <button type="button" class="taiji-dot" data-robot="yang" data-i18n-title="yangDisplayOnly" title="阳 · 技能组装" aria-label="阳"></button>
         </div>
       </div>
     </div>
@@ -549,6 +550,11 @@
             <div class="create-row">
               <input type="text" id="newProjectName" data-i18n-placeholder="inputProjectName" placeholder="输入项目名称" maxlength="64" />
               <button type="button" class="btn-create" id="btnCreate" data-i18n="btnCreate">新建</button>
+            </div>
+            <div class="create-row" style="margin-top:8px;">
+              <select id="projectTemplateSelect" style="flex:1;padding:8px 12px;background:rgba(0,0,0,0.4);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:0.85rem;">
+                <option value="">从模板创建（可选）</option>
+              </select>
             </div>
           </section>
           <section class="section-list">
@@ -562,6 +568,7 @@
       <div class="page-right">
         <section class="section-yin-chat">
           <h2><span data-i18n="withYinGlobal">与阴对话（全局）</span><button type="button" class="yin-chat-clear-btn" id="yinChatClearBtn" data-i18n="clearRecord">清空记录</button></h2>
+          <p class="yin-chat-hint" data-i18n="yinDescGlobal">此处对话与终端 TUI 独立</p>
           <div class="yin-chat-input-row">
             <input type="text" id="yinChatInput" data-i18n-placeholder="inputToYinShort" placeholder="输入消息与阴对话…" maxlength="2000" />
             <button type="button" class="yin-chat-send" id="yinChatSend" data-i18n="btnSend">发送</button>
@@ -596,6 +603,7 @@
     var emptyHint = document.getElementById('emptyHint');
     var newNameInput = document.getElementById('newProjectName');
     var btnCreate = document.getElementById('btnCreate');
+    var projectTemplateSelect = document.getElementById('projectTemplateSelect');
     var rowYinyang = document.getElementById('rowYinyang');
     var yinChatMessages = document.getElementById('yinChatMessages');
     var yinChatInput = document.getElementById('yinChatInput');
@@ -611,7 +619,6 @@
       } catch (_) {}
       return [
         { id: 'main', name: '阴', gateway: 'ws://127.0.0.1:18789', running: false },
-        { id: 'lan', name: 'lan', gateway: 'ws://127.0.0.1:18790', running: false },
       ];
     }
 
@@ -620,14 +627,20 @@
       const byId = {};
       (robots || []).forEach(function(r) { byId[r.id] = r; });
       rowYinyang.querySelectorAll('.taiji-dot').forEach(function(btn) {
-        const r = byId[btn.dataset.robot];
+        const rid = btn.dataset.robot;
+        if (rid === 'yang') {
+          btn.title = t('yangDisplayOnly');
+          btn.classList.remove('running', 'starting');
+          return;
+        }
+        const r = byId[rid];
         const isRunning = !!r && !!r.running;
         btn.classList.toggle('running', isRunning);
         if (isRunning) {
           btn.classList.remove('starting');
-          btn.title = btn.dataset.robot === 'main' ? t('yinClickMainStop') : t('yangClickStop');
+          btn.title = rid === 'main' ? t('yinClickMainStop') : t('yangClickStop');
         } else {
-          btn.title = btn.dataset.robot === 'main' ? t('yinClickMainStart') : t('yangClickStart');
+          btn.title = rid === 'main' ? t('yinClickMainStart') : t('yangClickStart');
         }
       });
     }
@@ -637,6 +650,10 @@
       rowYinyang.querySelectorAll('.taiji-dot').forEach(function(btn) {
         const robotId = btn.dataset.robot;
         btn.addEventListener('click', async function() {
+          if (robotId === 'yang') {
+            location.href = 'yang.html';
+            return;
+          }
           const robots = await fetchRobots();
           const robot = robots.find(function(r) { return r.id === robotId; });
           const isRunning = !!(robot && robot.running);
@@ -664,7 +681,7 @@
               const r = await fetch('/api/open-tui/' + robotId, { method: 'POST' });
               const data = await r.json().catch(function() { return {}; });
               if (r.ok && !data.error) {
-                show(t('toastTerminalOpened'));
+                show(data.reused ? t('toastTerminalReused') : t('toastTerminalOpened'));
               } else {
                 show(data.error || t('toastStartFailed') + ' (HTTP ' + r.status + ')');
                 btn.classList.remove('starting');
@@ -814,17 +831,35 @@
         });
     }
 
+    function loadProjectTemplates() {
+      fetch('/api/project-templates').then(function(r) { return r.json(); })
+        .then(function(d) {
+          var sel = projectTemplateSelect;
+          if (!sel) return;
+          sel.innerHTML = '<option value="">从模板创建（可选）</option>';
+          (d.templates || []).forEach(function(t) {
+            var opt = document.createElement('option');
+            opt.value = t.id;
+            opt.textContent = t.name + (t.description ? ' - ' + t.description : '');
+            sel.appendChild(opt);
+          });
+        })
+        .catch(function() {});
+    }
+    loadProjectTemplates();
+
     btnCreate.addEventListener('click', function() {
       var name = (newNameInput.value || '').trim();
       if (!name) {
         show(t('toastEnterProjectName'));
         return;
       }
+      var templateId = projectTemplateSelect ? projectTemplateSelect.value : '';
       btnCreate.disabled = true;
       fetch('/api/projects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name })
+        body: JSON.stringify({ name: name, templateId: templateId || undefined })
       })
         .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
         .then(function(result) {

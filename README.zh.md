@@ -1,14 +1,15 @@
 # Yinova
 
-64 卦群控面板 · openclaw 多开 · 一键部署 · v1.1
+64 卦群控面板 · openclaw 多开 · 一键部署 · v1.3
 
 > 通过 Web 面板统一管理 openclaw 多实例（阴主网关 + 64 卦子节点），支持主流 AI 模型提供商，填写 API Key 即可使用。
 
 ## 快速开始
 
 ```bash
-# 1. 克隆并安装
+# 1. 克隆并安装（GitHub 或 Gitee）
 git clone https://github.com/goldct/yinova && cd yinova
+# 国内用户可用: git clone https://gitee.com/goldct/yinova && cd yinova
 chmod +x install.sh start-panel.sh
 ./install.sh
 
@@ -59,16 +60,34 @@ yinova/
 ## 功能特性
 
 - 统一管理、一键部署、自动配置
-- 实时监控、项目管理、智能协调
+- 实时监控、项目管理、项目模板、智能协调
+- 技能库管理、技能模板、阳自动配置
+- 部署：Docker、健康检查、可选面板鉴权
+
+## 阳 · 技能组装
+
+点击太极阳眼，按项目为卦配置技能。卦执行任务时自动挂载所选技能。详见 [技能来源](docs/SKILL_SOURCES.zh.md)。
 
 ## 链接
 
+- [阴控制台](docs/YIN_CONSOLE.md) · [阳配置](docs/YANG.md) · [API 调用](docs/API.md) · [部署运维](docs/DEPLOY.md) · [安全实践](docs/SECURITY_BEST_PRACTICES.md) · [技术路线](docs/TECH_ROADMAP.md)
+- [使用手册](docs/USER_GUIDE.zh.md)
+- [项目架构](docs/ARCHITECTURE.zh.md)
 - [English README](README.md)
 - [贡献指南](CONTRIBUTING.md)
 - [安全策略](SECURITY.md)
 - [更新日志](CHANGELOG.md)
 - [免责声明](DISCLAIMER.md)
 
-## License
+## 版权与许可
 
-MIT License - 详见 [LICENSE](LICENSE)
+Yinova 采用 **GPL v3** 许可。基于本项目的衍生作品需遵守 GPL v3 并保留原作者署名。
+
+如需在闭源产品、SaaS 或商业场景中使用而不受 GPL 约束，可联系获取**商业许可**：
+
+- 邮箱：2304671698@qq.com
+- 微信：hundunai001（扫下方二维码添加）
+
+![Yinova 开源 · 微信](docs/wechat-qr.png)
+
+详见 [LICENSE](LICENSE)

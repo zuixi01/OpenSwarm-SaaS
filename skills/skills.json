@@ -1,0 +1,57 @@
+{
+  "version": "1.0",
+  "source": "ClawHub (clawhub.ai)",
+  "installCommand": "clawhub install",
+  "skills": [
+    {
+      "id": "summarize",
+      "name": "Summarize",
+      "description": "智能文本摘要，适合讨论总结、报告提炼",
+      "category": "productivity",
+      "clawhubId": "summarize"
+    },
+    {
+      "id": "github",
+      "name": "GitHub",
+      "description": "GitHub 集成：仓库、Issue、PR 操作",
+      "category": "development",
+      "clawhubId": "github"
+    },
+    {
+      "id": "wacli",
+      "name": "Wacli",
+      "description": "命令行工具与自动化",
+      "category": "development",
+      "clawhubId": "wacli"
+    },
+    {
+      "id": "byte-rover",
+      "name": "ByteRover",
+      "description": "多用途任务处理与自动化",
+      "category": "automation",
+      "clawhubId": "byte-rover"
+    },
+    {
+      "id": "agent-browser",
+      "name": "Agent Browser",
+      "description": "浏览器自动化，网页抓取与交互",
+      "category": "automation",
+      "clawhubId": "agent-browser"
+    },
+    {
+      "id": "gog",
+      "name": "Gog",
+      "description": "Google Workspace 集成：Gmail、Calendar、Drive、Sheets",
+      "category": "productivity",
+      "clawhubId": "gog"
+    },
+    {
+      "id": "filesystem",
+      "name": "Filesystem",
+      "description": "本地文件读写（MCP），适合项目文件操作",
+      "category": "development",
+      "clawhubId": null,
+      "mcpPackage": "@modelcontextprotocol/server-filesystem"
+    }
+  ]
+}

@@ -12,7 +12,7 @@ Yinova is provided as an open-source project for research, development, and pers
   - Infringement of others' privacy, intellectual property, or other legal rights
 - By using Yinova, you agree that **all consequences arising from your use are your own responsibility**, and the authors/contributors **shall not be liable** for any direct, indirect, incidental, or consequential damages.
 
-If you redistribute or modify this project, you should clearly state your own responsibility and comply with the original license (MIT License).
+If you redistribute or modify this project, you should clearly state your own responsibility and comply with the original license (GPL v3).
 
 ---
 
@@ -28,5 +28,5 @@ Yinova 作为开源项目提供，仅用于学习、研究、开发和个人使�
   - 侵犯他人隐私、知识产权或其他合法权益的行为  
 - 使用本项目即表示你同意：因你使用本项目而产生的一切后果**由你自行承担**，作者及贡献者**不对由此产生的任何直接或间接损失承担责任**。
 
-如你对本项目进行再发布或修改，请明确声明你自己的责任，并遵守原始开源许可（MIT License）。
+如你对本项目进行再发布或修改，请明确声明你自己的责任，并遵守原始开源许可（GPL v3）。
 

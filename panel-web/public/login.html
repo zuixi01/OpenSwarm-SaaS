@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>登录 · Yinova</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, sans-serif; background: #0c0c0c; color: #f0eeec; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+    .box { padding: 24px; border: 1px solid rgba(201,162,39,0.3); border-radius: 8px; background: #111; min-width: 280px; }
+    h1 { font-size: 1.1rem; color: #c9a227; margin: 0 0 16px 0; }
+    input { width: 100%; padding: 10px 12px; background: rgba(0,0,0,0.4); border: 1px solid rgba(201,162,39,0.3); border-radius: 4px; color: #f0eeec; font-size: 0.9rem; margin-bottom: 12px; }
+    button { width: 100%; padding: 10px; background: #c9a227; color: #000; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem; margin-top: 4px; }
+    button:hover { filter: brightness(1.1); }
+    .err { color: #e08080; font-size: 0.82rem; margin-top: 8px; }
+    .hint { font-size: 0.78rem; color: #888; margin-top: 12px; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>Yinova 面板登录</h1>
+    <p class="hint">管理员已启用面板鉴权，请输入访问令牌</p>
+    <input type="password" id="token" placeholder="访问令牌" autocomplete="off" />
+    <button type="button" id="btn">登录</button>
+    <div id="err" class="err"></div>
+  </div>
+  <script>
+    var tokenEl = document.getElementById('token');
+    var errEl = document.getElementById('err');
+    document.getElementById('btn').onclick = function() {
+      var t = tokenEl.value.trim();
+      if (!t) { errEl.textContent = '请输入令牌'; return; }
+      errEl.textContent = '';
+      fetch('/api/panel-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: t })
+      }).then(function(r) { return r.json(); }).then(function(d) {
+        if (d.error) { errEl.textContent = d.error; return; }
+        location.href = '/index.html';
+      }).catch(function() { errEl.textContent = '请求失败'; });
+    };
+    tokenEl.onkeydown = function(e) { if (e.key === 'Enter') document.getElementById('btn').click(); };
+  </script>
+</body>
+</html>

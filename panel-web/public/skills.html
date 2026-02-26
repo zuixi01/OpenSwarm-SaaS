@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>技能库管理 · Yinova</title>
+  <script src="i18n.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root { --black:#000; --black-light:#0c0c0c; --white:#f0eeec; --white-dim:#a8a6a4; --gold:#c9a227; --gold-dim:#9a7b20; --text:var(--white); --text-dim:var(--white-dim); --border:rgba(201,162,39,0.3); }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family:"Noto Serif SC",serif; background:#000; color:var(--text); min-height:100vh; display:flex; flex-direction:column; align-items:center; }
+    .page-content { width:100%; max-width:720px; padding:24px 20px; }
+    .top-bar { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+    .link-back { color:var(--gold-dim); text-decoration:none; }
+    .link-back:hover { color:var(--gold); }
+    h1 { font-size:1.2rem; color:var(--gold); margin:0 0 8px 0; }
+    .sub { font-size:0.78rem; color:var(--text-dim); margin-bottom:16px; }
+    .form-card { background:var(--black-light); border:1px solid var(--border); border-radius:6px; padding:20px; margin-bottom:16px; }
+    .skill-row { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--border); }
+    .skill-row:last-child { border-bottom:none; }
+    .skill-id { font-weight:600; color:var(--gold); min-width:120px; }
+    .skill-name { flex:1; }
+    .skill-desc { font-size:0.82rem; color:var(--text-dim); }
+    .skill-actions { display:flex; gap:8px; }
+    .btn-sm { padding:4px 10px; font-size:0.78rem; background:transparent; border:1px solid var(--border); border-radius:4px; color:var(--gold); cursor:pointer; font-family:inherit; }
+    .btn-sm:hover { background:rgba(201,162,39,0.1); }
+    .btn-sm.del { color:#e08080; border-color:rgba(224,128,128,0.5); }
+    .btn-add { padding:8px 16px; background:var(--gold); color:#000; border:none; border-radius:4px; cursor:pointer; font-family:inherit; margin-bottom:12px; }
+    .btn-add:hover { filter:brightness(1.1); }
+    input, select { padding:8px 12px; background:rgba(0,0,0,0.4); border:1px solid var(--border); border-radius:4px; color:var(--text); font-size:0.9rem; }
+    .form-row { margin-bottom:10px; }
+    .form-row label { display:block; font-size:0.8rem; color:var(--gold-dim); margin-bottom:4px; }
+    .toast { position:fixed; bottom:28px; left:50%; transform:translateX(-50%); padding:12px 24px; background:var(--black-light); border:1px solid var(--gold-dim); color:var(--gold); border-radius:6px; opacity:0; transition:opacity 0.2s; z-index:9999; }
+    .toast.show { opacity:1; }
+  </style>
+</head>
+<body>
+  <div class="page-content">
+    <div class="top-bar">
+      <a href="index.html" class="link-back">← 面板首页</a>
+      <a href="yang.html" class="link-back">阳配置</a>
+    </div>
+    <h1>技能库管理</h1>
+    <p class="sub">增删改查技能，供阳配置时选用。来源：ClawHub。</p>
+
+    <div class="form-card">
+      <button type="button" class="btn-add" id="btnAdd">+ 新增技能</button>
+      <div id="skillList"></div>
+    </div>
+  </div>
+  <div class="toast" id="toast"></div>
+
+  <div class="form-card" id="modalEdit" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:1000; min-width:320px;">
+    <h3 style="margin:0 0 12px 0; color:var(--gold);">编辑技能</h3>
+    <div class="form-row">
+      <label>ID（英文，不可改）</label>
+      <input type="text" id="editId" readonly style="opacity:0.7;" />
+    </div>
+    <div class="form-row">
+      <label>名称</label>
+      <input type="text" id="editName" placeholder="如：Summarize" />
+    </div>
+    <div class="form-row">
+      <label>描述</label>
+      <input type="text" id="editDesc" placeholder="简短描述" />
+    </div>
+    <div class="form-row">
+      <label>分类</label>
+      <select id="editCategory">
+        <option value="productivity">productivity</option>
+        <option value="development">development</option>
+        <option value="automation">automation</option>
+        <option value="other">other</option>
+      </select>
+    </div>
+    <div style="display:flex; gap:8px; margin-top:12px;">
+      <button type="button" class="btn-sm" id="editCancel">取消</button>
+      <button type="button" class="btn-add" id="editSave">保存</button>
+    </div>
+  </div>
+  <div id="modalOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:999;" onclick="document.getElementById('modalEdit').style.display='none'; document.getElementById('modalOverlay').style.display='none';"></div>
+
+  <script>
+    var skillList = document.getElementById('skillList');
+    var toast = document.getElementById('toast');
+    var skills = [];
+
+    function show(msg) {
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(function() { toast.classList.remove('show'); }, 3000);
+    }
+
+    function loadSkills() {
+      return fetch('/api/skills').then(function(r) { return r.json(); })
+        .then(function(d) {
+          skills = d.skills || [];
+          render();
+          return skills;
+        })
+        .catch(function() { show('加载失败'); });
+    }
+
+    function render() {
+      skillList.innerHTML = '';
+      skills.forEach(function(s) {
+        var row = document.createElement('div');
+        row.className = 'skill-row';
+        row.innerHTML = '<span class="skill-id">' + escapeHtml(s.id) + '</span>' +
+          '<span class="skill-name"><span class="skill-desc">' + escapeHtml(s.name || '') + '</span>' +
+          (s.description ? '<br><span class="skill-desc" style="font-size:0.75rem;">' + escapeHtml(s.description) + '</span>' : '') + '</span>' +
+          '<span class="skill-actions"><button type="button" class="btn-sm btn-edit" data-id="' + escapeHtml(s.id) + '">编辑</button><button type="button" class="btn-sm del btn-del" data-id="' + escapeHtml(s.id) + '">删除</button></span>';
+        skillList.appendChild(row);
+      });
+      skillList.querySelectorAll('.btn-edit').forEach(function(btn) {
+        btn.onclick = function() { openEdit(btn.dataset.id); };
+      });
+      skillList.querySelectorAll('.btn-del').forEach(function(btn) {
+        btn.onclick = function() { doDelete(btn.dataset.id); };
+      });
+    }
+
+    function escapeHtml(s) {
+      if (!s) return '';
+      var d = document.createElement('div');
+      d.textContent = s;
+      return d.innerHTML;
+    }
+
+    function openEdit(id) {
+      var s = skills.find(function(x) { return x.id === id; });
+      if (!s) return;
+      document.getElementById('editId').value = s.id;
+      document.getElementById('editName').value = s.name || '';
+      document.getElementById('editDesc').value = s.description || '';
+      document.getElementById('editCategory').value = s.category || 'other';
+      document.getElementById('modalEdit').style.display = 'block';
+      document.getElementById('modalOverlay').style.display = 'block';
+    }
+
+    function openAdd() {
+      document.getElementById('editId').value = '';
+      document.getElementById('editId').readOnly = false;
+      document.getElementById('editName').value = '';
+      document.getElementById('editDesc').value = '';
+      document.getElementById('editCategory').value = 'other';
+      document.getElementById('modalEdit').style.display = 'block';
+      document.getElementById('modalOverlay').style.display = 'block';
+    }
+
+    document.getElementById('editCancel').onclick = function() {
+      document.getElementById('modalEdit').style.display = 'none';
+      document.getElementById('modalOverlay').style.display = 'none';
+      document.getElementById('editId').readOnly = true;
+    };
+
+    document.getElementById('editSave').onclick = function() {
+      var id = document.getElementById('editId').value.trim();
+      var name = document.getElementById('editName').value.trim();
+      var desc = document.getElementById('editDesc').value.trim();
+      var category = document.getElementById('editCategory').value;
+      if (!id) { show('ID 不能为空'); return; }
+      var list = skills.slice();
+      var idx = list.findIndex(function(x) { return x.id === id; });
+      var item = { id: id, name: name || id, description: desc, category: category };
+      if (idx >= 0) {
+        list[idx] = Object.assign({}, list[idx], item);
+      } else {
+        if (list.some(function(x) { return x.id === id; })) { show('ID 已存在'); return; }
+        list.push(item);
+      }
+      fetch('/api/skills', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ skills: list })
+      }).then(function(r) { return r.json(); }).then(function(d) {
+        if (d.error) { show(d.error); return; }
+        skills = d.skills || list;
+        render();
+        document.getElementById('editCancel').click();
+        show('已保存');
+      }).catch(function() { show('保存失败'); });
+    };
+
+    function doDelete(id) {
+      if (!confirm('确定删除技能 ' + id + '？')) return;
+      var list = skills.filter(function(x) { return x.id !== id; });
+      fetch('/api/skills', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ skills: list })
+      }).then(function(r) { return r.json(); }).then(function(d) {
+        if (d.error) { show(d.error); return; }
+        skills = d.skills || list;
+        render();
+        show('已删除');
+      }).catch(function() { show('删除失败'); });
+    }
+
+    document.getElementById('btnAdd').onclick = openAdd;
+
+    loadSkills();
+  </script>
+</body>
+</html>

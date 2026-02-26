@@ -1,5 +1,32 @@
 # Changelog
 
+## 1.3 (2026-02-27)
+
+### Phase 7–9: Docs, Deployment, Security
+
+- **阴控制台文档**：`docs/YIN_CONSOLE.md`、`docs/YANG.md`、`docs/API.md`
+- **部署运维**：`docs/DEPLOY.md`，环境变量、健康检查、备份、Docker
+- **安全实践**：`docs/SECURITY_BEST_PRACTICES.md`，面板鉴权、API Token、密钥占位
+- **健康检查**：`GET /api/health` 供负载均衡/监控
+- **面板鉴权**：`YINOVA_PANEL_TOKEN` 可选，`/login.html` 登录
+- **阳页阴网关提示**：未启动时显示红色提示条
+
+### Phase 10: Skills & Stability
+
+- **技能库管理**：`skills.html` 增删改查，`PUT /api/skills`
+- **技能模板**：`/api/skills/templates`，阳页「应用模板」
+- **卦任务重试**：agent-task 失败最多重试 3 次，间隔 2s
+- **阴网关离线提示**：首页、阳页显示提示条
+
+### Phase 11: Templates & UX
+
+- **项目模板**：`/api/project-templates`，新建项目时可选
+- **快捷键**：Ctrl/Cmd+Enter 发送，Esc 关闭弹窗
+- **Docker**：`Dockerfile.panel`、`docker-compose.yml`
+- **技术路线**：`docs/TECH_ROADMAP.md` 完整路线图
+
+---
+
 ## 1.2 (2026-02-25)
 
 ### UX

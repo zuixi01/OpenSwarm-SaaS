@@ -140,8 +140,10 @@ panel-web/*.md
 !panel-web/README.md
 panel-web/projects.db*
 
-# 내부 기획 문서
-docs/
+# 内部规划文档（用户文档如 YIN_CONSOLE.md、API.md 等保留）
+docs/上架目标.md
+docs/方案B-定义.md
+docs/最终形态定义.md
 网吧测试清单.md
 
 # 内部/上架规划文档（含绝对路径，不提交）

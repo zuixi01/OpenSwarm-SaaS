@@ -1,0 +1,22 @@
+# Yinova 面板 - 仅 Web 面板（阴/卦需在宿主机或其它方式启动）
+FROM node:18-alpine
+
+WORKDIR /app
+
+# 复制 panel-web
+COPY panel-web/package*.json panel-web/
+COPY panel-web/public panel-web/public
+COPY panel-web/server.js panel-web/
+
+# 安装依赖与健康检查工具
+RUN cd panel-web && npm install --omit=dev && apk add --no-cache curl
+
+# 创建必要目录与占位文件（config.json 可由挂载覆盖）
+RUN mkdir -p panel-web/data && echo '{}' > config.json
+
+EXPOSE 3999
+
+ENV NODE_ENV=production
+ENV PANEL_WEB_PORT=3999
+
+CMD ["node", "panel-web/server.js"]

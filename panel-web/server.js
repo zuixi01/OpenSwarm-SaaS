@@ -6,6 +6,7 @@
  */
 const express = require('express');
 const cors = require('cors');
+const cron = require('node-cron');
 const { spawn, spawnSync, execSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
@@ -14,6 +15,38 @@ const os = require('os');
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '2mb' }));
+// 可选面板鉴权：设置 YINOVA_PANEL_TOKEN 后，/api/* 与主页面需鉴权
+const PANEL_TOKEN = process.env.YINOVA_PANEL_TOKEN || '';
+const COOKIE_NAME = 'yinova-panel-token';
+function getPanelToken(req) {
+  const auth = req.headers.authorization || '';
+  let cookie = '';
+  try {
+    (req.headers.cookie || '').split(';').forEach((p) => {
+      const eq = p.trim().indexOf('=');
+      if (eq > 0 && p.trim().slice(0, eq) === COOKIE_NAME) {
+        cookie = decodeURIComponent(p.trim().slice(eq + 1)).trim();
+      }
+    });
+  } catch (_) {}
+  return (auth.startsWith('Bearer ') ? auth.slice(7) : '') || req.headers['x-panel-token'] || cookie || '';
+}
+app.use((req, res, next) => {
+  if (!PANEL_TOKEN) return next();
+  if (req.path === '/api/health') return next();
+  if (req.path === '/api/panel-login') return next();
+  if (req.path === '/login.html') return next();
+  const hasToken = getPanelToken(req) === PANEL_TOKEN;
+  if (req.path.startsWith('/api/')) {
+    if (hasToken) return next();
+    return res.status(401).json({ error: '需提供有效的 X-Panel-Token、Authorization: Bearer 或先访问 /login.html 登录' });
+  }
+  // HTML 页面（除 login）：无 token 时重定向到登录页
+  if (req.path === '/' || (req.path.endsWith('.html') && req.path !== '/login.html')) {
+    if (!hasToken) return res.redirect(302, '/login.html');
+  }
+  return next();
+});
 app.use(express.static(path.join(__dirname, 'public')));
 
 // 确保任何错误都返回 JSON，避免前端收到 HTML 报错页
@@ -262,6 +295,38 @@ function startMainGatewayInBackground() {
   child.unref();
 }
 
+// 尝试激活已有终端窗口（若存在），返回 true 表示已复用
+function tryFocusExistingTerminal(robot) {
+  let winId = '';
+  try {
+    winId = fs.readFileSync(ID_FILE(robot), 'utf8').trim();
+  } catch (_) {}
+  if (!winId) return false;
+  const script = [
+    'tell application "Terminal"',
+    '  try',
+    '    set w to window id ' + winId,
+    '    set index of w to 1',
+    '    activate',
+    '    return true',
+    '  on error',
+    '    return false',
+    '  end try',
+    'end tell'
+  ].join('\n');
+  try {
+    const r = spawnSync('osascript', ['-e', script], { encoding: 'utf8', maxBuffer: 64 });
+    const ok = (r.stdout && r.stdout.trim()) === 'true';
+    if (!ok && winId) {
+      try { fs.unlinkSync(ID_FILE(robot)); } catch (_) {}
+    }
+    return ok;
+  } catch (_) {
+    if (winId) { try { fs.unlinkSync(ID_FILE(robot)); } catch (_) {} }
+    return false;
+  }
+}
+
 // 启动：do script 后取新窗口的 id 写入文件，便于停止时精确关闭
 function runTerminalScript(robot, shellCmd) {
   const cmdStr = JSON.stringify(shellCmd);
@@ -480,6 +545,15 @@ app.get('/api/config', (_req, res) => {
     res.status(500).json({ error: err.message || '读取配置失败' });
   }
 });
+
+// 面板登录：校验 YINOVA_PANEL_TOKEN，通过则设置 cookie
+app.post('/api/panel-login', (req, res) => {
+  if (!PANEL_TOKEN) return res.status(400).json({ error: '面板未启用鉴权' });
+  const token = (req.body && req.body.token) ? String(req.body.token).trim() : '';
+  if (token !== PANEL_TOKEN) return res.status(401).json({ error: '令牌无效' });
+  res.cookie(COOKIE_NAME, token, { httpOnly: true, sameSite: 'lax', maxAge: 7 * 24 * 60 * 60 * 1000 });
+  res.json({ ok: true });
+});
 app.get('/api/config/check-ports', (req, res) => {
   try {
     const current = readConfig();
@@ -615,6 +689,7 @@ app.post('/api/config', (req, res) => {
 // 项目空间：本地 JSON 存储（路线图阶段 A）
 const DATA_DIR = path.join(__dirname, 'data');
 const PROJECTS_FILE = path.join(DATA_DIR, 'projects.json');
+const SKILLS_FILE = path.join(ROOT_DIR, 'skills', 'skills.json');
 const HEX_DEFINITION_PROJECT_ID = 'hex-definition';
 const HEX_DEFINITION_FILE = path.join(DATA_DIR, 'hex-definition.json');
 function ensureDataDir() {
@@ -652,6 +727,206 @@ function nextProjectId(list) {
   return 'p' + (max + 1);
 }
 
+const DEFAULT_SKILLS = [
+  { id: 'summarize', name: 'Summarize' },
+  { id: 'github', name: 'GitHub' },
+  { id: 'wacli', name: 'Wacli' },
+  { id: 'byte-rover', name: 'ByteRover' },
+  { id: 'agent-browser', name: 'Agent Browser' },
+  { id: 'gog', name: 'Gog' },
+  { id: 'filesystem', name: 'Filesystem' }
+];
+function readSkillsLibrary() {
+  try {
+    if (fs.existsSync(SKILLS_FILE)) {
+      const j = JSON.parse(fs.readFileSync(SKILLS_FILE, 'utf8'));
+      const list = j.skills || [];
+      return list.length > 0 ? list : DEFAULT_SKILLS;
+    }
+  } catch (_) {}
+  return DEFAULT_SKILLS;
+}
+
+app.get('/api/skills', (_req, res) => {
+  try {
+    const skills = readSkillsLibrary();
+    res.json({ skills });
+  } catch (err) {
+    res.status(500).json({ error: err.message || '读取技能库失败' });
+  }
+});
+
+// 技能库管理：更新技能列表
+function writeSkillsLibrary(skills) {
+  const dir = path.dirname(SKILLS_FILE);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  let meta = {};
+  try {
+    if (fs.existsSync(SKILLS_FILE)) {
+      meta = JSON.parse(fs.readFileSync(SKILLS_FILE, 'utf8'));
+    }
+  } catch (_) {}
+  meta.skills = Array.isArray(skills) ? skills : [];
+  if (!meta.version) meta.version = '1.0';
+  if (!meta.source) meta.source = 'ClawHub (clawhub.ai)';
+  fs.writeFileSync(SKILLS_FILE, JSON.stringify(meta, null, 2), 'utf8');
+}
+
+app.put('/api/skills', (req, res) => {
+  try {
+    const skills = req.body?.skills;
+    if (!Array.isArray(skills)) return res.status(400).json({ error: 'skills 必须为数组' });
+    writeSkillsLibrary(skills);
+    res.json({ skills: readSkillsLibrary() });
+  } catch (err) {
+    res.status(500).json({ error: err.message || '保存技能库失败' });
+  }
+});
+
+// 技能模板：预设技能组合，一键应用到项目
+const SKILL_TEMPLATES = [
+  { id: 'content-ops', name: '内容运营', skillIds: ['summarize', 'filesystem', 'agent-browser'] },
+  { id: 'dev-ops', name: '开发协作', skillIds: ['github', 'wacli', 'filesystem'] },
+  { id: 'automation', name: '自动化', skillIds: ['byte-rover', 'wacli', 'agent-browser'] },
+  { id: 'productivity', name: '效率工具', skillIds: ['summarize', 'gog', 'filesystem'] },
+];
+app.get('/api/skills/templates', (_req, res) => {
+  res.json({ templates: SKILL_TEMPLATES });
+});
+
+// 项目模板：预设项目结构
+const PROJECT_TEMPLATES = [
+  { id: 'weekly-report', name: '周报分析', hexIds: ['qian'], hexSkills: { qian: ['summarize', 'filesystem'] }, description: '单卦摘要与文件分析' },
+  { id: 'pr-review', name: 'PR 评审', hexIds: ['qian', 'kun'], hexSkills: { qian: ['github', 'summarize'], kun: ['github', 'wacli'] }, description: '双卦协作：代码审查与总结' },
+  { id: 'content-pipeline', name: '内容流水线', hexIds: ['qian', 'kun', 'tai'], hexSkills: { qian: ['agent-browser', 'filesystem'], kun: ['summarize'], tai: ['filesystem'] }, description: '多卦：抓取→摘要→输出' },
+];
+app.get('/api/project-templates', (_req, res) => {
+  res.json({ templates: PROJECT_TEMPLATES });
+});
+
+// 阳 · 自动配置：调用阴网关 LLM 推理 hexSkills/schedules/triggers
+app.post('/api/projects/:id/yang-configure', async (req, res) => {
+  try {
+    const projectId = req.params.id;
+    if (projectId === HEX_DEFINITION_PROJECT_ID) return res.status(400).json({ error: 'hex-definition 无 yang-configure' });
+    const list = readProjects();
+    const project = list.find((p) => p.id === projectId);
+    if (!project) return res.status(404).json({ error: '项目不存在' });
+    const hexIds = project.hexIds || [];
+    if (hexIds.length === 0) return res.status(400).json({ error: '请先选卦' });
+    const body = req.body || {};
+    const userDesc = (body.description || '').trim();
+    const apply = body.apply === true;
+
+    const skills = readSkillsLibrary();
+    const skillNames = skills.map((s) => s.id).join(', ');
+    const hexNames = hexIds.map((id) => {
+      const r = HEXAGRAM_ROBOTS.find((h) => h.id === id);
+      return `${id}(${r ? r.name : id})`;
+    }).join(', ');
+
+    const prompt = `你是 Yinova 的「阳」配置 Agent。根据项目信息，为每个卦分配合适的技能，并可选配置定时任务和触发规则。
+
+项目名称：${project.name}
+项目描述：${project.description || userDesc || '（无）'}
+本项目卦象：${hexNames}
+可用技能：${skillNames}
+
+当前配置（可参考或覆盖）：
+hexSkills: ${JSON.stringify(project.hexSkills || {})}
+
+请输出一个 JSON 对象，且仅输出 JSON，不要其他文字。格式：
+{
+  "hexSkills": { "卦id": ["skill1","skill2"], ... },
+  "schedules": [{ "id":"s1","name":"名称","cron":"0 9 * * *","hexId":"卦id","message":"执行指令","enabled":true }],
+  "triggers": [{ "id":"t1","type":"webhook","name":"名称","hexId":"卦id","message":"执行指令","enabled":true }]
+}
+
+规则：hexSkills 的 key 必须是本项目卦的 id（如 h11、h19）；value 必须是技能 id，且只能从 [${skillNames}] 中选择。schedules 和 triggers 可为空数组。`;
+
+    const MAIN_HTTP = `http://127.0.0.1:${MAIN_GATEWAY_PORT}`;
+    const token = (() => {
+      try {
+        const envToken = process.env.YINOVA_GATEWAY_TOKEN || process.env.OPENCLAW_GATEWAY_TOKEN || '';
+        if (envToken) return envToken;
+        const p = path.join(ROOT_DIR, 'yin', 'moltbot.json');
+        if (fs.existsSync(p)) {
+          const j = JSON.parse(fs.readFileSync(p, 'utf8'));
+          const auth = (j.gateway && j.gateway.auth) ? j.gateway.auth : {};
+          return String(auth.token || auth.password || '');
+        }
+      } catch (_) {}
+      return '';
+    })();
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    let resp;
+    try {
+      resp = await fetch(`${MAIN_HTTP}/v1/chat/completions`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ model: 'openclaw', messages: [{ role: 'user', content: prompt }] }),
+      });
+    } catch (fetchErr) {
+      const msg = String(fetchErr.cause?.message || fetchErr.message || '');
+      if (msg.includes('ECONNREFUSED') || msg.includes('fetch failed')) {
+        return res.status(503).json({ error: '阴网关未启动。请点击「阴·启动」后再试。' });
+      }
+      throw fetchErr;
+    }
+    const raw = await resp.text();
+    let data = {};
+    try {
+      let jsonStr = raw;
+      const codeBlock = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
+      if (codeBlock) jsonStr = codeBlock[1].trim();
+      const jsonMatch = jsonStr.match(/\{[\s\S]*\}/);
+      if (jsonMatch) data = JSON.parse(jsonMatch[0]);
+    } catch (_) {}
+    const hexSkills = (data.hexSkills && typeof data.hexSkills === 'object') ? data.hexSkills : {};
+    const schedules = Array.isArray(data.schedules) ? data.schedules : [];
+    const triggers = Array.isArray(data.triggers) ? data.triggers : [];
+
+    const validHexSkills = {};
+    const resolveSkillId = (s) => {
+      const str = String(s || '').trim().toLowerCase();
+      if (!str) return null;
+      const byId = skills.find((sk) => sk.id.toLowerCase() === str);
+      if (byId) return byId.id;
+      const byName = skills.find((sk) => (sk.name || '').toLowerCase() === str);
+      if (byName) return byName.id;
+      return null;
+    };
+    hexIds.forEach((hid) => {
+      const arr = Array.isArray(hexSkills[hid]) ? hexSkills[hid] : [];
+      validHexSkills[hid] = arr.map(resolveSkillId).filter(Boolean);
+    });
+    const validSchedules = schedules.filter((s) => s.hexId && hexIds.includes(s.hexId) && s.cron && s.message);
+    const validTriggers = triggers.filter((t) => t.hexId && hexIds.includes(t.hexId) && t.message);
+
+    if (apply) {
+      const idx = list.findIndex((p) => p.id === projectId);
+      if (idx >= 0) {
+        list[idx].hexSkills = validHexSkills;
+        list[idx].schedules = validSchedules;
+        list[idx].triggers = validTriggers;
+        writeProjects(list);
+        if (typeof reloadSchedules === 'function') reloadSchedules();
+      }
+    }
+    res.json({
+      hexSkills: validHexSkills,
+      schedules: validSchedules,
+      triggers: validTriggers,
+      applied: apply,
+    });
+  } catch (err) {
+    console.error('[yang-configure]', err);
+    res.status(500).json({ error: err.message || '阳配置失败' });
+  }
+});
+
 app.get('/api/projects', (_req, res) => {
   try {
     const list = readProjects().filter((p) => p.id !== HEX_DEFINITION_PROJECT_ID);
@@ -671,13 +946,28 @@ app.post('/api/projects', (req, res) => {
   try {
     const name = (req.body && req.body.name) ? String(req.body.name).trim() : '';
     if (!name) return res.status(400).json({ error: '项目名称不能为空' });
+    const templateId = (req.body && req.body.templateId) ? String(req.body.templateId).trim() : '';
     const list = readProjects();
     const id = nextProjectId(list);
-    const project = {
+    let project = {
       id, name, hexIds: [],
+      hexSkills: {},
+      config: {},
+      hexConfig: {},
+      schedules: [],
+      triggers: [],
+      workflows: [],
       type: 'other', description: '', status: 'planning', budget: 0, revenue: 0,
       startDate: new Date().toISOString().slice(0, 10), tasks: []
     };
+    if (templateId) {
+      const tpl = PROJECT_TEMPLATES.find((t) => t.id === templateId);
+      if (tpl) {
+        project.hexIds = Array.isArray(tpl.hexIds) ? [...tpl.hexIds] : [];
+        project.hexSkills = typeof tpl.hexSkills === 'object' && tpl.hexSkills ? { ...tpl.hexSkills } : {};
+        if (tpl.description) project.description = tpl.description;
+      }
+    }
     list.push(project);
     writeProjects(list);
     res.status(201).json(project);
@@ -699,9 +989,51 @@ app.get('/api/projects/:id', (req, res) => {
     const list = readProjects();
     const project = list.find(p => p.id === req.params.id);
     if (!project) return res.status(404).json({ error: '项目不存在' });
+    if (!project.hexSkills || typeof project.hexSkills !== 'object') project.hexSkills = {};
+    if (!project.config || typeof project.config !== 'object') project.config = {};
+    if (!project.hexConfig || typeof project.hexConfig !== 'object') project.hexConfig = {};
+    if (!Array.isArray(project.schedules)) project.schedules = [];
+    if (!Array.isArray(project.triggers)) project.triggers = [];
+    if (!Array.isArray(project.workflows)) project.workflows = [];
     res.json(project);
   } catch (err) {
     res.status(500).json({ error: err.message || '读取项目失败' });
+  }
+});
+app.get('/api/projects/:id/yin-status', (req, res) => {
+  try {
+    if (req.params.id === HEX_DEFINITION_PROJECT_ID) return res.status(400).json({ error: 'hex-definition 无 yin-status' });
+    const list = readProjects();
+    const project = list.find(p => p.id === req.params.id);
+    if (!project) return res.status(404).json({ error: '项目不存在' });
+    const hexIds = project.hexIds || [];
+    const hexSkills = project.hexSkills || {};
+    const config = project.config || {};
+    const hexConfig = project.hexConfig || {};
+    const hexList = [];
+    hexIds.forEach((hexId) => {
+      const robot = HEXAGRAM_ROBOTS.find((r) => String(r.id) === String(hexId));
+      hexList.push({
+        id: hexId,
+        name: robot ? robot.name : hexId,
+        skills: hexSkills[hexId] || [],
+        config: hexConfig[hexId] || {}
+      });
+    });
+    const apiToken = project.apiToken || '';
+    res.json({
+      projectId: project.id,
+      projectName: project.name,
+      config,
+      hexList,
+      schedules: project.schedules || [],
+      triggers: project.triggers || [],
+      workflows: project.workflows || [],
+      apiToken: apiToken ? apiToken.slice(0, 8) + '…' : '',
+      hasApiToken: !!apiToken
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message || '读取 yin-status 失败' });
   }
 });
 app.put('/api/projects/:id', (req, res) => {
@@ -722,6 +1054,16 @@ app.put('/api/projects/:id', (req, res) => {
     if (!p.tasks) p.tasks = [];
     if (body.name != null) p.name = String(body.name).trim() || p.name;
     if (Array.isArray(body.hexIds)) p.hexIds = body.hexIds;
+    if (body.hexSkills !== undefined) p.hexSkills = (typeof body.hexSkills === 'object' && body.hexSkills !== null) ? body.hexSkills : {};
+    if (body.config !== undefined) p.config = (typeof body.config === 'object' && body.config !== null) ? body.config : {};
+    if (body.hexConfig !== undefined) p.hexConfig = (typeof body.hexConfig === 'object' && body.hexConfig !== null) ? body.hexConfig : {};
+    if (Array.isArray(body.schedules)) {
+      p.schedules = body.schedules;
+      if (typeof reloadSchedules === 'function') reloadSchedules();
+    }
+    if (Array.isArray(body.triggers)) p.triggers = body.triggers;
+    if (Array.isArray(body.workflows)) p.workflows = body.workflows;
+    if (body.apiToken !== undefined) p.apiToken = body.apiToken == null ? '' : String(body.apiToken).trim();
     if (body.type != null) p.type = String(body.type);
     if (body.description != null) p.description = String(body.description);
     if (body.status != null) p.status = String(body.status);
@@ -1850,6 +2192,70 @@ app.delete('/api/project-memory/:id', (req, res) => {
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
+
+// 对外 API 大门：外部系统调用，支持 token 鉴权
+// POST /api/projects/:id/run
+// Header: Authorization: Bearer <token> 或 X-API-Key: <token>
+// Body: { hexId, message } | { workflowId } | { triggerId }
+function checkRunToken(project, req) {
+  const authHeader = req.headers.authorization || '';
+  const apiKey = req.headers['x-api-key'] || '';
+  const token = (authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '') || apiKey;
+  const projectToken = project.apiToken || project.config?.apiToken || '';
+  const globalToken = process.env.YINOVA_RUN_TOKEN || '';
+  if (projectToken && token === projectToken) return true;
+  if (globalToken && token === globalToken) return true;
+  return false;
+}
+app.post('/api/projects/:id/run', (req, res) => {
+  try {
+    const projectId = req.params.id;
+    if (projectId === HEX_DEFINITION_PROJECT_ID) return res.status(400).json({ error: 'hex-definition 无 run' });
+    const list = readProjects();
+    const project = list.find((p) => p.id === projectId);
+    if (!project) return res.status(404).json({ error: '项目不存在' });
+    if (!checkRunToken(project, req)) return res.status(401).json({ error: '鉴权失败，需提供有效的 Authorization 或 X-API-Key' });
+    const body = req.body || {};
+    const baseUrl = `http://127.0.0.1:${PORT}`;
+    if (body.workflowId) {
+      const wf = (project.workflows || []).find((w) => w.id === body.workflowId);
+      if (!wf || !wf.steps?.length) return res.status(400).json({ error: '流程不存在或为空' });
+      fetch(baseUrl + '/api/hex/agent-task', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          hexId: wf.steps[0].hexId,
+          message: wf.steps[0].message,
+          projectId,
+          workflowId: body.workflowId,
+          workflowStepIndex: 0,
+        }),
+      }).catch((e) => console.warn('[run] workflow trigger failed:', e.message));
+      return res.json({ ok: true, type: 'workflow', workflowId: body.workflowId });
+    }
+    if (body.triggerId) {
+      const tr = (project.triggers || []).find((t) => t.id === body.triggerId);
+      if (!tr || tr.enabled === false) return res.status(400).json({ error: '触发规则不存在或已禁用' });
+      fetch(baseUrl + '/api/hex/agent-task', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hexId: tr.hexId, message: tr.message, projectId }),
+      }).catch((e) => console.warn('[run] trigger failed:', e.message));
+      return res.json({ ok: true, type: 'trigger', triggerId: body.triggerId });
+    }
+    if (body.hexId && body.message) {
+      fetch(baseUrl + '/api/hex/agent-task', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hexId: body.hexId, message: body.message, projectId }),
+      }).catch((e) => console.warn('[run] agent-task failed:', e.message));
+      return res.json({ ok: true, type: 'agent', hexId: body.hexId });
+    }
+    return res.status(400).json({ error: '请提供 hexId+message、workflowId 或 triggerId' });
+  } catch (err) {
+    res.status(500).json({ error: err.message || '执行失败' });
+  }
+});
 // ─────────────────────────────────────────────────────────────────────────────
 
 // DELETE /api/chat-history/:projectId/:mode — 清空聊天记录
@@ -2053,6 +2459,12 @@ app.post('/api/yin/chat', (req, res) => {
           task.error = '阴网关未开启或不允许 HTTP Chat 接口。请在阴的配置（yin/moltbot.json）中设置 gateway.http.endpoints.chatCompletions.enabled = true 后重启阴网关。';
         } else if (response.status === 401) {
           task.error = '阴网关鉴权失败(Unauthorized)。请检查 yin/moltbot.json 或环境变量 YINOVA_GATEWAY_TOKEN。';
+        } else if (response.status === 429) {
+          task.error = '智谱 API 限流(429)。请稍后重试，或检查配置页面的 API Key 配额。';
+        } else if (response.status === 403) {
+          task.error = 'API Key 无效或配额不足。请到配置页面检查并更新 API Key。';
+        } else if (response.status >= 500) {
+          task.error = '上游服务异常(' + response.status + ')。请稍后重试，或检查智谱控制台服务状态。';
         } else {
           task.error = errMsg;
         }
@@ -2062,10 +2474,17 @@ app.post('/api/yin/chat', (req, res) => {
         task.status = 'done';
       }
     } catch (err) {
-      const detail = err.cause ? (err.cause.message || String(err.cause)) : '';
-      task.error = (detail ? `${err.message} (${detail})` : (err.message || '阴网关不可达')) + '。请先启动阴网关（点阴·启动），或查看运行面板的终端里的报错。';
+      const code = err.cause?.code || err.code;
+      const msg = String(err.cause?.message || err.message || '');
+      if (code === 'ECONNREFUSED' || msg.includes('ECONNREFUSED') || msg.includes('fetch failed')) {
+        task.error = '阴网关未启动。请点击「阴·启动」按钮。';
+      } else if (msg.includes('timeout') || msg.includes('ETIMEDOUT')) {
+        task.error = '阴网关响应超时。请检查网络或稍后重试。';
+      } else {
+        task.error = (err.message || '阴网关不可达') + '。请先启动阴网关（点阴·启动），或查看运行面板的终端里的报错。';
+      }
       task.status = 'error';
-      console.error('[yin/chat] 请求阴网关失败:', err.message, detail || '');
+      console.error('[yin/chat] 请求阴网关失败:', err.message, code || '');
     }
     setTimeout(() => { yinTaskStore.delete(taskId); }, 300000);
   })();
@@ -2167,7 +2586,7 @@ app.post('/api/hex/chat', (req, res) => {
         const hexNamesWithLabels = (hexDef.hexIds || []).map((id) => formatHexNameWithLabel(id)).join('、');
         projectSystemMsg = {
           role: 'system',
-          content: `当前是「卦的自定义」场景，参与卦：${hexNamesWithLabels || '无'}。你可通过写入 workspace/我的定义.md 来更新自己的人设（角色、擅长、边界等）。与用户或其它卦讨论后，若达成共识即可写入该文件。`
+          content: `当前是「卦的自定义」场景，参与卦：${hexNamesWithLabels || '无'}。你可通过写入 workspace/我的定义.md 来更新自己的人设（角色、擅长、边界等）。与用户或其它卦讨论后，若达成共识即可写入该文件。产出文件时请在回复中写明完整路径。`
         };
       } else {
         const projectList = readProjects();
@@ -2185,7 +2604,7 @@ app.post('/api/hex/chat', (req, res) => {
           } catch (e) { /* 记忆读取失败不影响主流程 */ }
           projectSystemMsg = {
             role: 'system',
-            content: `当前项目上下文：项目名称"${proj.name}"，参与卦：${hexNamesWithLabels || '无'}。你是该项目的参与者，请围绕项目背景作答。${memoryText}`
+            content: `当前项目上下文：项目名称"${proj.name}"，项目ID "${reqProjectId}"，参与卦：${hexNamesWithLabels || '无'}。你是该项目的参与者，请围绕项目背景作答。\n\n【产出路径】凡需产出文件，请写入 workspace/output/${reqProjectId}/ 目录，并在回复中写明完整路径（如 workspace/output/${reqProjectId}/文件名.md）。${memoryText}`
           };
         }
       }
@@ -2281,7 +2700,10 @@ app.post('/api/hex/chat', (req, res) => {
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        const errMsg = data.error?.message || data.message || `HTTP ${response.status}`;
+        let errMsg = data.error?.message || data.message || `HTTP ${response.status}`;
+        if (response.status === 429) errMsg = '智谱 API 限流(429)，请稍后重试';
+        else if (response.status === 403) errMsg = 'API Key 无效或配额不足';
+        else if (response.status >= 500) errMsg = '上游服务异常(' + response.status + ')，请稍后重试';
         return { hexId, name, reply: null, error: errMsg };
       }
       const reply = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) ? String(data.choices[0].message.content) : '';
@@ -2670,9 +3092,77 @@ async function callHexAgentWS({ port, token, message, sessionKey, stateDir, time
   });
 }
 
+// 根据 project.hexSkills 将技能挂载到卦的 workspace/skills
+function mountHexSkillsForProject(projectId, hexId, stateDir) {
+  if (!projectId || !stateDir) return;
+  try {
+    const list = readProjects();
+    const project = list.find((p) => p.id === projectId);
+    if (!project || !project.hexSkills || typeof project.hexSkills !== 'object') return;
+    const skillIds = project.hexSkills[hexId];
+    if (!Array.isArray(skillIds) || skillIds.length === 0) return;
+
+    const skillsSrcDir = path.join(ROOT_DIR, 'skills');
+    const hexSkillsDir = path.join(stateDir, 'workspace', 'skills');
+    if (!fs.existsSync(hexSkillsDir)) fs.mkdirSync(hexSkillsDir, { recursive: true });
+
+    for (const skillId of skillIds) {
+      const src = path.join(skillsSrcDir, skillId);
+      if (!fs.existsSync(src) || !fs.statSync(src).isDirectory()) continue;
+      const dest = path.join(hexSkillsDir, skillId);
+      try {
+        if (fs.existsSync(dest)) {
+          try { fs.rmSync(dest, { recursive: true }); } catch (_) {}
+        }
+        copyDirSync(src, dest);
+      } catch (e) {
+        console.warn('[mountHexSkills] 复制 skill', skillId, '失败:', e.message);
+      }
+    }
+  } catch (e) {
+    console.warn('[mountHexSkills]', e.message);
+  }
+}
+function copyDirSync(src, dest) {
+  fs.mkdirSync(dest, { recursive: true });
+  const entries = fs.readdirSync(src, { withFileTypes: true });
+  for (const e of entries) {
+    const s = path.join(src, e.name);
+    const d = path.join(dest, e.name);
+    if (e.isDirectory()) copyDirSync(s, d);
+    else fs.copyFileSync(s, d);
+  }
+}
+
+// 触发 workflow 下一步（agent-task 完成后调用）
+function triggerNextWorkflowStep(projectId, workflowId, nextStepIndex) {
+  try {
+    const list = readProjects();
+    const project = list.find((p) => p.id === projectId);
+    if (!project) return;
+    const workflows = Array.isArray(project.workflows) ? project.workflows : [];
+    const wf = workflows.find((w) => w.id === workflowId);
+    if (!wf || !Array.isArray(wf.steps) || nextStepIndex >= wf.steps.length) return;
+    const step = wf.steps[nextStepIndex];
+    if (!step || !step.hexId || !step.message) return;
+    const baseUrl = `http://127.0.0.1:${PORT}`;
+    fetch(baseUrl + '/api/hex/agent-task', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        hexId: step.hexId,
+        message: step.message,
+        projectId,
+        workflowId,
+        workflowStepIndex: nextStepIndex,
+      }),
+    }).catch((e) => console.warn('[workflow] trigger next failed:', e.message));
+  } catch (e) { console.warn('[workflow]', e.message); }
+}
+
 // 异步 agent 任务接口：立即返回 taskId，后台让卦执行任务
 // POST /api/hex/agent-task
-// body: { hexId, message, projectId?, sessionKey? }
+// body: { hexId, message, projectId?, sessionKey?, workflowId?, workflowStepIndex? }
 app.post('/api/hex/agent-task', (req, res) => {
   const taskId = `agttask_${Date.now()}_${randomUUID().slice(0, 6)}`;
   const task = { status: 'running', reply: null, hexName: null, error: null, createdAt: Date.now() };
@@ -2681,7 +3171,7 @@ app.post('/api/hex/agent-task', (req, res) => {
 
   (async () => {
     try {
-      const { hexId, message, projectId, sessionKey } = req.body || {};
+      const { hexId, message, projectId, sessionKey, workflowId, workflowStepIndex } = req.body || {};
       if (!hexId || !message) { task.status = 'error'; task.error = '缺少 hexId 或 message'; return; }
       const hex = HEXAGRAM_ROBOTS.find((h) => h.id === hexId);
       const worker = hex ? getWorkerByHex(hexId) : null;
@@ -2691,10 +3181,24 @@ app.post('/api/hex/agent-task', (req, res) => {
       const stateDir = worker.stateDir || '';
       task.hexName = hex.name;
 
-      const { reply, error } = await callHexAgentWS({ port, token, message, sessionKey, stateDir, timeoutMs: AGENT_TASK_TIMEOUT_MS });
-      task.reply = reply;
-      task.error = error;
-      task.status = error ? 'error' : 'done';
+      mountHexSkillsForProject(projectId, hexId, stateDir);
+
+      // 卦任务失败重试：最多 3 次，间隔 2s
+      const MAX_RETRIES = 3;
+      const RETRY_DELAY_MS = 2000;
+      let lastReply = null, lastError = null;
+      for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+        const result = await callHexAgentWS({ port, token, message, sessionKey, stateDir, timeoutMs: AGENT_TASK_TIMEOUT_MS });
+        lastReply = result.reply;
+        lastError = result.error;
+        if (!lastError) break;
+        if (attempt < MAX_RETRIES) {
+          await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
+        }
+      }
+      task.reply = lastReply;
+      task.error = lastError;
+      task.status = lastError ? 'error' : 'done';
 
       // 自动保存到项目历史
       if (projectId && message && reply && !error) {
@@ -2707,6 +3211,11 @@ app.post('/api/hex/agent-task', (req, res) => {
           stored.push({ type: 'hex', name: hex.name, message: reply, ts: Date.now() });
           await queuedWriteFile(histPath, JSON.stringify(stored, null, 2));
         } catch(e) { console.warn('[agent-task] 保存历史失败:', e.message); }
+      }
+
+      // Workflow：本步成功后触发下一步
+      if (!error && projectId && workflowId != null && workflowStepIndex != null) {
+        triggerNextWorkflowStep(projectId, workflowId, workflowStepIndex + 1);
       }
     } catch (e) {
       task.status = 'error';
@@ -2926,12 +3435,19 @@ app.get('/api/system', (_req, res) => {
   res.json(getSystemStats());
 });
 
+// 健康检查：供负载均衡、容器编排、监控探针使用
+app.get('/api/health', (_req, res) => {
+  res.status(200).json({ ok: true, service: 'yinova-panel', ts: Date.now() });
+});
+
 // 统一启动：main / lan / 卦 id
 app.post('/api/open-tui/:robot', (req, res) => {
   try {
     const robot = req.params.robot;
     if (robot === 'main') {
-      // 阴：使用项目内的启动脚本
+      if (tryFocusExistingTerminal('main')) {
+        return res.json({ ok: true, reused: true });
+      }
       const yinStartScript = path.join(ROOT_DIR, 'yin', 'start-yin.sh');
       runTerminalScript('main', `bash "${yinStartScript}"`);
       return res.json({ ok: true });
@@ -2954,9 +3470,15 @@ app.post('/api/open-tui/:robot', (req, res) => {
           try { execSync('sleep 1', { stdio: 'pipe' }); } catch (_) {}
         }
       }
+      if (tryFocusExistingTerminal(robot)) {
+        return res.json({ ok: true, reused: true });
+      }
       const cmd = titlePrefix + `cd ${OPENCLAW_DIR} && OPENCLAW_STATE_DIR="${stateDir}" OPENCLAW_GATEWAY_PORT=${port} ${token}node openclaw.mjs tui`;
       runTerminalScript(robot, cmd);
       return res.json({ ok: true });
+    }
+    if (robot === 'yang') {
+      return res.status(400).json({ error: '敬请期待2.0版本' });
     }
     return res.status(400).json({ error: 'unknown robot' });
   } catch (err) {
@@ -3116,6 +3638,111 @@ app.post('/api/stop/:robot', async (req, res) => {
   }
 });
 
+// 定时调度：Schedule 阴服务
+const _cronTasks = new Map(); // scheduleKey -> cron ref
+function scheduleKey(projectId, scheduleId) { return projectId + ':' + scheduleId; }
+function fireScheduledTask(projectId, schedule) {
+  const baseUrl = `http://127.0.0.1:${PORT}`;
+  const { hexId, message } = schedule;
+  if (!hexId || !message) return;
+  fetch(baseUrl + '/api/hex/agent-task', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ hexId, message, projectId })
+  }).catch((e) => console.warn('[schedule] fire failed:', projectId, schedule.id, e.message));
+}
+function reloadSchedules() {
+  _cronTasks.forEach((t) => t.stop());
+  _cronTasks.clear();
+  try {
+    const list = readProjects();
+    list.forEach((p) => {
+      const arr = Array.isArray(p.schedules) ? p.schedules : [];
+      arr.forEach((s) => {
+        if (!s.id || !s.cron || !s.hexId || !s.message) return;
+        if (s.enabled === false) return;
+        if (!cron.validate(s.cron)) return;
+        const key = scheduleKey(p.id, s.id);
+        const task = cron.schedule(s.cron, () => fireScheduledTask(p.id, s));
+        _cronTasks.set(key, task);
+      });
+    });
+  } catch (e) { console.warn('[schedule] reload failed:', e.message); }
+}
+
+// Webhook 触发：外部系统 POST 到此 URL 可触发卦执行
+// POST /api/webhooks/:projectId/:triggerId
+// body 可选: { message?: "覆盖指令" }
+app.post('/api/webhooks/:projectId/:triggerId', (req, res) => {
+  try {
+    const { projectId, triggerId } = req.params;
+    if (projectId === HEX_DEFINITION_PROJECT_ID) return res.status(400).json({ error: 'hex-definition 无 triggers' });
+    const list = readProjects();
+    const project = list.find((p) => p.id === projectId);
+    if (!project) return res.status(404).json({ error: '项目不存在' });
+    const triggers = Array.isArray(project.triggers) ? project.triggers : [];
+    const trigger = triggers.find((t) => t.id === triggerId);
+    if (!trigger) return res.status(404).json({ error: '触发规则不存在' });
+    if (trigger.enabled === false) return res.status(403).json({ error: '触发已禁用' });
+    const hexId = trigger.hexId;
+    const message = (req.body && req.body.message) || trigger.message || '';
+    if (!hexId || !message) return res.status(400).json({ error: '触发规则缺少 hexId 或 message' });
+    fireScheduledTask(projectId, { hexId, message });
+    res.json({ ok: true, message: '已触发' });
+  } catch (err) {
+    res.status(500).json({ error: err.message || '触发失败' });
+  }
+});
+
+// 手动触发 workflow（从第一步开始）
+app.post('/api/projects/:projectId/workflows/:workflowId/trigger', (req, res) => {
+  try {
+    const { projectId, workflowId } = req.params;
+    if (projectId === HEX_DEFINITION_PROJECT_ID) return res.status(400).json({ error: 'hex-definition 无 workflows' });
+    const list = readProjects();
+    const project = list.find((p) => p.id === projectId);
+    if (!project) return res.status(404).json({ error: '项目不存在' });
+    const workflows = Array.isArray(project.workflows) ? project.workflows : [];
+    const wf = workflows.find((w) => w.id === workflowId);
+    if (!wf || !Array.isArray(wf.steps) || wf.steps.length === 0) return res.status(404).json({ error: '流程不存在或为空' });
+    const step = wf.steps[0];
+    if (!step || !step.hexId || !step.message) return res.status(400).json({ error: '流程第一步无效' });
+    const baseUrl = `http://127.0.0.1:${PORT}`;
+    fetch(baseUrl + '/api/hex/agent-task', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        hexId: step.hexId,
+        message: step.message,
+        projectId,
+        workflowId,
+        workflowStepIndex: 0,
+      }),
+    }).catch((e) => console.warn('[workflow] trigger failed:', e.message));
+    res.json({ ok: true, message: '已触发流程' });
+  } catch (err) {
+    res.status(500).json({ error: err.message || '触发失败' });
+  }
+});
+
+// 手动触发定时任务
+app.post('/api/projects/:projectId/schedules/:scheduleId/trigger', (req, res) => {
+  try {
+    const { projectId, scheduleId } = req.params;
+    if (projectId === HEX_DEFINITION_PROJECT_ID) return res.status(400).json({ error: 'hex-definition 无 schedules' });
+    const list = readProjects();
+    const project = list.find((p) => p.id === projectId);
+    if (!project) return res.status(404).json({ error: '项目不存在' });
+    const schedules = Array.isArray(project.schedules) ? project.schedules : [];
+    const schedule = schedules.find((s) => s.id === scheduleId);
+    if (!schedule) return res.status(404).json({ error: '定时任务不存在' });
+    fireScheduledTask(projectId, schedule);
+    res.json({ ok: true, message: '已触发' });
+  } catch (err) {
+    res.status(500).json({ error: err.message || '触发失败' });
+  }
+});
+
 // 未匹配的请求统一返回 JSON，避免浏览器收到 HTML 404 页
 app.use((_req, res) => {
   if (!res.headersSent) res.status(404).json({ error: 'Not found' });
@@ -3133,6 +3760,7 @@ if (!fs.existsSync(WORKERS_CONF)) {
 
 const server = app.listen(PORT, () => {
   console.log(`\n  Yinova 面板已启动 → http://localhost:${PORT}\n`);
+  if (typeof reloadSchedules === 'function') reloadSchedules();
 });
 server.on('error', (err) => {
   if (err.code === 'EADDRINUSE') {

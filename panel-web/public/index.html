@@ -56,13 +56,13 @@
       position: relative;
       z-index: 1;
       width: 100%;
-      padding: 28px 24px 48px;
+      padding: 12px 24px 48px;
       display: flex;
       flex-direction: column;
       align-items: center;
     }
     .header {
-      margin-bottom: 20px;
+      margin-bottom: 12px;
       width: 100%;
       align-self: stretch;
     }
@@ -172,6 +172,7 @@
     .monitor .warn { color: var(--gold); }
     .monitor .danger { color: var(--gold); font-weight: 600; }
     .monitor .warnings { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border); }
+    .yin-offline-banner { padding: 10px 16px; margin: 0 24px 12px; background: rgba(180,80,60,0.15); border: 1px solid rgba(180,80,60,0.5); border-radius: 6px; font-size: 0.88rem; color: #e8b8a8; text-align: center; }
 
     /* 阴阳：静态白线太极图，中间两枚不动圆点为按钮（阴/阳） */
     .row-yinyang {
@@ -180,7 +181,7 @@
       justify-content: center;
       align-items: center;
       gap: 12px;
-      margin-bottom: 24px;
+      margin-bottom: 12px;
     }
     .taiji-wrap {
       position: relative;
@@ -252,7 +253,7 @@
       width: 100%;
       max-width: 920px;
       position: relative;
-      padding: 20px 0;
+      padding: 8px 0;
     }
     .label-row {
       display: flex;
@@ -419,6 +420,9 @@
 <body data-i18n-title="title">
   <div id="starfield" aria-hidden="true"></div>
   <div class="page-content">
+  <div id="yinOfflineBanner" class="yin-offline-banner" style="display:none;">
+    阴网关未启动。请点击下方太极图阴眼「阴·启动」。
+  </div>
   <div class="header">
     <div class="header-row">
       <div class="header-left">
@@ -428,6 +432,7 @@
         <div class="header-buttons">
           <span id="yinova-lang-toggle-wrap"></span>
           <a href="config.html" class="btn-header-project" data-i18n-title="btnConfig" title="配置" style="font-size:0.9rem;">⚙</a>
+          <a href="skills.html" class="btn-header-project" title="技能库管理">📚</a>
           <a href="projects.html" class="btn-header-project" data-i18n-title="btnProjects" title="项目空间">+</a>
         </div>
         <div class="monitor" id="monitor">
@@ -462,7 +467,7 @@
         <path class="stroke" d="M50 0 A25 25 0 0 1 50 50 A25 25 0 0 0 50 100"/>
       </svg>
       <button type="button" class="taiji-dot" data-robot="main" data-i18n-title="yinClickStart" title="阴 · 点击启动/停止" aria-label="阴"></button>
-      <button type="button" class="taiji-dot" data-robot="yang" data-i18n-title="yangDisplayOnly" title="阳 · 仅作展示" aria-label="阳"></button>
+      <button type="button" class="taiji-dot" data-robot="yang" data-i18n-title="yangDisplayOnly" title="阳 · 技能组装" aria-label="阳"></button>
     </div>
   </div>
   <div class="section-hexagrams">
@@ -628,7 +633,7 @@
           const r = await fetch('/api/open-tui/' + robotId, { method: 'POST' });
           const data = await r.json().catch(() => ({}));
           if (r.ok && !data.error) {
-            show(t('toastTerminalOpened'));
+            show(data.reused ? t('toastTerminalReused') : t('toastTerminalOpened'));
           } else {
             show(data.error || t('toastStartFailed') + ' (HTTP ' + r.status + ')');
             (targetEl || btn).classList.remove('starting');
@@ -679,7 +684,7 @@
         const robotId = btn.dataset.robot;
         btn.addEventListener('click', async () => {
           if (robotId === 'yang') {
-            show(t('toastDisplayOnly'));
+            location.href = 'yang.html';
             return;
           }
           const robots = await fetchRobots();
@@ -709,7 +714,7 @@
               const r = await fetch('/api/open-tui/' + robotId, { method: 'POST' });
               const data = await r.json().catch(() => ({}));
               if (r.ok && !data.error) {
-                show(t('toastTerminalOpened'));
+                show(data.reused ? t('toastTerminalReused') : t('toastTerminalOpened'));
               } else {
                 show(data.error || t('toastStartFailed') + ' (HTTP ' + r.status + ')');
                 btn.classList.remove('starting');
@@ -774,7 +779,7 @@
           try {
             const r = await fetch('/api/open-tui/' + robotId, { method: 'POST' });
             const data = await r.json().catch(() => ({}));
-            if (r.ok && !data.error) show(t('toastTerminalOpened'));
+            if (r.ok && !data.error) show(data.reused ? t('toastTerminalReused') : t('toastTerminalOpened'));
             else { show(data.error || t('toastStartFailed')); card.classList.remove('starting'); }
           } catch (err) { show(t('toastRequestFailed') + ': ' + (err.message || '')); card.classList.remove('starting'); }
         } else if (stopBtn) {
@@ -864,23 +869,19 @@
       });
     };
 
-    // 阴连接状态轮询（每10秒）
-    var yinStatusDot = document.getElementById('yinStatusDot');
-    var yinStatusText = document.getElementById('yinStatusText');
-    function checkYinStatus() {
-      fetch('/api/yin/status')
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-          if (yinStatusDot) { yinStatusDot.className = 'yin-status-dot online'; }
-          if (yinStatusText) { yinStatusText.textContent = '阴 · 在线'; }
+    // 阴网关状态轮询（每15秒），未启动时显示提示条
+    var yinOfflineBanner = document.getElementById('yinOfflineBanner');
+    function checkYinGatewayHealth() {
+      fetch('/api/yin/gateway/health').then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (yinOfflineBanner) yinOfflineBanner.style.display = (d && d.ok) ? 'none' : 'block';
         })
         .catch(function() {
-          if (yinStatusDot) { yinStatusDot.className = 'yin-status-dot offline'; }
-          if (yinStatusText) { yinStatusText.textContent = '阴 · 未连接'; }
+          if (yinOfflineBanner) yinOfflineBanner.style.display = 'block';
         });
     }
-    checkYinStatus();
-    setInterval(checkYinStatus, 10000);
+    checkYinGatewayHealth();
+    setInterval(checkYinGatewayHealth, 15000);
   </script>
 </body>
 </html>
