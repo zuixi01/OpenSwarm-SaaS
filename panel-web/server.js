@@ -295,8 +295,9 @@ function startMainGatewayInBackground() {
   child.unref();
 }
 
-// 尝试激活已有终端窗口（若存在），返回 true 表示已复用
+// 尝试激活已有终端窗口（若存在），返回 true 表示已复用。仅 macOS 支持
 function tryFocusExistingTerminal(robot) {
+  if (process.platform !== 'darwin') return false;
   let winId = '';
   try {
     winId = fs.readFileSync(ID_FILE(robot), 'utf8').trim();
@@ -327,18 +328,50 @@ function tryFocusExistingTerminal(robot) {
   }
 }
 
-// 启动：do script 后取新窗口的 id 写入文件，便于停止时精确关闭
+// 启动：打开新终端窗口执行命令。macOS 用 osascript，Windows 用 start，Linux/WSL 用 gnome-terminal/xterm
 function runTerminalScript(robot, shellCmd) {
-  const cmdStr = JSON.stringify(shellCmd);
-  const script = [
-    'tell application "Terminal" to do script ' + cmdStr,
-    'delay 0.6',
-    'tell application "Terminal" to return id of front window'
-  ].join('\n');
-  const r = spawnSync('osascript', ['-e', script], { encoding: 'utf8', maxBuffer: 1024 });
-  const id = (r.stdout && r.stdout.trim()) || '';
-  if (id) {
-    try { fs.writeFileSync(ID_FILE(robot), id, 'utf8'); } catch (_) {}
+  const isWin = process.platform === 'win32';
+  const isMac = process.platform === 'darwin';
+
+  if (isMac) {
+    const cmdStr = JSON.stringify(shellCmd);
+    const script = [
+      'tell application "Terminal" to do script ' + cmdStr,
+      'delay 0.6',
+      'tell application "Terminal" to return id of front window'
+    ].join('\n');
+    const r = spawnSync('osascript', ['-e', script], { encoding: 'utf8', maxBuffer: 1024 });
+    const id = (r.stdout && r.stdout.trim()) || '';
+    if (id) {
+      try { fs.writeFileSync(ID_FILE(robot), id, 'utf8'); } catch (_) {}
+    }
+    return;
+  }
+
+  if (isWin) {
+    // Windows: start 新窗口。Git Bash 用户用 bash；否则用 cmd /k 调用 bash
+    const rootForBash = ROOT_DIR.replace(/\\/g, '/');
+    const title = robot === 'main' ? '阴 - openclaw' : (robot + ' - openclaw');
+    const innerCmd = `cd "${rootForBash}" && ${shellCmd}`;
+    spawnSync('cmd.exe', ['/c', 'start', title, 'bash', '-c', innerCmd], {
+      cwd: ROOT_DIR,
+      windowsHide: false,
+      stdio: 'ignore'
+    });
+    return;
+  }
+
+  // Linux / WSL：尝试 gnome-terminal、xterm、x-terminal-emulator、konsole
+  const bashCmd = shellCmd + '; exec bash';
+  const termOpts = [
+    ['gnome-terminal', '--', 'bash', '-c', bashCmd],
+    ['xterm', '-e', 'bash', '-c', bashCmd],
+    ['x-terminal-emulator', '-e', 'bash', '-c', bashCmd],
+    ['konsole', '-e', 'bash', '-c', bashCmd]
+  ];
+  for (const [exe, ...args] of termOpts) {
+    const r = spawnSync(exe, args, { cwd: ROOT_DIR, stdio: 'ignore', shell: false });
+    if (!r.error) break; // 能 spawn 则不再尝试
   }
 }
 

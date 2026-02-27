@@ -54,3 +54,4 @@ Yinova 在 Windows 上通过 **WSL**（Windows Subsystem for Linux）运行，�
 - **端口被占用**：在 WSL 中 `lsof -i :3999` 查看，或配置页点击「检测端口占用」
 - **Node 未找到**：确保在 WSL 终端中操作，且 `node -v` 能输出版本号
 - **浏览器打不开**：手动在 Windows 浏览器输入 http://localhost:3999
+- **点击「阴·启动」无反应 / 终端不弹出**：面板已支持 Windows 与 Linux/WSL。若在 Windows 上从 Git Bash 启动面板，点击阴会尝试用 `start bash` 打开新窗口；若仍无反应，请手动在终端执行 `bash yin/start-yin.sh` 启动阴网关。
