@@ -3255,20 +3255,20 @@ app.post('/api/hex/agent-task', (req, res) => {
       task.status = lastError ? 'error' : 'done';
 
       // 自动保存到项目历史
-      if (projectId && message && reply && !error) {
+      if (projectId && message && lastReply && !lastError) {
         try {
           const histPath = getChatHistoryPath(projectId, 'single');
           let stored = [];
           try { stored = JSON.parse(fs.readFileSync(histPath, 'utf8')); } catch(_) {}
           if (!Array.isArray(stored)) stored = [];
           stored.push({ type: 'user', message: `[任务] ${message}`, ts: Date.now() });
-          stored.push({ type: 'hex', name: hex.name, message: reply, ts: Date.now() });
+          stored.push({ type: 'hex', name: hex.name, message: lastReply, ts: Date.now() });
           await queuedWriteFile(histPath, JSON.stringify(stored, null, 2));
         } catch(e) { console.warn('[agent-task] 保存历史失败:', e.message); }
       }
 
       // Workflow：本步成功后触发下一步
-      if (!error && projectId && workflowId != null && workflowStepIndex != null) {
+      if (!lastError && projectId && workflowId != null && workflowStepIndex != null) {
         triggerNextWorkflowStep(projectId, workflowId, workflowStepIndex + 1);
       }
     } catch (e) {
