@@ -32,8 +32,33 @@ fi
 # 0. 安装 openclaw 到项目（方案 B）：优先用 npm 安装（含预构建 dist/）
 OPENCLAW_DIR="$ROOT/openclaw"
 OPENCLAW_REPO="https://github.com/openclaw/openclaw.git"
+NODE_MAJ=0
+if command -v node >/dev/null 2>&1; then
+  NODE_MAJ=$(node -p "process.versions.node.split('.')[0]" 2>/dev/null || echo 0)
+fi
 openclaw_ok() {
   [[ -f "$OPENCLAW_DIR/openclaw.mjs" ]] && { [[ -f "$OPENCLAW_DIR/dist/entry.mjs" ]] || [[ -f "$OPENCLAW_DIR/dist/entry.js" ]]; }
+}
+configure_openclaw_package() {
+  # 部分网络环境无法拉取 baileys 的 GitHub 依赖，改用 npm 的 libsignal 包。
+  if [[ -f "$OPENCLAW_DIR/package.json" ]] && command -v node >/dev/null 2>&1; then
+    node -e '
+      const fs=require("fs");
+      const p=process.argv[1];
+      const j=JSON.parse(fs.readFileSync(p,"utf8"));
+      j.overrides=j.overrides||{};
+      if(!j.overrides.libsignal) j.overrides.libsignal="2.0.1";
+      fs.writeFileSync(p,JSON.stringify(j,null,2));
+    ' "$OPENCLAW_DIR/package.json" 2>/dev/null || true
+  fi
+}
+install_openclaw_deps() {
+  if [[ "$NODE_MAJ" -lt 20 ]]; then
+    # Node 18 环境：跳过安装脚本与可选依赖，避免 Node 版本硬检查阻断安装。
+    (cd "$OPENCLAW_DIR" && npm install --omit=dev --omit=optional --ignore-scripts --registry=https://registry.npmjs.org --silent 2>/dev/null) || true
+  else
+    (cd "$OPENCLAW_DIR" && npm install --omit=dev --registry=https://registry.npmjs.org --silent 2>/dev/null) || true
+  fi
 }
 if openclaw_ok; then
   echo "✓ openclaw 已存在且完整，跳过安装"
@@ -45,10 +70,12 @@ else
     tgz="$ROOT"/openclaw-*.tgz
     tar xzf $tgz -C "$OPENCLAW_DIR" --strip-components=1
     rm -f $tgz
-    (cd "$OPENCLAW_DIR" && npm install --omit=dev --silent 2>/dev/null) || true
+    configure_openclaw_package
+    install_openclaw_deps
     echo "✓ openclaw 已从 npm 安装"
   elif git clone --depth 1 "$OPENCLAW_REPO" "$OPENCLAW_DIR" 2>/dev/null; then
-    (cd "$OPENCLAW_DIR" && npm install --silent 2>/dev/null) || true
+    configure_openclaw_package
+    install_openclaw_deps
     if command -v pnpm >/dev/null 2>&1; then
       (cd "$OPENCLAW_DIR" && pnpm build 2>/dev/null) || true
     else

@@ -133,6 +133,16 @@ const CONFIG_FILE = path.join(ROOT_DIR, 'config.json');
 const WORKERS_CONF = path.join(ROOT_DIR, 'workers.conf');
 const START_WORKER_SH = path.join(ROOT_DIR, 'start-worker.sh');
 const STOP_WORKER_SH = path.join(ROOT_DIR, 'stop-worker.sh');
+const OPENCLAW_NODE_CMD = (() => {
+  const fromEnv = String(process.env.OPENCLAW_NODE_CMD || '').trim();
+  if (fromEnv) return fromEnv;
+  const [majStr, minStr] = String(process.versions.node || '0.0').split('.');
+  const maj = parseInt(majStr, 10) || 0;
+  const min = parseInt(minStr, 10) || 0;
+  // openclaw 2026 requires Node >=22.12; fallback to npx Node 22 when panel runs on older Node.
+  if (maj > 22 || (maj === 22 && min >= 12)) return 'node';
+  return 'npx -y node@22.12.0';
+})();
 
 function parseWorkersConf() {
   const out = [];
@@ -301,7 +311,7 @@ const MAIN_GATEWAY_PORT = parseInt((GATEWAY_MAIN || '').replace(/.*:(\d+)$/, '$1
 const MAIN_GATEWAY_LOG = path.join(os.tmpdir(), 'yinova-main.log');
 function startMainGatewayInBackground() {
   const yinDir = path.join(ROOT_DIR, 'yin');
-  const cmd = `cd ${OPENCLAW_DIR} && OPENCLAW_STATE_DIR="${yinDir}" OPENCLAW_GATEWAY_PORT=${MAIN_GATEWAY_PORT} nohup node openclaw.mjs gateway </dev/null >> "${MAIN_GATEWAY_LOG}" 2>&1 &`;
+  const cmd = `cd ${OPENCLAW_DIR} && OPENCLAW_STATE_DIR="${yinDir}" OPENCLAW_GATEWAY_PORT=${MAIN_GATEWAY_PORT} nohup ${OPENCLAW_NODE_CMD} openclaw.mjs gateway </dev/null >> "${MAIN_GATEWAY_LOG}" 2>&1 &`;
   const env = getConfigEnv();
   delete env.http_proxy; delete env.https_proxy;
   delete env.HTTP_PROXY; delete env.HTTPS_PROXY;
@@ -3527,7 +3537,7 @@ app.post('/api/open-tui/:robot', (req, res) => {
       if (tryFocusExistingTerminal(robot)) {
         return res.json({ ok: true, reused: true });
       }
-      const cmd = titlePrefix + `cd ${OPENCLAW_DIR} && OPENCLAW_STATE_DIR="${stateDir}" OPENCLAW_GATEWAY_PORT=${port} ${token}node openclaw.mjs tui`;
+      const cmd = titlePrefix + `cd ${OPENCLAW_DIR} && OPENCLAW_STATE_DIR="${stateDir}" OPENCLAW_GATEWAY_PORT=${port} ${token}${OPENCLAW_NODE_CMD} openclaw.mjs tui`;
       runTerminalScript(robot, cmd);
       return res.json({ ok: true });
     }
@@ -3570,7 +3580,7 @@ app.post('/api/start-first-10', (req, res) => {
             try { execSync('sleep 1', { stdio: 'pipe' }); } catch (_) {}
           }
         }
-        const cmd = titlePrefix + `cd ${OPENCLAW_DIR} && OPENCLAW_STATE_DIR="${stateDir}" OPENCLAW_GATEWAY_PORT=${port} ${token}node openclaw.mjs tui`;
+        const cmd = titlePrefix + `cd ${OPENCLAW_DIR} && OPENCLAW_STATE_DIR="${stateDir}" OPENCLAW_GATEWAY_PORT=${port} ${token}${OPENCLAW_NODE_CMD} openclaw.mjs tui`;
         runTerminalScript(robot, cmd);
         results.started.push(hex ? hex.name : robot);
       } catch (err) {
