@@ -57,6 +57,7 @@ yinova/
 - **端口占用**：默认面板 3999、主网关 18789、卦 18791 起。配置页点击「检测端口占用」—若端口被占用，面板会自动查找空闲端口并更新 config.json、workers.conf、moltbot.json，无需手动编辑。
 - **No API key**：配置页选择提供商、填写 API Key 并保存。
 - **模型列表为空**：确保 `./install.sh` 已执行完成。
+- **GitHub 克隆/拉取失败**（如 `Error in the HTTP2 framing layer`）：改用 Gitee：`git clone https://gitee.com/goldct/yinova`，或 `git remote set-url origin https://gitee.com/goldct/yinova.git` 后 `git pull`。国内网络下 Gitee 更稳定。
 
 ## 功能特性
 

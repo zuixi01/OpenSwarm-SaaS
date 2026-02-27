@@ -109,6 +109,9 @@ yin/项目上下文识别问题修复.md
 *.log
 *.bak
 
+# 临时预览（外部项目副本，不提交）
+nova-openclaw-preview/
+
 # 非Yinova核心（来自原项目副本）
 /bala/
 /crewai/

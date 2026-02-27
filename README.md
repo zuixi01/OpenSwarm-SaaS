@@ -73,6 +73,7 @@ After `install` + `npm install`, copy the whole `yinova` directory to a USB or a
 - **Empty model list**: Ensure `./install.sh` completed (openclaw must be fetched).
 - **Install failed**: Ensure Node.js 18+ and npm are installed; check network (GitHub and npm registry).
 - **Hex shows "running" without clicking start**: Panel detects by port. If a previous terminal left a process, the port stays in use. Click "Stop" on that hex, or "Close all terminals".
+- **GitHub clone/pull fails** (e.g. `Error in the HTTP2 framing layer`): Use Gitee instead—`git clone https://gitee.com/goldct/yinova` or `git remote set-url origin https://gitee.com/goldct/yinova.git` then `git pull`. Gitee mirrors the repo and is more reliable in some regions.
 
 ## Features
 
