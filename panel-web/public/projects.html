@@ -306,6 +306,9 @@
     .yin-chat-msg.user .who { color: var(--gold-dim); }
     .yin-chat-msg.yin .who { color: var(--gold); }
     .yin-chat-msg .who { margin-right: 6px; font-weight: 500; }
+    .yin-chat-msg.yin-thinking { color: var(--text-dim); opacity: 0.9; }
+    .yin-chat-msg.yin-thinking .yin-thinking-text { animation: yin-thinking-pulse 1.5s ease-in-out infinite; }
+    @keyframes yin-thinking-pulse { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
     .yin-chat-input-row {
       display: flex;
       gap: 10px;
@@ -946,12 +949,26 @@
     if (yinChatSend && yinChatInput) {
       var YIN_TASK_KEY_GLOBAL = 'yinChatTask_global';
       var _yinPollTimer = null;
+      function removeYinThinkingMsg() {
+        var el = yinChatMessages && yinChatMessages.querySelector('.yin-chat-msg.yin-thinking');
+        if (el) el.remove();
+      }
+      function appendYinThinkingMsg() {
+        removeYinThinkingMsg();
+        if (!yinChatMessages) return;
+        var div = document.createElement('div');
+        div.className = 'yin-chat-msg yin yin-thinking';
+        div.innerHTML = '<span class="who">' + escapeHtml(t('yinLabel')) + '</span><span class="yin-thinking-text">' + t('yinThinking') + '</span>';
+        yinChatMessages.appendChild(div);
+        yinChatMessages.scrollTop = yinChatMessages.scrollHeight;
+      }
       function pollYinTask(taskId) {
         fetch('/api/yin/task/' + encodeURIComponent(taskId))
           .then(function(r) { return r.json(); })
           .then(function(task) {
             if (task.status === 'done') {
               try { sessionStorage.removeItem(YIN_TASK_KEY_GLOBAL); } catch (e) {}
+              removeYinThinkingMsg();
               if (task.reply) appendYinChatMsg('yin', task.reply);
               yinChatSend.disabled = false;
               saveYinChatHistory();
@@ -959,6 +976,7 @@
             }
             if (task.status === 'error') {
               try { sessionStorage.removeItem(YIN_TASK_KEY_GLOBAL); } catch (e) {}
+              removeYinThinkingMsg();
               appendYinChatMsg('yin', task.error ? t('yinNoReplyWith', task.error) : '（' + t('yinNoReply') + '）');
               yinChatSend.disabled = false;
               return;
@@ -989,6 +1007,7 @@
               return;
             }
             try { sessionStorage.setItem(YIN_TASK_KEY_GLOBAL, taskId); } catch (e) {}
+            appendYinThinkingMsg();
             pollYinTask(taskId);
           })
           .catch(function() {
@@ -1004,6 +1023,7 @@
           var savedTaskId = sessionStorage.getItem(YIN_TASK_KEY_GLOBAL);
           if (!savedTaskId) return;
           yinChatSend.disabled = true;
+          appendYinThinkingMsg();
           pollYinTask(savedTaskId);
         } catch (e) {}
       })();

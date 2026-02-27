@@ -49,9 +49,20 @@ Yinova 在 Windows 上通过 **WSL**（Windows Subsystem for Linux）运行，�
 - 项目建议放在 WSL 文件系统内（如 `~/yinova`），避免 Windows 路径带来的权限和性能问题
 - 若放在 Windows 盘（如 `/mnt/c/Users/xxx/yinova`），部分功能可能受影响，建议用 `\\wsl$\Ubuntu\home\用户名\yinova` 访问
 
-## 四、常见问题
+## 四、Git Bash 用户（非 WSL）
+
+若使用 **Git Bash** 而非 WSL 运行面板，启动方式相同，但「阴·启动」按钮依赖 Git Bash。若点击无反应：
+
+**手动启动阴网关**：在 Git Bash 中执行：
+```bash
+cd ~/yinova
+bash yin/start-yin.sh
+```
+新窗口会打开阴网关 TUI，端口 18789。面板检测到端口后会显示「阴」已启动。
+
+## 五、常见问题
 
 - **端口被占用**：在 WSL 中 `lsof -i :3999` 查看，或配置页点击「检测端口占用」
 - **Node 未找到**：确保在 WSL 终端中操作，且 `node -v` 能输出版本号
 - **浏览器打不开**：手动在 Windows 浏览器输入 http://localhost:3999
-- **点击「阴·启动」无反应 / 终端不弹出**：面板已支持 Windows 与 Linux/WSL。若在 Windows 上从 Git Bash 启动面板，点击阴会尝试用 `start bash` 打开新窗口；若仍无反应，请手动在终端执行 `bash yin/start-yin.sh` 启动阴网关。
+- **点击「阴·启动」无反应 / 终端不弹出**：面板会尝试用 Git Bash 打开新窗口。若仍无反应，请手动在 Git Bash 执行 `cd ~/yinova && bash yin/start-yin.sh` 启动阴网关。

@@ -349,11 +349,16 @@ function runTerminalScript(robot, shellCmd) {
   }
 
   if (isWin) {
-    // Windows: start 新窗口。Git Bash 用户用 bash；否则用 cmd /k 调用 bash
+    // Windows: start 新窗口。优先用 Git Bash 完整路径（cmd 的 PATH 可能不含 bash）
     const rootForBash = ROOT_DIR.replace(/\\/g, '/');
-    const title = robot === 'main' ? '阴 - openclaw' : (robot + ' - openclaw');
+    const title = robot === 'main' ? 'Yin-openclaw' : (robot + '-openclaw');
     const innerCmd = `cd "${rootForBash}" && ${shellCmd}`;
-    spawnSync('cmd.exe', ['/c', 'start', title, 'bash', '-c', innerCmd], {
+    const gitBashPaths = [
+      path.join(process.env.ProgramFiles || 'C:\\Program Files', 'Git', 'bin', 'bash.exe'),
+      path.join(process.env['ProgramFiles(x86)'] || 'C:\\Program Files (x86)', 'Git', 'bin', 'bash.exe')
+    ];
+    const bashExe = gitBashPaths.find((p) => fs.existsSync(p)) || 'bash';
+    spawnSync('cmd.exe', ['/c', 'start', title, bashExe, '-c', innerCmd], {
       cwd: ROOT_DIR,
       windowsHide: false,
       stdio: 'ignore'
