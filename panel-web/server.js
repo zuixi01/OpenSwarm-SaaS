@@ -364,17 +364,15 @@ function runTerminalScript(robot, shellCmd) {
   }
 
   if (isWin) {
-    // Windows: start 新窗口。优先用 Git Bash 完整路径（cmd 的 PATH 可能不含 bash）
-    // 用 spawn 异步执行，避免 spawnSync 阻塞导致前端请求挂起
+    // Windows: start 新窗口。第一个参数必须是窗口标题（空字符串也可），否则会被当成要执行的程序
     const rootForBash = ROOT_DIR.replace(/\\/g, '/');
-    const title = robot === 'main' ? 'Yin-openclaw' : (robot + '-openclaw');
     const innerCmd = `cd "${rootForBash}" && ${shellCmd}`;
     const gitBashPaths = [
       path.join(process.env.ProgramFiles || 'C:\\Program Files', 'Git', 'bin', 'bash.exe'),
       path.join(process.env['ProgramFiles(x86)'] || 'C:\\Program Files (x86)', 'Git', 'bin', 'bash.exe')
     ];
     const bashExe = gitBashPaths.find((p) => fs.existsSync(p)) || 'bash';
-    const child = spawn('cmd.exe', ['/c', 'start', title, bashExe, '-c', innerCmd], {
+    const child = spawn('cmd.exe', ['/c', 'start', '', bashExe, '-c', innerCmd], {
       cwd: ROOT_DIR,
       windowsHide: false,
       stdio: 'ignore',
