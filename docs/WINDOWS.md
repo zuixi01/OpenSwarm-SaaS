@@ -66,3 +66,4 @@ bash yin/start-yin.sh
 - **Node 未找到**：确保在 WSL 终端中操作，且 `node -v` 能输出版本号
 - **浏览器打不开**：手动在 Windows 浏览器输入 http://localhost:3999
 - **点击「阴·启动」无反应 / 终端不弹出**：面板会尝试用 Git Bash 打开新窗口。若仍无反应，请手动在 Git Bash 执行 `cd ~/yinova && bash yin/start-yin.sh` 启动阴网关。
+- **点击阴阳/项目加号后一直加载、无反应**：1) 按 F12 → Network 标签 → 再点一次按钮，看是否有红色失败请求；2) 更新到最新代码（`git pull`）后重启面板；3) 若仍无效，阴网关可手动执行 `bash yin/start-yin.sh`。

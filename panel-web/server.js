@@ -215,17 +215,28 @@ const PANEL_PORTS = new Set([
 ]);
 let _portsCache = null;
 let _portsCacheTime = 0;
+const isWin = process.platform === 'win32';
 function getPortsInUse() {
   const now = Date.now();
   if (_portsCache && now - _portsCacheTime < 500) return _portsCache;
   const inUse = new Set();
   try {
-    const out = execSync('lsof -iTCP -sTCP:LISTEN -P -n 2>/dev/null', { encoding: 'utf8', maxBuffer: 256 * 1024 });
-    const re = /:(\d+)\s*\(LISTEN\)/g;
-    let m;
-    while ((m = re.exec(out)) !== null) {
-      const p = parseInt(m[1], 10);
-      if (PANEL_PORTS.has(p)) inUse.add(p);
+    if (isWin) {
+      const out = execSync('netstat -an', { encoding: 'utf8', maxBuffer: 256 * 1024 });
+      const re = /:(\d+)\s+.*LISTENING/gi;
+      let m;
+      while ((m = re.exec(out)) !== null) {
+        const p = parseInt(m[1], 10);
+        if (PANEL_PORTS.has(p)) inUse.add(p);
+      }
+    } else {
+      const out = execSync('lsof -iTCP -sTCP:LISTEN -P -n 2>/dev/null', { encoding: 'utf8', maxBuffer: 256 * 1024 });
+      const re = /:(\d+)\s*\(LISTEN\)/g;
+      let m;
+      while ((m = re.exec(out)) !== null) {
+        const p = parseInt(m[1], 10);
+        if (PANEL_PORTS.has(p)) inUse.add(p);
+      }
     }
   } catch (_) {}
   _portsCache = inUse;
@@ -235,6 +246,10 @@ function getPortsInUse() {
 
 function isPortInUse(port) {
   try {
+    if (isWin) {
+      const out = execSync('netstat -an', { encoding: 'utf8', stdio: 'pipe' });
+      return new RegExp(':' + port + '\\s+.*LISTENING', 'i').test(out);
+    }
     execSync('lsof -ti :' + port, { stdio: 'pipe' });
     return true;
   } catch (_) {
@@ -350,6 +365,7 @@ function runTerminalScript(robot, shellCmd) {
 
   if (isWin) {
     // Windows: start 新窗口。优先用 Git Bash 完整路径（cmd 的 PATH 可能不含 bash）
+    // 用 spawn 异步执行，避免 spawnSync 阻塞导致前端请求挂起
     const rootForBash = ROOT_DIR.replace(/\\/g, '/');
     const title = robot === 'main' ? 'Yin-openclaw' : (robot + '-openclaw');
     const innerCmd = `cd "${rootForBash}" && ${shellCmd}`;
@@ -358,11 +374,13 @@ function runTerminalScript(robot, shellCmd) {
       path.join(process.env['ProgramFiles(x86)'] || 'C:\\Program Files (x86)', 'Git', 'bin', 'bash.exe')
     ];
     const bashExe = gitBashPaths.find((p) => fs.existsSync(p)) || 'bash';
-    spawnSync('cmd.exe', ['/c', 'start', title, bashExe, '-c', innerCmd], {
+    const child = spawn('cmd.exe', ['/c', 'start', title, bashExe, '-c', innerCmd], {
       cwd: ROOT_DIR,
       windowsHide: false,
-      stdio: 'ignore'
+      stdio: 'ignore',
+      detached: true
     });
+    child.unref();
     return;
   }
 
