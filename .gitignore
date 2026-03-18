@@ -5,6 +5,12 @@ workers.conf
 .env
 config.json
 
+# 运行时数据（不提交）
+runtime/
+
+# 备份目录（不提交）
+openclaw.backup-*/
+
 # 依赖
 node_modules/
 
