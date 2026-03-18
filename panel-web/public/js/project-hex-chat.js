@@ -3,6 +3,7 @@
     window.currentRequestAbortController = null;
     window._activeTaskId = window._activeTaskId || null;
     window._activeTaskTimer = window._activeTaskTimer || null;
+    window._activeTaskStream = window._activeTaskStream || null;
     window._hexChatRestoring = window._hexChatRestoring || false;
     window._activeEnableBroadcast = window._activeEnableBroadcast || false;
     window._activeHexIds = window._activeHexIds || [];
@@ -497,10 +498,10 @@
     }
 
     function onHexChatDone(replies, enableBroadcast, hexIds) {
-      if (typeof window.clearHexChatLiveMsg === 'function') {
-        (hexIds || []).forEach(function(hexId) {
-          window.clearHexChatLiveMsg((window._activeTaskId || 'done') + ':' + hexId);
-        });
+      function isConnectivityFailure(reply) {
+        var err = String((reply && reply.error) || '');
+        if (!err) return false;
+        return /无法连接|连接被拒绝|不可用|未配置端口|无此员工|HTTP 404|HTTP 405|接口仍在预热|接口尚未就绪|对话接口/.test(err);
       }
       var successReplies = replies.filter(function(reply) { return !!reply.reply; });
       var failedReplies = replies.filter(function(reply) { return !reply.reply; });
@@ -509,10 +510,22 @@
       if (failedReplies.length) statusParts.push('<span class="st-item st-fail">失败 ' + failedReplies.length + '</span>');
       window.setHexChatStatus(statusParts.length ? statusParts.join(' ') : '');
       var allFailed = replies.length > 0 && successReplies.length === 0;
+      var activeTaskId = window._activeTaskId || 'done';
       successReplies.forEach(function(reply) {
         var displayName = window.getAgentDisplayName(reply.hexId, '', reply.name);
-        window.appendHexChatMsg(displayName, reply.reply || '—', false, true, undefined, reply.hexId);
+        var finalized = typeof window.finalizeHexChatLiveMsg === 'function'
+          ? window.finalizeHexChatLiveMsg(activeTaskId + ':' + reply.hexId, displayName, reply.reply || '—', false, enableBroadcast ? 'discuss' : 'single', reply.hexId)
+          : false;
+        if (!finalized) {
+          window.appendHexChatMsg(displayName, reply.reply || '—', false, true, undefined, reply.hexId);
+        }
       });
+      if (typeof window.clearHexChatLiveMsg === 'function') {
+        failedReplies.forEach(function(reply) {
+          if (!reply || !reply.hexId) return;
+          window.clearHexChatLiveMsg(activeTaskId + ':' + reply.hexId);
+        });
+      }
       if (failedReplies.length) {
         var grouped = {};
         failedReplies.forEach(function(reply) {
@@ -531,7 +544,13 @@
         );
       }
       if (allFailed && replies.length > 0) {
-        window.appendHexChatMsg(window.t('systemLabel'), window.t('hexChatNoConnect'), true, false);
+        var allConnectivityFailed = failedReplies.length === replies.length && failedReplies.every(isConnectivityFailure);
+        window.appendHexChatMsg(
+          window.t('systemLabel'),
+          window.t(allConnectivityFailed ? 'hexChatNoConnect' : 'hexChatAllFailedButReachable'),
+          true,
+          false
+        );
       }
       if (enableBroadcast && !allFailed && successReplies.length >= 2) {
         triggerDiscussSummary(hexIds, replies);
@@ -542,7 +561,50 @@
         window._pendingDiscussExecution = null;
       }
       if (window.hexChatSend) window.hexChatSend.disabled = false;
+      if (window._activeTaskStream && window._activeTaskStream.taskId === activeTaskId) {
+        try { window._activeTaskStream.es.close(); } catch (_) {}
+        window._activeTaskStream = null;
+      }
       window._activeTaskId = null;
+    }
+
+    function closeTaskStream(taskId) {
+      if (!window._activeTaskStream) return;
+      if (taskId && window._activeTaskStream.taskId !== taskId) return;
+      try { window._activeTaskStream.es.close(); } catch (_) {}
+      window._activeTaskStream = null;
+    }
+
+    function handleRunningTaskSnapshot(taskId, task, enableBroadcast, hexIds) {
+      if (!task || window._activeTaskId !== taskId) return;
+      if (Array.isArray(task.replies) && typeof window.upsertHexChatLiveMsg === 'function') {
+        task.replies.forEach(function(reply) {
+          if (!reply || !reply.hexId || !reply.reply) return;
+          var liveName = window.getAgentDisplayName(reply.hexId, '', reply.name);
+          window.upsertHexChatLiveMsg(taskId + ':' + reply.hexId, liveName, reply.reply, enableBroadcast ? 'discuss' : 'single', reply.hexId);
+        });
+      }
+      if (task.status === 'done') {
+        if (typeof window.refreshRuntimeSnapshot === 'function') window.refreshRuntimeSnapshot();
+        closeTaskStream(taskId);
+        onHexChatDone(task.replies || [], enableBroadcast, hexIds);
+        return true;
+      }
+      if (task.status === 'error') {
+        if (typeof window.refreshRuntimeSnapshot === 'function') window.refreshRuntimeSnapshot();
+        closeTaskStream(taskId);
+        window.setHexChatStatus('');
+        if (typeof window.clearHexChatLiveMsg === 'function') {
+          (hexIds || []).forEach(function(hexId) {
+            window.clearHexChatLiveMsg(taskId + ':' + hexId);
+          });
+        }
+        window.appendHexChatMsg(window.t('systemLabel'), window.t('serviceErrorWith', task.error || '未知错误'), true, false);
+        if (window.hexChatSend) window.hexChatSend.disabled = false;
+        window._activeTaskId = null;
+        return true;
+      }
+      return false;
     }
 
     function pollTask(taskId, enableBroadcast, hexIds) {
@@ -573,12 +635,177 @@
             if (window.hexChatSend) window.hexChatSend.disabled = false;
             window._activeTaskId = null;
           } else {
-            window._activeTaskTimer = setTimeout(function() { pollTask(taskId, enableBroadcast, hexIds); }, 2000);
+            var hasPartialReplies = Array.isArray(task.replies) && task.replies.some(function(reply) {
+              return !!(reply && reply.reply);
+            });
+            window._activeTaskTimer = setTimeout(function() { pollTask(taskId, enableBroadcast, hexIds); }, hasPartialReplies ? 350 : 900);
           }
         })
         .catch(function() {
           if (window._activeTaskId !== taskId) return;
-          window._activeTaskTimer = setTimeout(function() { pollTask(taskId, enableBroadcast, hexIds); }, 3000);
+          window._activeTaskTimer = setTimeout(function() { pollTask(taskId, enableBroadcast, hexIds); }, 1200);
+        });
+    }
+
+    function startTaskStream(taskId, enableBroadcast, hexIds) {
+      if (typeof EventSource === 'undefined') {
+        pollTask(taskId, enableBroadcast, hexIds);
+        return;
+      }
+      closeTaskStream();
+      var es = new EventSource('/api/agent/task/' + encodeURIComponent(taskId) + '/stream');
+      var receivedEvent = false;
+      var fallbackTimer = setTimeout(function() {
+        if (receivedEvent || window._activeTaskId !== taskId) return;
+        closeTaskStream(taskId);
+        pollTask(taskId, enableBroadcast, hexIds);
+      }, 2500);
+
+      function markReceived() {
+        receivedEvent = true;
+        clearTimeout(fallbackTimer);
+      }
+
+      function parsePayload(event) {
+        try { return JSON.parse(event.data || '{}'); } catch (_) { return {}; }
+      }
+
+      es.addEventListener('snapshot', function(event) {
+        markReceived();
+        var payload = parsePayload(event);
+        handleRunningTaskSnapshot(taskId, payload.task || null, enableBroadcast, hexIds);
+      });
+
+      es.addEventListener('reply', function(event) {
+        markReceived();
+        if (window._activeTaskId !== taskId || typeof window.upsertHexChatLiveMsg !== 'function') return;
+        var payload = parsePayload(event);
+        if (!payload || !payload.hexId || !payload.reply) return;
+        var liveName = window.getAgentDisplayName(payload.hexId, '', payload.name);
+        window.upsertHexChatLiveMsg(taskId + ':' + payload.hexId, liveName, payload.reply, enableBroadcast ? 'discuss' : 'single', payload.hexId);
+      });
+
+      es.addEventListener('done', function(event) {
+        markReceived();
+        var payload = parsePayload(event);
+        if (typeof window.refreshRuntimeSnapshot === 'function') window.refreshRuntimeSnapshot();
+        closeTaskStream(taskId);
+        onHexChatDone((payload.task && payload.task.replies) || [], enableBroadcast, hexIds);
+      });
+
+      es.addEventListener('failed', function(event) {
+        markReceived();
+        var payload = parsePayload(event);
+        if (typeof window.refreshRuntimeSnapshot === 'function') window.refreshRuntimeSnapshot();
+        closeTaskStream(taskId);
+        window.setHexChatStatus('');
+        if (typeof window.clearHexChatLiveMsg === 'function') {
+          (hexIds || []).forEach(function(hexId) {
+            window.clearHexChatLiveMsg(taskId + ':' + hexId);
+          });
+        }
+        window.appendHexChatMsg(window.t('systemLabel'), window.t('serviceErrorWith', (payload.task && payload.task.error) || '未知错误'), true, false);
+        if (window.hexChatSend) window.hexChatSend.disabled = false;
+        window._activeTaskId = null;
+      });
+
+      es.onerror = function() {
+        if (window._activeTaskId !== taskId) {
+          closeTaskStream(taskId);
+          return;
+        }
+        if (!receivedEvent) {
+          closeTaskStream(taskId);
+          pollTask(taskId, enableBroadcast, hexIds);
+        }
+      };
+
+      window._activeTaskStream = { taskId: taskId, es: es };
+    }
+
+    function fetchRuntimeAgentItems() {
+      return fetch('/api/tenant-runtime/runtime/agents')
+        .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+        .then(function(result) {
+          if (!result.ok || (result.data && result.data.error)) return [];
+          var items = Array.isArray(result.data && result.data.items) ? result.data.items : [];
+          window.tenantRuntimeAgents = items;
+          return items;
+        })
+        .catch(function() { return []; });
+    }
+
+    function getRuntimeAgentMap(items) {
+      var map = {};
+      (items || []).forEach(function(item) {
+        if (item && item.agentId) map[item.agentId] = item;
+      });
+      return map;
+    }
+
+    function getWarmingHexIds(hexIds, items) {
+      var runtimeMap = getRuntimeAgentMap(items || window.tenantRuntimeAgents || []);
+      return (hexIds || []).filter(function(hexId) {
+        var item = runtimeMap[hexId];
+        return !!(item && item.running && String(item.readinessStatus || '') === 'warming');
+      });
+    }
+
+    function waitForChatReady(hexIds, timeoutMs) {
+      var limit = Math.max(0, Number(timeoutMs || 0));
+      if (!hexIds || !hexIds.length || limit <= 0) return Promise.resolve(false);
+      var startedAt = Date.now();
+      return fetchRuntimeAgentItems().then(function(items) {
+        if (!getWarmingHexIds(hexIds, items).length) return false;
+        function poll() {
+          return fetchRuntimeAgentItems().then(function(nextItems) {
+            if (!getWarmingHexIds(hexIds, nextItems).length) return false;
+            if (Date.now() - startedAt >= limit) return true;
+            return new Promise(function(resolve) {
+              setTimeout(function() { resolve(poll()); }, 1000);
+            });
+          });
+        }
+        return poll();
+      });
+    }
+
+    function submitAgentChat(payload, options) {
+      var opts = options || {};
+      return fetch('/api/agent/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.error) {
+            window.setHexChatStatus('<span class="st-fail">' + window.escapeHtml(window.t('serviceErrorWith', data.error)) + '</span>');
+            window.appendHexChatMsg(window.t('systemLabel'), window.t('serviceErrorWith', data.error), true, false);
+            window.hexChatSend.disabled = false;
+            return;
+          }
+          var taskId = data.taskId;
+          if (!taskId) {
+            window.appendHexChatMsg(window.t('systemLabel'), window.t('noTaskId'), true, false);
+            window.hexChatSend.disabled = false;
+            return;
+          }
+          if (typeof opts.onTaskId === 'function') opts.onTaskId(taskId);
+          window._activeTaskId = taskId;
+          window._activeEnableBroadcast = !!opts.enableBroadcast;
+          window._activeHexIds = opts.hexIds || payload.hexIds || [];
+          startTaskStream(taskId, !!opts.enableBroadcast, opts.hexIds || payload.hexIds || []);
+        })
+        .catch(function(e) {
+          window.setHexChatStatus('');
+          var msg = e.message || '网络错误';
+          var hint = window.t('requestFailedWith', msg);
+          if (/load failed|failed to fetch|networkerror|network error/i.test(String(msg)) || msg === 'Load failed') {
+            hint = window.t('connectPanelHint', 'http://localhost:3999/project.html' + (window.projectId ? '?id=' + window.projectId : ''));
+          }
+          window.appendHexChatMsg(window.t('systemLabel'), hint, true);
+          window.hexChatSend.disabled = false;
         });
     }
 
@@ -629,45 +856,33 @@
             window.hexChatSend.disabled = true;
             window.setHexChatStatus(window.t('hexChatSending'));
             var discussHistory = window.getHexChatHistory();
-            var discussTaskId = null;
             window.currentRequestAbortController = null;
-            fetch('/api/agent/chat', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                message: text,
-                hexIds: hexIds,
-                history: discussHistory,
+            var autoPayload = {
+              message: text,
+              hexIds: hexIds,
+              history: discussHistory,
+              enableBroadcast: true,
+              maxRounds: window.getHexChatMaxRounds(),
+              projectId: window.projectId
+            };
+            waitForChatReady(hexIds, 8000).then(function(stillWarming) {
+              if (stillWarming) {
+                window.appendHexChatMsg(window.t('systemLabel'), window.t('hexChatWarmingContinue'), true, true);
+                window.setHexChatStatus(window.t('hexChatSending'));
+              }
+              submitAgentChat(autoPayload, {
                 enableBroadcast: true,
-                maxRounds: window.getHexChatMaxRounds(),
-                projectId: window.projectId
-              })
-            })
-              .then(function(r) { return r.json(); })
-              .then(function(data) {
-                if (data.error) {
-                  window.setHexChatStatus('<span class="st-fail">' + window.escapeHtml(window.t('serviceErrorWith', data.error)) + '</span>');
-                  window.appendHexChatMsg(window.t('systemLabel'), window.t('serviceErrorWith', data.error), true, false);
-                  window.hexChatSend.disabled = false;
-                  return;
+                hexIds: hexIds,
+                onTaskId: function(discussTaskId) {
+                  scheduleAutoExecution(text, autoIntent, hexIds, discussTaskId);
                 }
-                discussTaskId = data.taskId;
-                if (!discussTaskId) {
-                  window.appendHexChatMsg(window.t('systemLabel'), window.t('noTaskId'), true, false);
-                  window.hexChatSend.disabled = false;
-                  return;
-                }
-                scheduleAutoExecution(text, autoIntent, hexIds, discussTaskId);
-                window._activeTaskId = discussTaskId;
-                window._activeEnableBroadcast = true;
-                window._activeHexIds = hexIds;
-                pollTask(discussTaskId, true, hexIds);
-              })
-              .catch(function(e) {
-                window.setHexChatStatus('');
-                window.appendHexChatMsg(window.t('systemLabel'), window.t('requestFailedWith', e.message || '网络错误'), true);
-                window.hexChatSend.disabled = false;
               });
+            });
+            fetchRuntimeAgentItems().then(function(items) {
+              if (getWarmingHexIds(hexIds, items).length) {
+                window.setHexChatStatus(window.t('hexChatWarmingWait'));
+              }
+            });
             return;
           }
         }
@@ -679,47 +894,29 @@
         var enableBroadcast = chatModeVal === 'discuss';
         var maxRounds = window.getHexChatMaxRounds();
         window.currentRequestAbortController = null;
-        fetch('/api/agent/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            message: text,
-            hexIds: hexIds,
-            history: history,
+        var payload = {
+          message: text,
+          hexIds: hexIds,
+          history: history,
+          enableBroadcast: enableBroadcast,
+          maxRounds: maxRounds,
+          projectId: window.projectId
+        };
+        waitForChatReady(hexIds, 8000).then(function(stillWarming) {
+          if (stillWarming) {
+            window.appendHexChatMsg(window.t('systemLabel'), window.t('hexChatWarmingContinue'), true, true);
+            window.setHexChatStatus(window.t('hexChatSending'));
+          }
+          submitAgentChat(payload, {
             enableBroadcast: enableBroadcast,
-            maxRounds: maxRounds,
-            projectId: window.projectId
-          })
-        })
-          .then(function(r) { return r.json(); })
-          .then(function(data) {
-            if (data.error) {
-              window.setHexChatStatus('<span class="st-fail">' + window.escapeHtml(window.t('serviceErrorWith', data.error)) + '</span>');
-              window.appendHexChatMsg(window.t('systemLabel'), window.t('serviceErrorWith', data.error), true, false);
-              window.hexChatSend.disabled = false;
-              return;
-            }
-            var taskId = data.taskId;
-            if (!taskId) {
-              window.appendHexChatMsg(window.t('systemLabel'), window.t('noTaskId'), true, false);
-              window.hexChatSend.disabled = false;
-              return;
-            }
-            window._activeTaskId = taskId;
-            window._activeEnableBroadcast = enableBroadcast;
-            window._activeHexIds = hexIds;
-            pollTask(taskId, enableBroadcast, hexIds);
-          })
-          .catch(function(e) {
-            window.setHexChatStatus('');
-            var msg = e.message || '网络错误';
-            var hint = window.t('requestFailedWith', msg);
-            if (/load failed|failed to fetch|networkerror|network error/i.test(String(msg)) || msg === 'Load failed') {
-              hint = window.t('connectPanelHint', 'http://localhost:3999/project.html' + (window.projectId ? '?id=' + window.projectId : ''));
-            }
-            window.appendHexChatMsg(window.t('systemLabel'), hint, true);
-            window.hexChatSend.disabled = false;
+            hexIds: hexIds
           });
+        });
+        fetchRuntimeAgentItems().then(function(items) {
+          if (getWarmingHexIds(hexIds, items).length) {
+            window.setHexChatStatus(window.t('hexChatWarmingWait'));
+          }
+        });
       });
     }
 

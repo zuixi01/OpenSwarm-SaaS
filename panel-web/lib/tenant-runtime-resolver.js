@@ -209,6 +209,7 @@ class TenantRuntimeResolver {
     this.projectsFileForTenant = options.projectsFileForTenant || null;
     this.hexDefinitionFileForTenant = options.hexDefinitionFileForTenant || null;
     this.getAgentRuntimeHealth = options.getAgentRuntimeHealth || null;
+    this.setAgentRuntimeHealth = options.setAgentRuntimeHealth || null;
     this.pendingStarts = new Map();
   }
 
@@ -541,6 +542,15 @@ class TenantRuntimeResolver {
     const worker = this.getWorkerByAgent(agentId, tenantId);
     if (!worker) return null;
     if (this.isPortInUse(Number(worker.port))) return worker;
+    if (typeof this.setAgentRuntimeHealth === 'function') {
+      this.setAgentRuntimeHealth(tenantId, agentId, {
+        status: 'healthy',
+        lastSuccessCode: 'PORT_ONLINE',
+        lastSuccessAt: null,
+        lastError: null,
+        lastErrorCode: null,
+      });
+    }
     await this.ensureGatewayStarted(`worker:${sanitizeTenantId(tenantId)}:${String(agentId)}`, worker.stateDir, worker.port, worker.token || '');
     return worker;
   }
@@ -555,6 +565,12 @@ class TenantRuntimeResolver {
   stopWorkerGateway(agentId, tenantId = 'public') {
     const worker = this.getWorkerByAgent(agentId, tenantId);
     if (!worker) return false;
+    if (typeof this.setAgentRuntimeHealth === 'function') {
+      this.setAgentRuntimeHealth(tenantId, agentId, {
+        status: 'offline',
+        lastSuccessCode: null,
+      });
+    }
     return this.stopGatewayByPort(worker.port);
   }
 
@@ -670,6 +686,14 @@ class TenantRuntimeResolver {
     const healthStatus = !running
       ? 'offline'
       : (health && typeof health.status === 'string' ? health.status : 'healthy');
+    const lastSuccessCode = health && health.lastSuccessCode ? String(health.lastSuccessCode) : '';
+    const readinessStatus = !running
+      ? 'offline'
+      : (healthStatus === 'recovering'
+        ? 'warming'
+        : (healthStatus === 'degraded'
+          ? 'degraded'
+          : (lastSuccessCode === 'CHAT_READY' ? 'ready' : 'warming')));
     return {
       agentId,
       agentKey: agentId,
@@ -677,6 +701,7 @@ class TenantRuntimeResolver {
       status: running ? (healthStatus === 'healthy' ? 'running' : healthStatus) : 'stopped',
       running,
       healthStatus,
+      readinessStatus,
       health,
       port: Number(worker.port),
       stateDir: worker.stateDir,

@@ -522,6 +522,7 @@ const tenantRuntimeResolver = new TenantRuntimeResolver({
   projectsFileForTenant: (tenantId) => tenantPaths.projectsFile(tenantId),
   hexDefinitionFileForTenant: (tenantId) => tenantPaths.hexDefinitionFile(tenantId),
   getAgentRuntimeHealth: (tenantId, agentId) => agentRuntimeHealthService.getAgentState(tenantId, agentId),
+  setAgentRuntimeHealth: (tenantId, agentId, patch) => agentRuntimeHealthService.setAgentState(tenantId, agentId, patch),
 });
 function reportWorkerHealth(tenantId, agentId, payload = {}) {
   if (!agentId) return null;

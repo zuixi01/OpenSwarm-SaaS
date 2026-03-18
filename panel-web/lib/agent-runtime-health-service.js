@@ -80,6 +80,7 @@ function createAgentRuntimeHealthService(options = {}) {
       lastErrorCode: null,
       lastErrorAt: null,
       lastSuccessAt: null,
+      lastSuccessCode: null,
       lastRecoveryAt: null,
       updatedAt: null,
     };
@@ -96,12 +97,14 @@ function createAgentRuntimeHealthService(options = {}) {
   }
 
   function markSuccess(tenantId, agentId, meta = {}) {
+    const successCode = String(meta.code || '').trim() || null;
     return setAgentState(tenantId, agentId, {
       status: 'healthy',
       consecutiveFailures: 0,
       lastError: null,
       lastErrorCode: null,
       lastSuccessAt: new Date().toISOString(),
+      lastSuccessCode: successCode,
       lastLatencyMs: Number.isFinite(Number(meta.latencyMs)) ? Number(meta.latencyMs) : null,
     });
   }

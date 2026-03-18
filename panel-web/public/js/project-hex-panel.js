@@ -317,11 +317,13 @@
         var name = window.getAgentDisplayName(hexId, label, (robot && robot.name) ? robot.name : '');
         var running = runtimeAgent ? !!runtimeAgent.running : !!(robot && robot.running);
         var healthStatus = runtimeAgent && runtimeAgent.healthStatus ? String(runtimeAgent.healthStatus) : (running ? 'healthy' : 'offline');
+        var readinessStatus = runtimeAgent && runtimeAgent.readinessStatus ? String(runtimeAgent.readinessStatus) : (running ? 'warming' : 'offline');
         var healthText = !running
           ? '未启动'
-          : (healthStatus === 'healthy' ? '运行中'
+          : (readinessStatus === 'warming' ? '预热中'
+            : (healthStatus === 'healthy' ? '运行中'
             : (healthStatus === 'recovering' ? '恢复中'
-              : (healthStatus === 'degraded' ? '响应异常' : '网关异常')));
+              : (healthStatus === 'degraded' ? '响应异常' : '网关异常'))));
         var portValue = runtimeAgent && runtimeAgent.port ? runtimeAgent.port : (robot && robot.port);
         var portText = portValue ? ('127.0.0.1:' + String(portValue)) : window.t('badgePortUnknown');
         var roleText = label || name || window.t('badgeRoleFallback');

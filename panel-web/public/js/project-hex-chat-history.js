@@ -205,6 +205,9 @@
         window.hexChatMessages.appendChild(div);
         existing = div;
       } else {
+        if (existing.getAttribute('data-message') === String(partialText || '')) {
+          return;
+        }
         existing.setAttribute('data-message', partialText || '');
         var contentEl = existing.querySelector('[data-live-content="1"]');
         if (contentEl) contentEl.innerHTML = liveHtml;
@@ -232,6 +235,55 @@
       if (!window.hexChatMessages || !taskId) return;
       var node = window.hexChatMessages.querySelector('.hex-chat-msg[data-live-key="' + String(taskId) + '"]');
       if (node) node.remove();
+    }
+
+    function finalizeHexChatLiveMsg(taskId, hexName, finalText, isError, mode, hexId, meta) {
+      if (!window.hexChatMessages || !taskId) return false;
+      var key = String(taskId);
+      var node = window.hexChatMessages.querySelector('.hex-chat-msg[data-live-key="' + key + '"]');
+      if (!node) return false;
+      var displayHexName = window.normalizeAgentDisplayName(hexName || '');
+      var finalReply = String(finalText || '');
+      node.classList.remove('is-live');
+      if (isError) node.classList.add('err');
+      node.removeAttribute('data-live-key');
+      node.setAttribute('data-mode', mode || 'discuss');
+      node.setAttribute('data-name', displayHexName);
+      node.setAttribute('data-message', finalReply);
+      if (hexId) node.setAttribute('data-hex-id', hexId);
+
+      var nameEl = node.querySelector('.hex-chat-name');
+      if (nameEl) nameEl.textContent = displayHexName;
+      var metaEl = node.querySelector('.hex-chat-card-meta');
+      if (metaEl) {
+        metaEl.innerHTML =
+          '<span class="hex-chat-mode-tag" title="' + ((mode || 'discuss') === 'single' ? '群发单聊' : '群讨论') + '">' + ((mode || 'discuss') === 'single' ? '单' : '群') + '</span>'
+          + '<span class="hex-chat-card-role">' + window.escapeHtml(displayHexName) + '</span>';
+      }
+      var contentEl = node.querySelector('[data-live-content="1"]') || node.querySelector('.hex-chat-card-content');
+      if (contentEl) {
+        contentEl.removeAttribute('data-live-content');
+        contentEl.innerHTML = (isError ? window.escapeHtml(finalReply).replace(/\n/g, '<br>') : renderMd(finalReply));
+        contentEl.classList.remove('is-collapsed');
+      }
+      var evidenceWrap = node.querySelector('.hex-chat-card-evidence');
+      var nextEvidenceHtml = buildExecutionMetaHtml(meta);
+      if (nextEvidenceHtml) {
+        if (evidenceWrap) {
+          var holder = document.createElement('div');
+          holder.innerHTML = nextEvidenceHtml;
+          evidenceWrap.replaceWith(holder.firstChild);
+        } else {
+          var bubble = node.querySelector('.hex-chat-bubble');
+          if (bubble) {
+            var holder2 = document.createElement('div');
+            holder2.innerHTML = nextEvidenceHtml;
+            bubble.appendChild(holder2.firstChild);
+          }
+        }
+      }
+      window.hexChatMessages.scrollTop = window.hexChatMessages.scrollHeight;
+      return true;
     }
 
     function renderHexChatMessages(messages, currentMode) {
@@ -414,6 +466,7 @@
     window.appendHexChatMsg = appendHexChatMsg;
     window.upsertHexChatLiveMsg = upsertHexChatLiveMsg;
     window.clearHexChatLiveMsg = clearHexChatLiveMsg;
+    window.finalizeHexChatLiveMsg = finalizeHexChatLiveMsg;
     window.saveHexChatHistory = saveHexChatHistory;
     window.loadHexChatHistory = loadHexChatHistory;
     window.clearHexChatHistoryByMode = clearHexChatHistoryByMode;

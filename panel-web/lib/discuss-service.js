@@ -1,4 +1,5 @@
 const fs = require('fs');
+const { EventEmitter } = require('events');
 
 function createDiscussService(options) {
   const {
@@ -21,10 +22,13 @@ function createDiscussService(options) {
     restartWorkerGateway,
   } = options;
 
-  const HEX_FETCH_TIMEOUT_MS = 45000;
+  const HEX_FETCH_TIMEOUT_MS = 75000;
   const DISCUSS_TASK_MAX_MS = 90000;
+  const HEX_WARMUP_RETRY_DELAYS_MS = [1200, 2500, 4000];
   const taskStore = new Map();
   const taskFile = options.taskFile;
+  const taskEvents = new EventEmitter();
+  taskEvents.setMaxListeners(0);
 
   function hexFetchSignal() {
     return AbortSignal.timeout ? AbortSignal.timeout(HEX_FETCH_TIMEOUT_MS) : undefined;
@@ -41,6 +45,16 @@ function createDiscussService(options) {
         }, ms);
       }),
     ]);
+  }
+
+  function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  function isWarmupRetryable(result) {
+    if (!result || !result.error) return false;
+    const code = String(result.code || '').trim().toUpperCase();
+    return code === 'HTTP_404' || code === 'HTTP_405';
   }
 
   function loadTasks() {
@@ -85,6 +99,20 @@ function createDiscussService(options) {
 
   function getTask(taskId) {
     return taskStore.get(taskId) || null;
+  }
+
+  function emitTaskEvent(taskId, event, payload = {}) {
+    if (!taskId || !event) return;
+    taskEvents.emit(String(taskId), { event, taskId, ...payload });
+  }
+
+  function subscribeTask(taskId, handler) {
+    if (!taskId || typeof handler !== 'function') return function noop() {};
+    const key = String(taskId);
+    taskEvents.on(key, handler);
+    return function unsubscribe() {
+      taskEvents.off(key, handler);
+    };
   }
 
   async function buildProjectSystemMessage(projectId, tenantId = 'public') {
@@ -235,6 +263,7 @@ function createDiscussService(options) {
           if (response.status === 429) errMsg = '智谱 API 限流(429)，请稍后重试';
           else if (response.status === 403) errMsg = 'API Key 无效或配额不足';
           else if (response.status >= 500) errMsg = `上游服务异常(${response.status})，请稍后重试`;
+          else if (response.status === 404 || response.status === 405) errMsg = `HTTP ${response.status}：员工 HTTP 对话接口可能仍在预热`;
           return { reply: null, error: errMsg, code: `HTTP_${response.status}`, latencyMs: Date.now() - startedAt };
         }
         const contentType = String(response.headers.get('content-type') || '').toLowerCase();
@@ -303,8 +332,16 @@ function createDiscussService(options) {
     }
 
     let result = await doFetch(worker);
+    if (isWarmupRetryable(result)) {
+      for (const delayMs of HEX_WARMUP_RETRY_DELAYS_MS) {
+        await sleep(delayMs);
+        worker = await ensureWorkerGateway(hexId, tenantId);
+        result = await doFetch(worker);
+        if (!isWarmupRetryable(result) || !result.error) break;
+      }
+    }
     if (!result.error) {
-      if (typeof reportWorkerHealth === 'function') reportWorkerHealth(tenantId, hexId, { ok: true, latencyMs: result.latencyMs });
+      if (typeof reportWorkerHealth === 'function') reportWorkerHealth(tenantId, hexId, { ok: true, code: 'CHAT_READY', latencyMs: result.latencyMs });
       return { hexId, name, reply: result.reply, error: null };
     }
 
@@ -319,7 +356,7 @@ function createDiscussService(options) {
         worker = await ensureWorkerGateway(hexId, tenantId);
         const retried = await doFetch(worker);
         if (!retried.error) {
-          if (typeof reportWorkerHealth === 'function') reportWorkerHealth(tenantId, hexId, { ok: true, latencyMs: retried.latencyMs });
+          if (typeof reportWorkerHealth === 'function') reportWorkerHealth(tenantId, hexId, { ok: true, code: 'CHAT_READY', latencyMs: retried.latencyMs });
           return { hexId, name, reply: retried.reply, error: null };
         }
         if (typeof reportWorkerHealth === 'function') {
@@ -330,16 +367,25 @@ function createDiscussService(options) {
         return { hexId, name, reply: null, error: `${result.error}（自动重启失败）` };
       }
     }
+    if (isWarmupRetryable(result)) {
+      return {
+        hexId,
+        name,
+        reply: null,
+        error: '员工进程已启动，但 HTTP 对话接口仍在预热。请稍等 3-8 秒后重试。',
+      };
+    }
     return { hexId, name, reply: null, error: result.error };
   }
 
-  function markTaskDone(task, { results, error = null, warning = null }) {
+  function markTaskDone(taskId, task, { results, error = null, warning = null }) {
     task.replies = Array.isArray(results) ? results : [];
     task.status = 'done';
     task.error = error;
     if (warning) task.warning = warning;
     task.updatedAt = Date.now();
     saveTasks();
+    emitTaskEvent(taskId, 'done', { task: { ...task } });
   }
 
   function snapshotOrderedResults(hexIds, resultsById) {
@@ -349,10 +395,11 @@ function createDiscussService(options) {
       .map((item) => ({ ...item }));
   }
 
-  function updateRunningTaskResults(task, hexIds, resultsById) {
+  function updateRunningTaskResults(taskId, task, hexIds, resultsById) {
     task.replies = snapshotOrderedResults(hexIds, resultsById);
     task.updatedAt = Date.now();
     saveTasks();
+    emitTaskEvent(taskId, 'snapshot', { task: { ...task } });
   }
 
   async function executeChatTask(taskId, body, deps = {}) {
@@ -368,7 +415,7 @@ function createDiscussService(options) {
       const broadcast = enableBroadcast === true;
       const rounds = Math.min(Math.max(parseInt(maxRounds, 10) || 2, 1), 5);
       if (!text) {
-        markTaskDone(task, { results: [] });
+        markTaskDone(taskId, task, { results: [] });
         return;
       }
       const configuredProjectHexIds = resolveProjectHexIds(projectId, tenantId);
@@ -409,11 +456,16 @@ function createDiscussService(options) {
         existing.reply = String(nextReply || '');
         existing.error = null;
         resultsById.set(hexId, existing);
+        emitTaskEvent(taskId, 'reply', {
+          hexId,
+          reply: existing.reply,
+          name: existing.name,
+        });
         const now = Date.now();
         const last = liveFlushAt.get(hexId) || 0;
         if (now - last >= 250 || existing.reply.length < 32) {
           liveFlushAt.set(hexId, now);
-          updateRunningTaskResults(task, hexList, resultsById);
+          updateRunningTaskResults(taskId, task, hexList, resultsById);
         }
       }
       const hexReplies = new Map();
@@ -428,14 +480,14 @@ function createDiscussService(options) {
           },
         });
         resultsById.set(hexId, result);
-        updateRunningTaskResults(task, hexList, resultsById);
+        updateRunningTaskResults(taskId, task, hexList, resultsById);
         if (result.reply && broadcast) hexReplies.set(hexId, { name: result.name, reply: result.reply });
         return result;
       }));
       const results = snapshotOrderedResults(hexList, resultsById);
 
       if (Date.now() - startedAt >= DISCUSS_TASK_MAX_MS) {
-        markTaskDone(task, {
+        markTaskDone(taskId, task, {
           results,
           warning: `群聊讨论超过 ${Math.round(DISCUSS_TASK_MAX_MS / 1000)} 秒，已按当前结果提前收口`,
         });
@@ -498,11 +550,11 @@ function createDiscussService(options) {
               resultsById.set(hexId, existing);
             }
           }
-          updateRunningTaskResults(task, hexList, resultsById);
+          updateRunningTaskResults(taskId, task, hexList, resultsById);
         }
       }
 
-      markTaskDone(task, { results: snapshotOrderedResults(hexList, resultsById) });
+      markTaskDone(taskId, task, { results: snapshotOrderedResults(hexList, resultsById) });
       if (projectId) {
         try {
           const outputChars = results.reduce((sum, r) => sum + String((r && (r.reply || r.error)) || '').length, 0);
@@ -555,6 +607,7 @@ function createDiscussService(options) {
       task.error = String((err && err.message) || err);
       task.updatedAt = Date.now();
       saveTasks();
+      emitTaskEvent(taskId, 'failed', { task: { ...task } });
     }
   }
 
@@ -564,6 +617,7 @@ function createDiscussService(options) {
     const task = { status: 'running', replies: null, error: null, warning: null, createdAt: now, updatedAt: now };
     taskStore.set(taskId, task);
     saveTasks();
+    emitTaskEvent(taskId, 'snapshot', { task: { ...task } });
     return { taskId, task };
   }
 
@@ -573,6 +627,7 @@ function createDiscussService(options) {
     saveTasks,
     cleanupExpiredTasks,
     getTask,
+    subscribeTask,
     createTask,
     executeChatTask,
   };
