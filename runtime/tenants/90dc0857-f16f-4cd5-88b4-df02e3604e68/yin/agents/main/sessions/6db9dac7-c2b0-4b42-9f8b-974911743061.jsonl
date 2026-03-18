@@ -1,6 +1,0 @@
-{"type":"session","version":3,"id":"6db9dac7-c2b0-4b42-9f8b-974911743061","timestamp":"2026-02-27T08:29:32.226Z","cwd":"/Users/shenwei/Documents/source/yinova/yin/workspace"}
-{"type":"model_change","id":"2ed600f7","parentId":null,"timestamp":"2026-02-27T08:29:32.230Z","provider":"zai","modelId":"glm-4.7"}
-{"type":"thinking_level_change","id":"3ba4eb7d","parentId":"2ed600f7","timestamp":"2026-02-27T08:29:32.230Z","thinkingLevel":"low"}
-{"type":"custom","customType":"model-snapshot","data":{"timestamp":1772180972233,"provider":"zai","modelApi":"openai-completions","modelId":"glm-4.7"},"id":"fd166bbb","parentId":"3ba4eb7d","timestamp":"2026-02-27T08:29:32.233Z"}
-{"type":"message","id":"46755420","parentId":"fd166bbb","timestamp":"2026-02-27T08:29:32.246Z","message":{"role":"user","content":[{"type":"text","text":"ping"}],"timestamp":1772180972236}}
-{"type":"message","id":"6e5c5447","parentId":"46755420","timestamp":"2026-02-27T08:29:33.539Z","message":{"role":"assistant","content":[],"api":"openai-completions","provider":"zai","model":"glm-4.7","usage":{"input":0,"output":0,"cacheRead":0,"cacheWrite":0,"totalTokens":0,"cost":{"input":0,"output":0,"cacheRead":0,"cacheWrite":0,"total":0}},"stopReason":"error","timestamp":1772180972242,"errorMessage":"401 token expired or incorrect"}}

@@ -1,6 +1,0 @@
-{"type":"session","version":3,"id":"fe09e024-e928-4e6d-87b7-decfddb9427c","timestamp":"2026-03-01T23:46:50.104Z","cwd":"/Users/shenwei/Documents/source/yinova/yin/workspace"}
-{"type":"model_change","id":"418b926a","parentId":null,"timestamp":"2026-03-01T23:46:50.104Z","provider":"moonshot","modelId":"kimi-k2.5"}
-{"type":"thinking_level_change","id":"4a5a65e2","parentId":"418b926a","timestamp":"2026-03-01T23:46:50.104Z","thinkingLevel":"off"}
-{"type":"custom","customType":"model-snapshot","data":{"timestamp":1772408810105,"provider":"moonshot","modelApi":"openai-completions","modelId":"kimi-k2.5"},"id":"287fd128","parentId":"4a5a65e2","timestamp":"2026-03-01T23:46:50.105Z"}
-{"type":"message","id":"8e6c9787","parentId":"287fd128","timestamp":"2026-03-01T23:46:50.108Z","message":{"role":"user","content":[{"type":"text","text":"ping"}],"timestamp":1772408810107}}
-{"type":"message","id":"e2790f7e","parentId":"8e6c9787","timestamp":"2026-03-01T23:47:22.269Z","message":{"role":"assistant","content":[],"api":"openai-completions","provider":"moonshot","model":"kimi-k2.5","usage":{"input":0,"output":0,"cacheRead":0,"cacheWrite":0,"totalTokens":0,"cost":{"input":0,"output":0,"cacheRead":0,"cacheWrite":0,"total":0}},"stopReason":"error","timestamp":1772408810107,"errorMessage":"Request timed out."}}
