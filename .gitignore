@@ -94,6 +94,7 @@ OPENSOURCE_CHECKLIST.md
 # 本地打的发布包（不纳入版本库）
 openswarm-*.zip
 openclaw-offline.zip
+openclaw-*.tar.gz
 node*.pkg
 
 # 仅本地使用的指南（不上传）
