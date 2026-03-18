@@ -1,8 +1,8 @@
-# Yinova 群聊/转发用 — 中文
+# OpenSwarm 群聊/转发用 — 中文
 
 ---
 
-Yinova 六十四卦控制台，一键安装、开箱即用。
+OpenSwarm 六十四员工控制台，一键安装、开箱即用。
 
 **环境**：macOS / Linux / Windows(WSL)，Node.js 18+、npm
 
@@ -10,21 +10,21 @@ Yinova 六十四卦控制台，一键安装、开箱即用。
 
 GitHub：
 ```
-git clone https://github.com/goldct/yinova && cd yinova
+git clone https://github.com/goldct/openswarm && cd openswarm
 chmod +x install.sh start-panel.sh
 ./install.sh
 ```
 
 Gitee（国内，推荐）：
 ```
-git clone https://gitee.com/goldct/yinova && cd yinova
+git clone https://gitee.com/goldct/openswarm && cd openswarm
 chmod +x install.sh start-panel.sh
 ./install.sh
 ```
 
-**已安装用户更新**（注意：`cd yinova` 与 `git pull` 之间要有空格或换行，勿写成 `cd yinovagit pull`）：
+**已安装用户更新**（注意：`cd openswarm` 与 `git pull` 之间要有空格或换行，勿写成 `cd openswarmgit pull`）：
 ```
-cd yinova
+cd openswarm
 git pull
 cd panel-web && npm install && cd ..
 ./start-panel.sh

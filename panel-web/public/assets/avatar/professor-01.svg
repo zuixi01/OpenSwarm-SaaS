@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Professor Avatar 1">
+  <defs>
+    <linearGradient id="bg-p1" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#e8eef5"/>
+      <stop offset="100%" stop-color="#c5d0db"/>
+    </linearGradient>
+    <linearGradient id="coat-p1" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#f7f9fb"/>
+      <stop offset="100%" stop-color="#dfe5eb"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" fill="url(#bg-p1)"/>
+  <circle cx="128" cy="102" r="47" fill="#f1cdb3"/>
+  <path d="M80 98c0-35 20-56 48-56s48 21 48 56c-9-13-20-21-48-21s-39 8-48 21z" fill="#8e939b"/>
+  <rect x="92" y="96" width="22" height="14" rx="6" fill="none" stroke="#2f3540" stroke-width="3"/>
+  <rect x="142" y="96" width="22" height="14" rx="6" fill="none" stroke="#2f3540" stroke-width="3"/>
+  <rect x="114" y="101" width="28" height="3" fill="#2f3540"/>
+  <path d="M92 146c10 16 22 23 36 23s26-7 36-23" fill="#7f858d"/>
+  <path d="M40 230c11-34 42-54 88-54s77 20 88 54v26H40z" fill="url(#coat-p1)"/>
+  <path d="M128 182l12 24h-24z" fill="#6b86a6"/>
+  <circle cx="111" cy="106" r="4" fill="#2e343c"/>
+  <circle cx="145" cy="106" r="4" fill="#2e343c"/>
+</svg>

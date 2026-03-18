@@ -13,14 +13,14 @@
    - `./install.sh` 无报错
    - `./start-panel.sh` 启动成功
    - 配置页填写 API Key 保存
-   - 创建项目、选卦、与卦对话
+   - 创建项目、选员工、与员工对话
    - 技能库管理、项目模板、阳应用模板
 
 2. **Git 提交**
    ```bash
    git status
    git add .
-   git commit -m "v1.3: 文档、部署、安全、技能库、项目模板、卦任务重试"
+   git commit -m "v1.3: 文档、部署、安全、技能库、项目模板、员工任务重试"
    git tag v1.3
    ```
 
@@ -34,8 +34,8 @@
    ```
 
 4. **Release 说明**（可选）
-   - GitHub: https://github.com/goldct/yinova/releases/new?tag=v1.3
-   - 标题：Yinova v1.3
+   - GitHub: https://github.com/goldct/openswarm/releases/new?tag=v1.3
+   - 标题：OpenSwarm v1.3
    - 描述：复制 CHANGELOG.md 中 1.3 部分
 
 ## 三、文档与链接

@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>计费中心 · OpenSwarm</title>
+  <script src="i18n.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --black: #05070c;
+      --black-light: #0d1322;
+      --white: #e9f3ff;
+      --white-dim: #8ea5c4;
+      --cyan: #39d0ff;
+      --cyan-dim: #16a5d4;
+      --text: var(--white);
+      --text-dim: var(--white-dim);
+      --border: rgba(57, 208, 255, 0.32);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "Space Grotesk", "Noto Sans SC", "PingFang SC", sans-serif;
+      background: radial-gradient(circle at 20% 0%, #121d35 0%, #060a14 50%, #02040a 100%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+    #starfield {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+      background: radial-gradient(circle at 30% 20%, #10233f 0%, #091325 48%, #050a16 100%);
+    }
+    #starfield canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      opacity: 0.96;
+    }
+    #starfield::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0) 54%, rgba(0, 0, 0, 0.42) 100%);
+      pointer-events: none;
+    }
+    .page-content {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 920px;
+      padding: 24px 20px;
+    }
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .top-links {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .link-back {
+      color: var(--cyan-dim);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .link-back:hover { color: var(--cyan); }
+    h1 {
+      font-size: 1.2rem;
+      color: var(--cyan);
+      letter-spacing: 0.12em;
+      margin: 0 0 8px 0;
+    }
+    .sub {
+      font-size: 0.82rem;
+      color: var(--text-dim);
+      margin-bottom: 20px;
+    }
+    .form-card {
+      background: var(--black-light);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 0 24px rgba(0,0,0,0.3);
+    }
+    .form-row label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--cyan-dim);
+      margin-bottom: 6px;
+    }
+    .form-row select,
+    .form-row input {
+      width: 100%;
+      padding: 10px 12px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      background: rgba(0,0,0,0.4);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+    }
+    .billing-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-top: 10px;
+    }
+    .billing-col {
+      flex: 1;
+      min-width: 240px;
+    }
+    .btn {
+      padding: 8px 16px;
+      font-size: 0.85rem;
+      font-family: inherit;
+      background: transparent;
+      border: 1px solid var(--cyan-dim);
+      border-radius: 4px;
+      color: var(--cyan);
+      cursor: pointer;
+    }
+    .btn:hover { border-color: var(--cyan); filter: brightness(1.1); }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .billing-topup-wrap {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .billing-topup-wrap input {
+      width: 170px;
+      padding: 8px 10px;
+      font-size: 0.84rem;
+    }
+    .billing-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+      gap: 8px;
+      margin-top: 14px;
+    }
+    .billing-stat {
+      border: 1px solid var(--border);
+      background: rgba(0, 0, 0, 0.28);
+      border-radius: 4px;
+      padding: 10px;
+    }
+    .billing-stat .k {
+      display: block;
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      margin-bottom: 4px;
+    }
+    .billing-stat .v {
+      display: block;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.9rem;
+      color: var(--cyan);
+    }
+    .billing-events-wrap {
+      margin-top: 12px;
+      border-top: 1px solid var(--border);
+      padding-top: 10px;
+    }
+    .billing-events-title {
+      font-size: 0.8rem;
+      color: var(--cyan-dim);
+      margin-bottom: 6px;
+    }
+    .billing-events-list {
+      max-height: 240px;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: rgba(0,0,0,0.26);
+    }
+    .billing-event-item {
+      padding: 8px 10px;
+      border-bottom: 1px solid rgba(57, 208, 255, 0.18);
+      font-size: 0.76rem;
+      color: var(--text-dim);
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .billing-event-item:last-child { border-bottom: none; }
+    .billing-event-main {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      min-width: 0;
+    }
+    .billing-event-kind {
+      font-family: "JetBrains Mono", monospace;
+      color: var(--cyan);
+      font-size: 0.72rem;
+      border: 1px solid rgba(57, 208, 255, 0.4);
+      border-radius: 4px;
+      padding: 1px 6px;
+      flex-shrink: 0;
+    }
+    .billing-event-desc {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .billing-event-amt {
+      font-family: "JetBrains Mono", monospace;
+      color: #7bf0b6;
+      flex-shrink: 0;
+    }
+    .empty-state {
+      color: var(--text-dim);
+      font-size: 0.9rem;
+      padding: 24px;
+      text-align: center;
+    }
+    .empty-state a { color: var(--cyan-dim); }
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 12px 24px;
+      border-radius: 6px;
+      background: var(--black-light);
+      border: 1px solid var(--cyan-dim);
+      color: var(--cyan);
+      font-size: 0.875rem;
+      opacity: 0;
+      transition: opacity 0.2s;
+      pointer-events: none;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      z-index: 9999;
+    }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+  <div id="starfield"></div>
+  <div class="page-content">
+    <div class="top-bar">
+      <div class="top-links">
+        <a href="index.html" class="link-back">← 面板首页</a>
+        <a href="projects.html" class="link-back">返回项目</a>
+        <a href="yang.html" class="link-back">策略编排</a>
+        <a href="runtime-admin.html" class="link-back">Runtime管理</a>
+      </div>
+      <span id="openswarm-lang-toggle-wrap"></span>
+    </div>
+
+    <h1>计费中心</h1>
+    <p class="sub">按项目管理套餐、预算与余额，查看本周期用量与账单事件流水。</p>
+
+    <div class="form-card">
+      <div class="form-row">
+        <label>选择项目</label>
+        <select id="projectSelect">
+          <option value="">-- 请选择项目 --</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="billingPanel" class="form-card" style="display:none;">
+      <div class="billing-row">
+        <div class="form-row billing-col">
+          <label>套餐</label>
+          <select id="billingPlanSelect">
+            <option value="">-- 加载中 --</option>
+          </select>
+        </div>
+        <div class="form-row billing-col">
+          <label>预算上限（元，留空=不限）</label>
+          <input id="billingHardLimitInput" type="number" min="0" step="0.01" placeholder="如 500.00" />
+        </div>
+      </div>
+      <div class="billing-row">
+        <button type="button" class="btn" id="btnSaveBilling">保存套餐与预算</button>
+        <div class="billing-topup-wrap">
+          <input id="billingTopupInput" type="number" min="0.01" step="0.01" placeholder="充值金额（元）" />
+          <button type="button" class="btn" id="btnTopupBilling">充值</button>
+        </div>
+        <button type="button" class="btn" id="btnRefreshBilling">刷新账单</button>
+      </div>
+
+      <div class="billing-stats">
+        <div class="billing-stat"><span class="k">周期</span><span class="v" id="billCycle">--</span></div>
+        <div class="billing-stat"><span class="k">套餐月费</span><span class="v" id="billMonthlyFee">--</span></div>
+        <div class="billing-stat"><span class="k">含免费额度</span><span class="v" id="billIncludedUnits">--</span></div>
+        <div class="billing-stat"><span class="k">已用额度</span><span class="v" id="billUsedUnits">--</span></div>
+        <div class="billing-stat"><span class="k">超额额度</span><span class="v" id="billOverageUnits">--</span></div>
+        <div class="billing-stat"><span class="k">本周期合计</span><span class="v" id="billCycleTotal">--</span></div>
+        <div class="billing-stat"><span class="k">可用余额</span><span class="v" id="billCreditBalance">--</span></div>
+      </div>
+
+      <div class="billing-events-wrap">
+        <div class="billing-events-title">最近账单事件</div>
+        <div id="billingEventsList" class="billing-events-list"></div>
+      </div>
+    </div>
+
+    <div id="emptyState" class="empty-state" style="display:none;">
+      暂无可选项目。<a href="projects.html">去项目空间</a>创建项目后再回来配置计费。
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="/assets/dot-grid-bg.js"></script>
+  <script>
+    if (window.initDotGridBackground) {
+      window.initDotGridBackground({
+        containerId: 'starfield',
+        dotSize: 1.8,
+        gap: 24,
+        baseColor: '85,125,168',
+        activeColor: '64,211,255',
+        bgColor: '5,10,22',
+        pulse: 0.26,
+        mouseRadius: 180,
+        mouseStrength: 1
+      });
+    }
+
+    var projectSelect = document.getElementById('projectSelect');
+    var billingPanel = document.getElementById('billingPanel');
+    var billingPlanSelect = document.getElementById('billingPlanSelect');
+    var billingHardLimitInput = document.getElementById('billingHardLimitInput');
+    var billingTopupInput = document.getElementById('billingTopupInput');
+    var btnSaveBilling = document.getElementById('btnSaveBilling');
+    var btnTopupBilling = document.getElementById('btnTopupBilling');
+    var btnRefreshBilling = document.getElementById('btnRefreshBilling');
+    var billingEventsList = document.getElementById('billingEventsList');
+    var emptyState = document.getElementById('emptyState');
+    var toast = document.getElementById('toast');
+
+    var projects = [];
+    var billingPlans = [];
+
+    function show(msg) {
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(function() { toast.classList.remove('show'); }, 3000);
+    }
+    function centsToYuan(cents) {
+      var n = Number(cents);
+      if (!Number.isFinite(n)) n = 0;
+      return '¥' + (n / 100).toFixed(2);
+    }
+    function setText(id, text) {
+      var el = document.getElementById(id);
+      if (el) el.textContent = text;
+    }
+
+    function loadProjects() {
+      return fetch('/api/projects').then(function(r) { return r.json(); })
+        .then(function(data) {
+          projects = (data || []).filter(function(p) { return p.id !== 'hex-definition'; });
+          return projects;
+        });
+    }
+    function loadBillingPlans() {
+      return fetch('/api/billing/plans').then(function(r) { return r.json(); })
+        .then(function(data) {
+          billingPlans = Array.isArray(data && data.plans) ? data.plans : [];
+          return billingPlans;
+        })
+        .catch(function() { billingPlans = []; return billingPlans; });
+    }
+
+    function renderProjectSelect() {
+      projectSelect.innerHTML = '<option value="">-- 请选择项目 --</option>';
+      projects.forEach(function(p) {
+        var opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = p.name + ' (' + (p.hexIds || []).length + ' 员工)';
+        projectSelect.appendChild(opt);
+      });
+      if (projects.length === 0) {
+        emptyState.style.display = 'block';
+        billingPanel.style.display = 'none';
+      } else {
+        emptyState.style.display = 'none';
+      }
+    }
+    function renderBillingPlans(selectedPlanId) {
+      billingPlanSelect.innerHTML = '';
+      if (!billingPlans.length) {
+        billingPlanSelect.innerHTML = '<option value="">-- 暂无套餐 --</option>';
+        return;
+      }
+      billingPlans.forEach(function(plan) {
+        var opt = document.createElement('option');
+        opt.value = plan.id;
+        opt.textContent = plan.name + ' · 月费' + centsToYuan(plan.monthlyFeeCents) + ' · 含 ' + (plan.includedUnits || 0) + ' 单位 · 超额 ' + centsToYuan(plan.pricePerUnitCents) + '/单位';
+        if (String(selectedPlanId || '') === String(plan.id)) opt.selected = true;
+        billingPlanSelect.appendChild(opt);
+      });
+    }
+    function renderBillingEvents(events) {
+      var list = Array.isArray(events) ? events : [];
+      if (!list.length) {
+        billingEventsList.innerHTML = '<div class="billing-event-item"><div class="billing-event-main"><span class="billing-event-desc">暂无账单事件</span></div></div>';
+        return;
+      }
+      billingEventsList.innerHTML = list.map(function(evt) {
+        var kind = evt.kind === 'topup' ? 'TOPUP' : 'USAGE';
+        var desc = '';
+        if (evt.kind === 'topup') desc = '充值 ' + centsToYuan(evt.topupCents || 0) + (evt.note ? (' · ' + evt.note) : '');
+        else desc = (evt.source || 'agent') + ' · ' + (evt.units || 0) + ' 单位';
+        var amount = evt.kind === 'topup' ? '+' + centsToYuan(evt.topupCents || 0) : '-' + centsToYuan(evt.amountCents || 0);
+        var ts = evt.at ? new Date(evt.at).toLocaleString('zh-CN', { hour12: false }) : '--';
+        return '' +
+          '<div class="billing-event-item">' +
+            '<div class="billing-event-main">' +
+              '<span class="billing-event-kind">' + kind + '</span>' +
+              '<span class="billing-event-desc" title="' + desc + ' · ' + ts + '">' + desc + ' · ' + ts + '</span>' +
+            '</div>' +
+            '<span class="billing-event-amt">' + amount + '</span>' +
+          '</div>';
+      }).join('');
+    }
+    function renderBillingSummary(summary) {
+      var usage = (summary && summary.usage) ? summary.usage : {};
+      var billing = (summary && summary.billing) ? summary.billing : {};
+      var plan = (summary && summary.plan) ? summary.plan : {};
+      setText('billCycle', summary && summary.cycle ? summary.cycle : '--');
+      setText('billMonthlyFee', centsToYuan(plan.monthlyFeeCents || 0));
+      setText('billIncludedUnits', String(plan.includedUnits || 0));
+      setText('billUsedUnits', String(usage.usedUnits || 0));
+      setText('billOverageUnits', String(usage.overageUnits || 0));
+      setText('billCycleTotal', centsToYuan(usage.cycleTotalCents || 0));
+      setText('billCreditBalance', centsToYuan(billing.creditBalanceCents || 0));
+      billingHardLimitInput.value = (billing.hardLimitCents == null || billing.hardLimitCents === '') ? '' : ((Number(billing.hardLimitCents || 0) / 100).toFixed(2));
+      renderBillingPlans(billing.planId || plan.id);
+    }
+
+    function loadBillingForProject(projectId) {
+      if (!projectId) {
+        billingPanel.style.display = 'none';
+        return Promise.resolve();
+      }
+      billingPanel.style.display = 'block';
+      return Promise.all([
+        loadBillingPlans(),
+        fetch('/api/billing/projects/' + encodeURIComponent(projectId) + '/summary').then(function(r) { return r.json(); }),
+        fetch('/api/billing/projects/' + encodeURIComponent(projectId) + '/events?limit=20').then(function(r) { return r.json(); })
+      ]).then(function(result) {
+        renderBillingSummary(result[1]);
+        renderBillingEvents(result[2] && result[2].events);
+      }).catch(function() {
+        renderBillingPlans();
+        renderBillingSummary(null);
+        renderBillingEvents([]);
+        show('账单加载失败');
+      });
+    }
+
+    projectSelect.addEventListener('change', function() {
+      var id = projectSelect.value;
+      if (!id) {
+        billingPanel.style.display = 'none';
+        return;
+      }
+      loadBillingForProject(id);
+    });
+
+    btnSaveBilling.addEventListener('click', function() {
+      var pid = projectSelect.value;
+      if (!pid) { show('请先选择项目'); return; }
+      var hardLimitText = String(billingHardLimitInput.value || '').trim();
+      var hardLimitCents = hardLimitText === '' ? null : Math.max(0, Math.round((Number(hardLimitText) || 0) * 100));
+      var payload = { planId: billingPlanSelect.value, hardLimitCents: hardLimitCents };
+      btnSaveBilling.disabled = true;
+      fetch('/api/billing/projects/' + encodeURIComponent(pid), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+        .then(function(result) {
+          btnSaveBilling.disabled = false;
+          if (!result.ok || (result.data && result.data.error)) {
+            show((result.data && result.data.error) || '保存计费配置失败');
+            return;
+          }
+          show('计费配置已保存');
+          loadBillingForProject(pid);
+        })
+        .catch(function(e) {
+          btnSaveBilling.disabled = false;
+          show('保存失败：' + (e.message || '网络错误'));
+        });
+    });
+
+    btnTopupBilling.addEventListener('click', function() {
+      var pid = projectSelect.value;
+      if (!pid) { show('请先选择项目'); return; }
+      var amountYuan = Number(billingTopupInput.value || 0);
+      if (!Number.isFinite(amountYuan) || amountYuan <= 0) { show('请输入有效充值金额'); return; }
+      btnTopupBilling.disabled = true;
+      fetch('/api/billing/projects/' + encodeURIComponent(pid) + '/topup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amountCents: Math.round(amountYuan * 100), note: 'billing.html manual topup' })
+      }).then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+        .then(function(result) {
+          btnTopupBilling.disabled = false;
+          if (!result.ok || (result.data && result.data.error)) {
+            show((result.data && result.data.error) || '充值失败');
+            return;
+          }
+          billingTopupInput.value = '';
+          show('充值成功');
+          loadBillingForProject(pid);
+        })
+        .catch(function(e) {
+          btnTopupBilling.disabled = false;
+          show('充值失败：' + (e.message || '网络错误'));
+        });
+    });
+
+    btnRefreshBilling.addEventListener('click', function() {
+      var pid = projectSelect.value;
+      if (!pid) { show('请先选择项目'); return; }
+      loadBillingForProject(pid);
+    });
+
+    Promise.all([loadProjects(), loadBillingPlans()]).then(function() {
+      renderProjectSelect();
+      var hash = (location.hash || '').replace(/^#/, '');
+      if (hash) {
+        projectSelect.value = hash;
+        projectSelect.dispatchEvent(new Event('change'));
+      }
+    }).catch(function() { show('加载失败'); });
+  </script>
+  <script src="/assets/auth-shell.js"></script>
+</body>
+</html>

@@ -19,9 +19,9 @@
 ## 2. Release 版本（首次公开时）
 
 **操作**：
-1. 打开 https://github.com/goldct/yinova/releases
+1. 打开 https://github.com/goldct/openswarm/releases
 2. 点击 **Draft a new release**
 3. **Choose a tag**：选择 `v1.2.0`
-4. **Release title**：`Yinova v1.2.0 — 首个正式开源版本`
+4. **Release title**：`OpenSwarm v1.2.0 — 首个正式开源版本`
 5. **Description**：从 CHANGELOG.md 复制 1.2 的更新内容
 6. 发布

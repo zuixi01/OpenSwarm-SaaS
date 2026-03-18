@@ -1,36 +1,80 @@
 {
-  "meta": {"lastTouchedVersion":"2026.1.27-beta.1"},
-  "browser": {"enabled": false},
-  "auth": {"profiles": {"zai:default": {"provider": "zai", "mode": "api_key"}}},
-  "agents": {
-    "defaults": {
-      "model": {"primary": "zai/glm-5", "fallbacks": ["zai/glm-4.7"]},
-      "workspace": "__YINOVA_ROOT__/hexes/__HEX_NAME__/workspace",
-      "maxConcurrent": 4,
-      "subagents": {"maxConcurrent": 8}
+  "meta": {
+    "lastTouchedVersion": "2026.1.27-beta.1"
+  },
+  "browser": {
+    "enabled": false
+  },
+  "auth": {
+    "profiles": {
+      "zai:default": {
+        "provider": "zai",
+        "mode": "api_key"
+      },
+      "moonshot:default": {
+        "provider": "moonshot",
+        "mode": "api_key"
+      }
     }
   },
-  "tools": {"web": {"search": {"enabled": true}, "fetch": {"enabled": true}}},
-  "channels": {"telegram": {"enabled": false}},
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "zai/glm-5",
+        "fallbacks": [
+          "zai/glm-4.7"
+        ]
+      },
+      "workspace": "__OPENSWARM_ROOT__/hexes/__HEX_NAME__/workspace",
+      "maxConcurrent": 4,
+      "subagents": {
+        "maxConcurrent": 8
+      }
+    }
+  },
+  "tools": {
+    "web": {
+      "search": {
+        "enabled": true
+      },
+      "fetch": {
+        "enabled": true
+      }
+    }
+  },
+  "channels": {
+    "telegram": {
+      "enabled": false
+    }
+  },
   "gateway": {
     "port": 99999,
     "mode": "local",
     "bind": "loopback",
-    "auth": {"mode": "token", "token": "yinova_local_replace_me"},
-    "tailscale": {"mode": "off"},
-    "http": {"endpoints": {"chatCompletions": {"enabled": true}}}
+    "auth": {
+      "mode": "token",
+      "token": "openswarm_local_replace_me"
+    },
+    "tailscale": {
+      "mode": "off"
+    },
+    "http": {
+      "endpoints": {
+        "chatCompletions": {
+          "enabled": true
+        }
+      }
+    }
   },
-  "skills": {"install": {"nodeManager": "npm"}},
-  "plugins": {"entries": {"telegram": {"enabled": false}}},
-  "models": {
-    "providers": {
-      "zai": {
-        "baseUrl": "https://open.bigmodel.cn/api/coding/paas/v4",
-        "models": [
-          {"id": "glm-5", "name": "GLM-5"},
-          {"id": "glm-4.7", "name": "GLM-4.7"},
-          {"id": "glm-4.7-flash", "name": "GLM-4.7-Flash"}
-        ]
+  "skills": {
+    "install": {
+      "nodeManager": "npm"
+    }
+  },
+  "plugins": {
+    "entries": {
+      "telegram": {
+        "enabled": false
       }
     }
   }

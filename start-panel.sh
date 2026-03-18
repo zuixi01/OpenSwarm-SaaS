@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 启动 Yinova Web 面板
+# 启动 OpenSwarm Web 面板
 set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
@@ -18,6 +18,10 @@ if command -v lsof >/dev/null 2>&1; then
 fi
 
 cd panel-web
+# Prefer Homebrew Node 22 for local panel/openclaw compatibility.
+if [[ -x "/opt/homebrew/opt/node@22/bin/node" ]]; then
+  export PATH="/opt/homebrew/opt/node@22/bin:$PATH"
+fi
 # Mac 上约 3 秒后自动打开浏览器（与 start-panel.command 一致）
 [[ "$(uname)" == "Darwin" ]] && (sleep 3 && open "http://localhost:${PANEL_PORT:-3999}" 2>/dev/null) &
 exec node server.js

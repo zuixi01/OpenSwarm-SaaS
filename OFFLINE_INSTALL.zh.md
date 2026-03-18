@@ -1,18 +1,18 @@
-# Yinova 离线安装说明（Mac）
+# OpenSwarm 离线安装说明（Mac）
 
 适合**无外网**或**不想用命令行**的用户，只需双击和填 Key。
 
 ---
 
-## 使用前：把「环境配置包」放进 yinova 文件夹
+## 使用前：把「环境配置包」放进 openswarm 文件夹
 
-如果你拿到的是 **「yinova安装环境配置」** 文件夹或压缩包，需要先把里面的文件放到 **yinova 项目根目录** 里再用：
+如果你拿到的是 **「openswarm安装环境配置」** 文件夹或压缩包，需要先把里面的文件放到 **openswarm 项目根目录** 里再用：
 
-1. **先有 yinova 项目**  
-   若还没有：从 [GitHub](https://github.com/goldct/yinova) 或 [Gitee](https://gitee.com/goldct/yinova) 下载 yinova 源码（下载 ZIP 解压，或 git clone），得到名为 `yinova` 的文件夹。
+1. **先有 openswarm 项目**  
+   若还没有：从 [GitHub](https://github.com/goldct/openswarm) 或 [Gitee](https://gitee.com/goldct/openswarm) 下载 openswarm 源码（下载 ZIP 解压，或 git clone），得到名为 `openswarm` 的文件夹。
 
 2. **把环境配置包里的东西复制进去**  
-   打开「yinova安装环境配置」文件夹，把下面这些**全部复制**到 **yinova 文件夹的根目录**（和 `install.sh`、`start-panel.sh` 同一层）：
+   打开「openswarm安装环境配置」文件夹，把下面这些**全部复制**到 **openswarm 文件夹的根目录**（和 `install.sh`、`start-panel.sh` 同一层）：
    - `node-v24.14.0.pkg`（或任意 `node-*.pkg`）
    - `openclaw-offline.zip`
    - `install-offline-mac.command`
@@ -20,9 +20,9 @@
    （本说明文件 `OFFLINE_INSTALL.zh.md` 也可一并复制，方便查看。）
 
 3. **解压 openclaw（若尚未解压）**  
-   在 yinova 根目录下，用终端执行（或按后面「第一步」先做环境检测再执行）：
+   在 openswarm 根目录下，用终端执行（或按后面「第一步」先做环境检测再执行）：
    ```bash
-   cd ~/yinova
+   cd ~/openswarm
    rm -rf openclaw
    unzip openclaw-offline.zip -d .
    ```
@@ -67,6 +67,6 @@
 
 ## 获取离线包
 
-- **「yinova安装环境配置」** 里只有：Node 安装包、openclaw-offline.zip、环境检测与离线安装脚本、本说明。**不含完整 yinova 源码**，需先有 yinova 项目（从 GitHub/Gitee 下载），再把本包里的文件复制进 yinova 根目录使用。
+- **「openswarm安装环境配置」** 里只有：Node 安装包、openclaw-offline.zip、环境检测与离线安装脚本、本说明。**不含完整 openswarm 源码**，需先有 openswarm 项目（从 GitHub/Gitee 下载），再把本包里的文件复制进 openswarm 根目录使用。
 - 可通过 **Gitee 仓库 Release** 或联系作者获取该环境配置包。
 - 在线用户请直接使用 [README 快速开始](README.md)：`git clone` → `./install.sh` → `./start-panel.sh`。

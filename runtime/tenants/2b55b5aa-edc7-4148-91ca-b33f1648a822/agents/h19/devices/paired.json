@@ -1,0 +1,32 @@
+{
+  "3ac103c824c89f839c7fb980a705e5c0c6e9e2dc0d263db86ad57c3faca900ce": {
+    "deviceId": "3ac103c824c89f839c7fb980a705e5c0c6e9e2dc0d263db86ad57c3faca900ce",
+    "publicKey": "jo4iHV8Pu4yMJcMG9unL-G3fcliwpXfe4QrDRUntOnY",
+    "displayName": "openclaw-tui",
+    "platform": "darwin",
+    "clientId": "gateway-client",
+    "clientMode": "ui",
+    "role": "operator",
+    "roles": [
+      "operator"
+    ],
+    "scopes": [
+      "operator.admin"
+    ],
+    "approvedScopes": [
+      "operator.admin"
+    ],
+    "tokens": {
+      "operator": {
+        "token": "nNNq4aIQ7t4jaqRYZgbeQp7A0UZFCcOVj725McFCVuM",
+        "role": "operator",
+        "scopes": [
+          "operator.admin"
+        ],
+        "createdAtMs": 1772182483169
+      }
+    },
+    "createdAtMs": 1772182483169,
+    "approvedAtMs": 1772182483169
+  }
+}

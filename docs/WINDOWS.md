@@ -1,6 +1,6 @@
 # Windows 使用说明（WSL）
 
-Yinova 在 Windows 上通过 **WSL**（Windows Subsystem for Linux）运行，推荐使用 **Ubuntu on WSL**，与 Linux 体验一致。
+OpenSwarm 在 Windows 上通过 **WSL**（Windows Subsystem for Linux）运行，推荐使用 **Ubuntu on WSL**，与 Linux 体验一致。
 
 ## 一、前置条件
 
@@ -25,8 +25,8 @@ Yinova 在 Windows 上通过 **WSL**（Windows Subsystem for Linux）运行，�
 1. **克隆项目**（在 WSL 终端中）
    ```bash
    cd ~
-   git clone https://github.com/goldct/yinova && cd yinova
-   # 国内用户: git clone https://gitee.com/goldct/yinova && cd yinova
+   git clone https://github.com/goldct/openswarm && cd openswarm
+   # 国内用户: git clone https://gitee.com/goldct/openswarm && cd openswarm
    ```
 
 2. **安装**
@@ -46,8 +46,8 @@ Yinova 在 Windows 上通过 **WSL**（Windows Subsystem for Linux）运行，�
 
 ## 三、路径说明
 
-- 项目建议放在 WSL 文件系统内（如 `~/yinova`），避免 Windows 路径带来的权限和性能问题
-- 若放在 Windows 盘（如 `/mnt/c/Users/xxx/yinova`），部分功能可能受影响，建议用 `\\wsl$\Ubuntu\home\用户名\yinova` 访问
+- 项目建议放在 WSL 文件系统内（如 `~/openswarm`），避免 Windows 路径带来的权限和性能问题
+- 若放在 Windows 盘（如 `/mnt/c/Users/xxx/openswarm`），部分功能可能受影响，建议用 `\\wsl$\Ubuntu\home\用户名\openswarm` 访问
 
 ## 四、Git Bash 用户（非 WSL）
 
@@ -55,7 +55,7 @@ Yinova 在 Windows 上通过 **WSL**（Windows Subsystem for Linux）运行，�
 
 **手动启动阴网关**：在 Git Bash 中执行：
 ```bash
-cd ~/yinova
+cd ~/openswarm
 bash yin/start-yin.sh
 ```
 新窗口会打开阴网关 TUI，端口 18789。面板检测到端口后会显示「阴」已启动。
@@ -65,5 +65,5 @@ bash yin/start-yin.sh
 - **端口被占用**：在 WSL 中 `lsof -i :3999` 查看，或配置页点击「检测端口占用」
 - **Node 未找到**：确保在 WSL 终端中操作，且 `node -v` 能输出版本号
 - **浏览器打不开**：手动在 Windows 浏览器输入 http://localhost:3999
-- **点击「阴·启动」无反应 / 终端不弹出**：面板会尝试用 Git Bash 打开新窗口。若仍无反应，请手动在 Git Bash 执行 `cd ~/yinova && bash yin/start-yin.sh` 启动阴网关。
+- **点击「阴·启动」无反应 / 终端不弹出**：面板会尝试用 Git Bash 打开新窗口。若仍无反应，请手动在 Git Bash 执行 `cd ~/openswarm && bash yin/start-yin.sh` 启动阴网关。
 - **点击阴阳/项目加号后一直加载、无反应**：1) 按 F12 → Network 标签 → 再点一次按钮，看是否有红色失败请求；2) 更新到最新代码（`git pull`）后重启面板；3) 若仍无效，阴网关可手动执行 `bash yin/start-yin.sh`。

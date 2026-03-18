@@ -1,20 +1,42 @@
-# Yinova 面板 - 仅 Web 面板
-# 阴/卦需在宿主机执行 ./install.sh 后通过面板启动，或另行部署
 services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: openswarm
+      POSTGRES_USER: openswarm
+      POSTGRES_PASSWORD: openswarm
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U openswarm -d openswarm"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
   panel:
     build:
       context: .
       dockerfile: Dockerfile.panel
+    depends_on:
+      postgres:
+        condition: service_healthy
     ports:
       - "3999:3999"
+    env_file:
+      - ./panel-web/.env.example
     volumes:
       - ./panel-web/data:/app/panel-web/data
       - ./config.json:/app/config.json
     environment:
       - PANEL_WEB_PORT=3999
+      - DATABASE_URL=postgres://openswarm:openswarm@postgres:5432/openswarm
+      - OPENSWARM_REQUIRE_USER_AUTH=1
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://127.0.0.1:3999/api/health"]
       interval: 30s
       timeout: 5s
       retries: 3
+
+volumes:
+  postgres_data:

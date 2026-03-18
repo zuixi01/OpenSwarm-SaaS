@@ -1,0 +1,591 @@
+openapi: 3.1.0
+info:
+  title: OpenSwarm Cloud API (MVP Week 1)
+  version: 0.1.0
+  description: |
+    Initial API contract for multi-tenant cloud runtime.
+    Scope focuses on tenant runtime lifecycle, tasks, workflows, and artifacts.
+servers:
+  - url: https://api.openswarm.example.com
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Auth
+  - name: Tenants
+  - name: Runtimes
+  - name: Projects
+  - name: Workflows
+  - name: Tasks
+  - name: Artifacts
+
+paths:
+  /v1/auth/login:
+    post:
+      tags: [Auth]
+      summary: Login and get access token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken:
+                    type: string
+                  expiresIn:
+                    type: integer
+
+  /v1/tenants:
+    post:
+      tags: [Tenants]
+      summary: Create tenant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tenant'
+
+  /v1/tenants/{tenantId}/runtimes:
+    post:
+      tags: [Runtimes]
+      summary: Create runtime
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [mode, region]
+              properties:
+                mode:
+                  type: string
+                  enum: [local, k8s]
+                region:
+                  type: string
+                desiredAgents:
+                  type: integer
+                  minimum: 1
+                  default: 10
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Runtime'
+
+  /v1/tenants/{tenantId}/runtimes/{runtimeId}:
+    get:
+      tags: [Runtimes]
+      summary: Get runtime
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/RuntimeId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Runtime'
+
+  /v1/tenants/{tenantId}/runtimes/{runtimeId}/start:
+    post:
+      tags: [Runtimes]
+      summary: Start runtime
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/RuntimeId'
+      responses:
+        '202':
+          description: Accepted
+
+  /v1/tenants/{tenantId}/runtimes/{runtimeId}/stop:
+    post:
+      tags: [Runtimes]
+      summary: Stop runtime
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/RuntimeId'
+      responses:
+        '202':
+          description: Accepted
+
+  /v1/tenants/{tenantId}/runtimes/{runtimeId}/scale:
+    post:
+      tags: [Runtimes]
+      summary: Scale runtime agents
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/RuntimeId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [desiredAgents]
+              properties:
+                desiredAgents:
+                  type: integer
+                  minimum: 1
+      responses:
+        '202':
+          description: Accepted
+
+  /v1/tenants/{tenantId}/runtimes/{runtimeId}/agents:
+    get:
+      tags: [Runtimes]
+      summary: List runtime agents
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/RuntimeId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RuntimeAgent'
+
+  /v1/tenants/{tenantId}/secrets/{provider}:
+    put:
+      tags: [Tenants]
+      summary: Upsert provider API key
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [apiKey]
+              properties:
+                apiKey:
+                  type: string
+      responses:
+        '200':
+          description: OK
+
+  /v1/projects:
+    post:
+      tags: [Projects]
+      summary: Create project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tenantId, name]
+              properties:
+                tenantId:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+
+  /v1/projects/{projectId}:
+    get:
+      tags: [Projects]
+      summary: Get project
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+
+  /v1/projects/{projectId}/chat/yin:
+    post:
+      tags: [Tasks]
+      summary: Submit yin chat task (async)
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message:
+                  type: string
+      responses:
+        '202':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskAccepted'
+
+  /v1/projects/{projectId}/chat/hex:
+    post:
+      tags: [Tasks]
+      summary: Submit multi-agent chat task (async)
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message, agentKeys]
+              properties:
+                message:
+                  type: string
+                agentKeys:
+                  type: array
+                  items:
+                    type: string
+                enableBroadcast:
+                  type: boolean
+                  default: false
+                maxRounds:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                  default: 2
+      responses:
+        '202':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskAccepted'
+
+  /v1/projects/{projectId}/agents/{agentKey}/tasks:
+    post:
+      tags: [Tasks]
+      summary: Submit agent task (async)
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+        - name: agentKey
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message:
+                  type: string
+                workflowRunId:
+                  type: string
+                  format: uuid
+      responses:
+        '202':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskAccepted'
+
+  /v1/tasks/{taskId}:
+    get:
+      tags: [Tasks]
+      summary: Get task status/result
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+
+  /v1/projects/{projectId}/workflows:
+    post:
+      tags: [Workflows]
+      summary: Create workflow
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, definition]
+              properties:
+                name:
+                  type: string
+                definition:
+                  type: object
+                  additionalProperties: true
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workflow'
+
+  /v1/projects/{projectId}/workflows/{workflowId}/runs:
+    post:
+      tags: [Workflows]
+      summary: Trigger workflow run
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+        - $ref: '#/components/parameters/WorkflowId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                triggerType:
+                  type: string
+                  enum: [manual, schedule, webhook]
+                  default: manual
+                input:
+                  type: object
+                  additionalProperties: true
+      responses:
+        '202':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  runId:
+                    type: string
+                    format: uuid
+
+  /v1/workflow-runs/{runId}:
+    get:
+      tags: [Workflows]
+      summary: Get workflow run
+      parameters:
+        - name: runId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowRun'
+
+  /v1/projects/{projectId}/artifacts:
+    get:
+      tags: [Artifacts]
+      summary: List project artifacts
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Artifact'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    TenantId:
+      name: tenantId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    RuntimeId:
+      name: runtimeId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    ProjectId:
+      name: projectId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    WorkflowId:
+      name: workflowId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    TaskId:
+      name: taskId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    Tenant:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        plan: { type: string }
+        status: { type: string }
+
+    Runtime:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        tenantId: { type: string, format: uuid }
+        mode: { type: string }
+        region: { type: string }
+        status: { type: string }
+        desiredAgents: { type: integer }
+        runningAgents: { type: integer }
+        gatewayUrl: { type: string }
+
+    RuntimeAgent:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        runtimeId: { type: string, format: uuid }
+        agentKey: { type: string }
+        role: { type: string }
+        status: { type: string }
+        endpoint: { type: string }
+
+    Project:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        tenantId: { type: string, format: uuid }
+        name: { type: string }
+        description: { type: string }
+        status: { type: string }
+
+    Workflow:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        projectId: { type: string, format: uuid }
+        name: { type: string }
+        definition:
+          type: object
+          additionalProperties: true
+
+    WorkflowRun:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        workflowId: { type: string, format: uuid }
+        triggerType: { type: string }
+        status: { type: string }
+        input:
+          type: object
+          additionalProperties: true
+        output:
+          type: object
+          additionalProperties: true
+
+    TaskAccepted:
+      type: object
+      properties:
+        taskId: { type: string, format: uuid }
+        status: { type: string, example: queued }
+
+    Task:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        status: { type: string }
+        taskType: { type: string }
+        input:
+          type: object
+          additionalProperties: true
+        output:
+          type: object
+          additionalProperties: true
+        error: { type: string }
+
+    Artifact:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        projectId: { type: string, format: uuid }
+        filename: { type: string }
+        sizeBytes: { type: integer }
+        storageUri: { type: string }

@@ -1,15 +1,15 @@
-# Yinova — Share in Chat (English)
+# OpenSwarm — Share in Chat (English)
 
 ---
 
-Yinova: 64-hexagram control panel. One-command install, open and use.
+OpenSwarm: 64-hexagram control panel. One-command install, open and use.
 
 **Requirements:** macOS / Linux, Node.js 18+, npm
 
 **Install (copy the block below into terminal):**
 
 ```
-git clone https://github.com/goldct/yinova && cd yinova
+git clone https://github.com/goldct/openswarm && cd openswarm
 chmod +x install.sh start-panel.sh
 ./install.sh
 ```

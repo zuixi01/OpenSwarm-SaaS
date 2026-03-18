@@ -52,6 +52,34 @@
       "category": "development",
       "clawhubId": null,
       "mcpPackage": "@modelcontextprotocol/server-filesystem"
+    },
+    {
+      "id": "find-skills",
+      "name": "Find Skills",
+      "description": "发现和安装技能，适合做 skills 生态入口和技能推荐。",
+      "category": "automation",
+      "clawhubId": "find-skills"
+    },
+    {
+      "id": "has-anonymizer",
+      "name": "Has Anonymizer",
+      "description": "本地隐私脱敏与匿名化，适合企业文档、图片和隐私数据处理。",
+      "category": "security",
+      "clawhubId": "has-anonymizer"
+    },
+    {
+      "id": "tencentcloud-asr",
+      "name": "TencentCloud ASR",
+      "description": "语音转文字，适合客服录音、会议转录和字幕生成。",
+      "category": "automation",
+      "clawhubId": "tencentcloud-asr"
+    },
+    {
+      "id": "tencentcloud-ocr",
+      "name": "TencentCloud OCR",
+      "description": "高精度 OCR，适合文档识别、票据识别和复杂图片文字抽取。",
+      "category": "automation",
+      "clawhubId": "tencentcloud-ocr"
     }
   ]
 }

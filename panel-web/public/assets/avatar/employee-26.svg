@@ -1,0 +1,18 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="professor-26">
+  <defs>
+    <linearGradient id="g26" x1="12" y1="8" x2="112" y2="118" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f6f7fb"/>
+      <stop offset="1" stop-color="#e1e2ef"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="112" height="112" rx="20" fill="url(#g26)"/>
+  <circle cx="60" cy="56" r="22" fill="#f5c7a9"/>
+  <path d="M28 52c0-18 14-31 32-31s32 13 32 31v14H28V52z" fill="#2a2c35"/><path d="M44 28h32v8H44z" fill="#d8d8d8" opacity="0.85"/>
+  <circle cx="52" cy="58" r="2" fill="#1f2937"/>
+  <circle cx="68" cy="58" r="2" fill="#1f2937"/>
+  <path d="M53 67c2.3 2.5 11.7 2.5 14 0" stroke="#6b4f3e" stroke-width="2" stroke-linecap="round"/>
+  <rect x="43" y="53" width="13" height="8" rx="2" fill="none" stroke="#2a2f3a" stroke-width="2"/><rect x="64" y="53" width="13" height="8" rx="2" fill="none" stroke="#2a2f3a" stroke-width="2"/><rect x="56" y="56" width="8" height="2" fill="#2a2f3a"/>
+  <path d="M18 114c4-19 18-30 42-30s38 11 42 30" fill="#f8fafc"/><path d="M41 86h38l-9 28H50z" fill="#e5e7eb"/><path d="M57 86h6v13h-6z" fill="#111827"/>
+  <rect x="76" y="92" width="32" height="16" rx="8" fill="#ffffff" opacity="0.76"/>
+  <text x="92" y="103" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" font-weight="700" fill="#111827">A26</text>
+</svg>

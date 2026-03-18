@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Researcher Avatar 1">
+  <defs>
+    <linearGradient id="bg-r1" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#e6f4ef"/>
+      <stop offset="100%" stop-color="#c7dbd4"/>
+    </linearGradient>
+    <linearGradient id="coat-r1" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#f7faf8"/>
+      <stop offset="100%" stop-color="#dce8e1"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" fill="url(#bg-r1)"/>
+  <circle cx="128" cy="102" r="47" fill="#e5b796"/>
+  <path d="M80 98c0-35 20-56 48-56s48 21 48 56c-9-13-20-21-48-21s-39 8-48 21z" fill="#26313a"/>
+  <rect x="92" y="96" width="22" height="14" rx="6" fill="none" stroke="#2f3540" stroke-width="3"/>
+  <rect x="142" y="96" width="22" height="14" rx="6" fill="none" stroke="#2f3540" stroke-width="3"/>
+  <rect x="114" y="101" width="28" height="3" fill="#2f3540"/>
+  <path d="M40 230c11-34 42-54 88-54s77 20 88 54v26H40z" fill="url(#coat-r1)"/>
+  <path d="M102 182h52v10h-52z" fill="#65a08b"/>
+  <circle cx="168" cy="188" r="7" fill="#65a08b"/>
+  <circle cx="111" cy="106" r="4" fill="#2e343c"/>
+  <circle cx="145" cy="106" r="4" fill="#2e343c"/>
+</svg>

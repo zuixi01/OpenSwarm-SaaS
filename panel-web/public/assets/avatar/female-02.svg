@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Female Avatar 2">
+  <defs>
+    <linearGradient id="bg-f2" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#f2ecff"/>
+      <stop offset="100%" stop-color="#cdc7e2"/>
+    </linearGradient>
+    <linearGradient id="cloth-f2" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#3a566d"/>
+      <stop offset="100%" stop-color="#233645"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" fill="url(#bg-f2)"/>
+  <circle cx="128" cy="102" r="47" fill="#edc2a4"/>
+  <path d="M72 114c4-50 24-76 56-76s52 26 56 76c-18-17-34-24-56-24s-38 7-56 24z" fill="#4a3429"/>
+  <path d="M81 128c8 18 18 28 31 34" stroke="#4a3429" stroke-width="10" fill="none" stroke-linecap="round"/>
+  <path d="M175 128c-8 18-18 28-31 34" stroke="#4a3429" stroke-width="10" fill="none" stroke-linecap="round"/>
+  <circle cx="111" cy="108" r="4" fill="#2e343c"/>
+  <circle cx="145" cy="108" r="4" fill="#2e343c"/>
+  <path d="M111 127c8 8 26 8 34 0" stroke="#ab775a" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <path d="M40 230c11-34 42-54 88-54s77 20 88 54v26H40z" fill="url(#cloth-f2)"/>
+</svg>

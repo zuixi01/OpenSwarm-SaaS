@@ -1,6 +1,6 @@
 # Contributing
 
-Thank you for your interest in Yinova! We welcome all forms of contribution.
+Thank you for your interest in OpenSwarm! We welcome all forms of contribution.
 
 ## How to Contribute
 
@@ -8,7 +8,7 @@ Thank you for your interest in Yinova! We welcome all forms of contribution.
 
 If you found a bug or have a feature suggestion:
 
-1. Check [Issues](https://github.com/goldct/yinova/issues) for existing reports
+1. Check [Issues](https://github.com/goldct/openswarm/issues) for existing reports
 2. If none, create a new Issue with: clear description, steps to reproduce, expected vs actual behavior, environment info, logs/screenshots
 
 ### Submit Code
@@ -30,7 +30,7 @@ If you found a bug or have a feature suggestion:
 ## Dev Setup
 
 ```bash
-git clone https://github.com/goldct/yinova.git && cd yinova
+git clone https://github.com/goldct/openswarm.git && cd openswarm
 ./install.sh
 cd panel-web && npm install
 ./start-panel.sh
@@ -39,7 +39,7 @@ cd panel-web && npm install
 ## Project Structure
 
 ```
-yinova/
+openswarm/
 ├── panel-web/     # Backend + frontend
 ├── yin/            # Main gateway
 ├── hex-template/   # Hexagram template

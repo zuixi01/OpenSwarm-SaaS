@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Yinova - Mac 环境一键部署（Node.js 18+、npm）
+# OpenSwarm - Mac 环境一键部署（Node.js 18+、npm）
 # 用法：复制到终端执行，或保存为 setup-env-mac.sh 后执行：bash setup-env-mac.sh
 
 set -e
 
-echo "=== Yinova 环境检查（Mac）==="
+echo "=== OpenSwarm 环境检查（Mac）==="
 
 # 仅支持 Mac
 if [[ "$(uname)" != "Darwin" ]]; then
@@ -25,8 +25,8 @@ fi
 
 if [[ "$need_install" -eq 0 ]]; then
   echo ""
-  echo "环境已就绪。若尚未安装 Yinova，请执行："
-  echo "  git clone https://github.com/goldct/yinova && cd yinova"
+  echo "环境已就绪。若尚未安装 OpenSwarm，请执行："
+  echo "  git clone https://github.com/goldct/openswarm && cd openswarm"
   echo "  chmod +x install.sh start-panel.sh && ./install.sh"
   echo "  ./start-panel.sh"
   echo ""
@@ -54,8 +54,8 @@ brew install node
 echo ""
 echo "✓ 环境部署完成：Node $(node -v)，npm $(npm -v)"
 echo ""
-echo "请执行以下命令安装并启动 Yinova："
-echo "  git clone https://github.com/goldct/yinova && cd yinova"
+echo "请执行以下命令安装并启动 OpenSwarm："
+echo "  git clone https://github.com/goldct/openswarm && cd openswarm"
 echo "  chmod +x install.sh start-panel.sh && ./install.sh"
 echo "  ./start-panel.sh"
 echo ""

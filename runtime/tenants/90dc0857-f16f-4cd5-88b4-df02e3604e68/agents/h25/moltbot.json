@@ -1,0 +1,141 @@
+{
+  "meta": {
+    "lastTouchedVersion": "2026.1.27-beta.1"
+  },
+  "browser": {
+    "enabled": true,
+    "ssrfPolicy": {
+      "dangerouslyAllowPrivateNetwork": true,
+      "allowedHostnames": [
+        "localhost",
+        "127.0.0.1",
+        "::1"
+      ]
+    }
+  },
+  "auth": {
+    "profiles": {
+      "zai:default": {
+        "provider": "zai",
+        "mode": "api_key"
+      },
+      "moonshot:default": {
+        "provider": "moonshot",
+        "mode": "api_key"
+      }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "moonshot/kimi-k2.5",
+        "fallbacks": [
+          "zai/glm-4.7"
+        ]
+      },
+      "workspace": "/Users/shenwei/Documents/source/yinova/hexes/无妄/workspace",
+      "maxConcurrent": 4,
+      "subagents": {
+        "maxConcurrent": 8
+      },
+      "models": {
+        "moonshot/kimi-k2.5": {
+          "alias": "Kimi"
+        }
+      }
+    }
+  },
+  "tools": {
+    "web": {
+      "search": {
+        "enabled": true,
+        "provider": "brave"
+      },
+      "fetch": {
+        "enabled": true,
+        "firecrawl": {}
+      }
+    },
+    "profile": "full",
+    "alsoAllow": [
+      "group:fs",
+      "group:runtime",
+      "group:web",
+      "group:ui",
+      "group:memory",
+      "group:sessions",
+      "group:automation",
+      "group:nodes",
+      "group:messaging",
+      "group:openclaw"
+    ],
+    "exec": {
+      "security": "full",
+      "ask": "off"
+    }
+  },
+  "channels": {
+    "telegram": {
+      "enabled": false
+    }
+  },
+  "gateway": {
+    "port": 22185,
+    "mode": "local",
+    "bind": "loopback",
+    "auth": {
+      "mode": "token",
+      "token": "23c0a18a32f3322d65aa196c4f2561dc89ddad1bb38f30c7"
+    },
+    "tailscale": {
+      "mode": "off"
+    },
+    "http": {
+      "endpoints": {
+        "chatCompletions": {
+          "enabled": true
+        }
+      }
+    }
+  },
+  "skills": {
+    "install": {
+      "nodeManager": "npm"
+    }
+  },
+  "plugins": {
+    "entries": {
+      "telegram": {
+        "enabled": false
+      }
+    }
+  },
+  "models": {
+    "mode": "merge",
+    "providers": {
+      "moonshot": {
+        "baseUrl": "https://api.moonshot.cn/v1",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "kimi-k2.5",
+            "name": "Kimi K2.5",
+            "reasoning": false,
+            "input": [
+              "text",
+              "image"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 256000,
+            "maxTokens": 8192
+          }
+        ]
+      }
+    }
+  }
+}

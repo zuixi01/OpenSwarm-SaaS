@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>注册 · OpenSwarm Cloud</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: "Space Grotesk", "Noto Sans SC", "PingFang SC", sans-serif; background: radial-gradient(circle at 20% 0%, #121d35 0%, #060a14 50%, #02040a 100%); color: #e9f3ff; min-height: 100vh; display: flex; align-items: center; justify-content: center; position: relative; }
+    #starfield {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+      background: radial-gradient(circle at 30% 20%, #10233f 0%, #091325 48%, #050a16 100%);
+    }
+    #starfield canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      opacity: 0.96;
+    }
+    #starfield::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0) 54%, rgba(0, 0, 0, 0.42) 100%);
+      pointer-events: none;
+    }
+    .box { position: relative; z-index: 1; }
+    .box { padding: 24px; border: 1px solid rgba(57,208,255,0.32); border-radius: 10px; background: #0b1734; min-width: 340px; box-shadow: 0 16px 36px rgba(0,0,0,0.35); }
+    h1 { font-size: 1.15rem; color: #39d0ff; margin: 0 0 8px 0; }
+    .sub { color: #8ea9d6; font-size: 0.84rem; margin: 0 0 16px 0; }
+    input { width: 100%; padding: 10px 12px; background: rgba(0,0,0,0.4); border: 1px solid rgba(57,208,255,0.32); border-radius: 4px; color: #e9f3ff; font-size: 0.9rem; margin-bottom: 10px; }
+    button { width: 100%; padding: 10px; background: #39d0ff; color: #000; border: none; border-radius: 4px; cursor: pointer; font-size: 0.92rem; margin-top: 4px; font-weight: 700; }
+    button:hover { filter: brightness(1.1); }
+    .btn-google { display:block; width:100%; padding:10px 12px; margin-top:10px; border-radius:4px; border:1px solid rgba(255,255,255,0.18); background:#fff; color:#111827; text-align:center; text-decoration:none; font-size:0.9rem; font-weight:700; }
+    .btn-google:hover { filter:brightness(1.03); }
+    .err { color: #e08080; font-size: 0.82rem; margin-top: 8px; min-height: 1.2em; }
+    .ok { color: #7ddf9c; font-size: 0.82rem; margin-top: 8px; min-height: 1.2em; }
+    .link-row { margin-top: 12px; display: flex; justify-content: space-between; align-items: center; font-size: 0.84rem; }
+    .link-row a { color: #39d0ff; text-decoration: none; }
+    .link-row a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div id="starfield" aria-hidden="true"></div>
+  <div class="box">
+    <h1>OpenSwarm Cloud 注册</h1>
+    <p class="sub">创建你的数字员工工作台</p>
+    <input type="email" id="email" placeholder="邮箱" autocomplete="username" />
+    <input type="password" id="password" placeholder="密码（至少8位）" autocomplete="new-password" />
+    <input type="password" id="confirmPassword" placeholder="确认密码" autocomplete="new-password" />
+    <input type="text" id="tenantName" placeholder="团队名称（可选）" autocomplete="organization" />
+    <button type="button" id="btn">注册并登录</button>
+    <a id="googleBtn" class="btn-google" href="/api/auth/google/start">使用 Google 账号继续</a>
+    <div id="err" class="err"></div>
+    <div id="ok" class="ok"></div>
+    <div class="link-row">
+      <span style="color:#8ea9d6;">已有账号？</span>
+      <a href="/login.html">去登录</a>
+    </div>
+  </div>
+  <script src="/assets/dot-grid-bg.js"></script>
+  <script>
+    if (window.initDotGridBackground) {
+      window.initDotGridBackground({
+        containerId: 'starfield',
+        dotSize: 1.8,
+        gap: 24,
+        baseColor: '85,125,168',
+        activeColor: '64,211,255',
+        bgColor: '5,10,22',
+        pulse: 0.26,
+        mouseRadius: 180,
+        mouseStrength: 1
+      });
+    }
+    var emailEl = document.getElementById('email');
+    var passwordEl = document.getElementById('password');
+    var confirmPasswordEl = document.getElementById('confirmPassword');
+    var tenantNameEl = document.getElementById('tenantName');
+    var googleBtnEl = document.getElementById('googleBtn');
+    var errEl = document.getElementById('err');
+    var okEl = document.getElementById('ok');
+
+    function clearTips() {
+      errEl.textContent = '';
+      okEl.textContent = '';
+    }
+
+    function getNextPath() {
+      var sp = new URLSearchParams(location.search || '');
+      var n = sp.get('next');
+      return n || '/index.html';
+    }
+    function updateGoogleHref() {
+      googleBtnEl.href = '/api/auth/google/start?next=' + encodeURIComponent(getNextPath());
+    }
+
+    function setError(msg) {
+      errEl.textContent = msg || '请求失败';
+      okEl.textContent = '';
+    }
+
+    function setOk(msg) {
+      okEl.textContent = msg || '';
+      errEl.textContent = '';
+    }
+
+    async function doRegister() {
+      var email = emailEl.value.trim();
+      var password = passwordEl.value;
+      var confirmPassword = confirmPasswordEl.value;
+      var tenantName = tenantNameEl.value.trim();
+
+      clearTips();
+      if (!email) return setError('请输入邮箱');
+      if (!password) return setError('请输入密码');
+      if (password.length < 8) return setError('密码至少 8 位');
+      if (confirmPassword !== password) return setError('两次密码输入不一致');
+
+      try {
+        var registerRes = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: email,
+            password: password,
+            tenantName: tenantName || 'My Workspace'
+          })
+        });
+        var registerData = await registerRes.json();
+        if (!registerRes.ok || registerData.error) return setError(registerData.error || '注册失败');
+
+        var tenantId = registerData.tenant && registerData.tenant.id ? registerData.tenant.id : '';
+        var loginRes = await fetch('/api/auth/web-login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email, password: password, tenantId: tenantId || undefined })
+        });
+        var loginData = await loginRes.json();
+        if (!loginRes.ok || loginData.error) return setError(loginData.error || '自动登录失败，请手动登录');
+
+        setOk('注册成功，正在进入工作台...');
+        setTimeout(function () {
+          location.href = getNextPath();
+        }, 500);
+      } catch (_err) {
+        setError('请求失败');
+      }
+    }
+
+    document.getElementById('btn').onclick = doRegister;
+    updateGoogleHref();
+    [emailEl, passwordEl, confirmPasswordEl, tenantNameEl].forEach(function(el) {
+      el.onkeydown = function(e) { if (e.key === 'Enter') doRegister(); };
+    });
+  </script>
+</body>
+</html>

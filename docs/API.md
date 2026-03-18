@@ -1,6 +1,6 @@
 # API 调用说明
 
-Yinova 面板提供 REST API，供外部系统触发项目内卦执行。
+OpenSwarm 面板提供 REST API，供外部系统触发项目内员工执行。
 
 ## 一、端点
 
@@ -24,7 +24,7 @@ Token 在项目页「阴 · 控制台」→ API 区块 → 点击「生成 Token
 
 支持三种调用方式：
 
-### 3.1 指定卦执行（hexId + message）
+### 3.1 指定员工执行（hexId + message）
 
 ```json
 {

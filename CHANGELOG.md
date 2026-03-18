@@ -17,14 +17,14 @@
 - **部署运维**：`docs/DEPLOY.md`，环境变量、健康检查、备份、Docker
 - **安全实践**：`docs/SECURITY_BEST_PRACTICES.md`，面板鉴权、API Token、密钥占位
 - **健康检查**：`GET /api/health` 供负载均衡/监控
-- **面板鉴权**：`YINOVA_PANEL_TOKEN` 可选，`/login.html` 登录
+- **面板鉴权**：`OPENSWARM_PANEL_TOKEN` 可选，`/login.html` 登录
 - **阳页阴网关提示**：未启动时显示红色提示条
 
 ### Phase 10: Skills & Stability
 
 - **技能库管理**：`skills.html` 增删改查，`PUT /api/skills`
 - **技能模板**：`/api/skills/templates`，阳页「应用模板」
-- **卦任务重试**：agent-task 失败最多重试 3 次，间隔 2s
+- **员工任务重试**：agent-task 失败最多重试 3 次，间隔 2s
 - **阴网关离线提示**：首页、阳页显示提示条
 
 ### Phase 11: Templates & UX
@@ -40,7 +40,7 @@
 
 ### UX
 
-- **项目页「本项目卦象·启停」**：一键启动 / 一键停止按钮单独成行，更易发现
+- **项目页「本项目员工象·启停」**：一键启动 / 一键停止按钮单独成行，更易发现
 - **阴的身份定义**：yin/workspace/IDENTITY.md、SOUL.md、MEMORY.md 纳入仓库，fresh clone 后阴即带预设身份
 - **安装完成提示**：步骤更清晰（Mac 推荐双击 start-panel.command；终端用 ./start-panel.sh）；Mac 上安装结束后自动打开项目文件夹（Finder），便于找到启动文件
 - **start-panel.sh**：Mac 上启动后约 3 秒自动打开浏览器（与 start-panel.command 一致）
@@ -73,10 +73,10 @@
 
 ---
 
-## 1.0 (Yinova 1.0)
+## 1.0 (OpenSwarm 1.0)
 
 - 中英文切换（i18n）：面板、配置页、项目页支持 中/EN
-- 卦名英文显示：64 卦英文为拼音缩写（Qian、Kun、Tai 等）
+- 员工名英文显示：64 员工英文为拼音缩写（Qian、Kun、Tai 等）
 - 系统负载：移至 header 右侧、可折叠、指标去冒号
 - 上架准备：i18n.js 纳入版本库，内部文档加入 .gitignore，开源上架清单
 
@@ -86,11 +86,11 @@
 
 ### 功能
 
-- 64 卦群控面板，一键启停阴、卦
+- 64 员工群控面板，一键启停阴、员工
 - 项目内嵌 openclaw（install 从 npm 拉取，含预构建 dist）
-- 首次配置页：选择模型提供商 → 填写 API Key → 保存后自动写入阴和 64 卦 auth，无需手动配置
+- 首次配置页：选择模型提供商 → 填写 API Key → 保存后自动写入阴和 64 员工 auth，无需手动配置
 - 动态加载 openclaw 内置模型目录，覆盖市面上主流 AI 提供商（智谱、OpenAI、Anthropic、DeepSeek、Moonshot、Gemini、xAI、Mistral、Cohere、Ollama、vLLM 等）
-- 端口检测：配置页可检测主网关、卦、面板端口占用
+- 端口检测：配置页可检测主网关、员工、面板端口占用
 - Mac double-click `start-panel.command` to start and open browser
 
 ### Security

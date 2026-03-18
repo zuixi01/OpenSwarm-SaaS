@@ -1,0 +1,18 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="researcher-27">
+  <defs>
+    <linearGradient id="g27" x1="12" y1="8" x2="112" y2="118" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#effaf4"/>
+      <stop offset="1" stop-color="#d9f1e5"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="112" height="112" rx="20" fill="url(#g27)"/>
+  <circle cx="60" cy="56" r="22" fill="#e8b896"/>
+  <path d="M30 51c0-17 13-30 30-30s30 13 30 30v15H30V51z" fill="#3d2a1f"/><path d="M40 69c2 10 10 18 20 18s18-8 20-18" fill="#3d2a1f" opacity="0.88"/>
+  <circle cx="52" cy="58" r="2" fill="#1f2937"/>
+  <circle cx="68" cy="58" r="2" fill="#1f2937"/>
+  <path d="M53 67c2.3 2.5 11.7 2.5 14 0" stroke="#6b4f3e" stroke-width="2" stroke-linecap="round"/>
+  <path d="M47 62h26" stroke="#3f3f46" stroke-width="2" stroke-linecap="round"/><circle cx="52" cy="63" r="2" fill="#3f3f46"/><circle cx="68" cy="63" r="2" fill="#3f3f46"/>
+  <path d="M18 114c4-20 20-30 42-30s38 10 42 30" fill="#f3f4f6"/><path d="M56 84h8v30h-8z" fill="#16a34a"/><path d="M38 92h44" stroke="#cbd5e1" stroke-width="2"/>
+  <rect x="76" y="92" width="32" height="16" rx="8" fill="#ffffff" opacity="0.76"/>
+  <text x="92" y="103" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" font-weight="700" fill="#111827">A27</text>
+</svg>

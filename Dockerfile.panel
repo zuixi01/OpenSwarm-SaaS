@@ -1,4 +1,4 @@
-# Yinova 面板 - 仅 Web 面板（阴/卦需在宿主机或其它方式启动）
+# OpenSwarm 面板 - 仅 Web 面板（主控/数字员工需在宿主机或其它方式启动）
 FROM node:18-alpine
 
 WORKDIR /app

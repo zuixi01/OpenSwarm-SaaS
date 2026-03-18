@@ -3,205 +3,1217 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>技能库管理 · Yinova</title>
+  <title>技能库 · OpenSwarm</title>
   <script src="i18n.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet" />
   <style>
-    :root { --black:#000; --black-light:#0c0c0c; --white:#f0eeec; --white-dim:#a8a6a4; --gold:#c9a227; --gold-dim:#9a7b20; --text:var(--white); --text-dim:var(--white-dim); --border:rgba(201,162,39,0.3); }
+    :root {
+      --bg: #050913;
+      --panel: rgba(8, 18, 34, 0.88);
+      --panel-strong: rgba(6, 14, 28, 0.96);
+      --panel-soft: rgba(10, 21, 38, 0.7);
+      --line: rgba(57, 208, 255, 0.18);
+      --line-strong: rgba(57, 208, 255, 0.3);
+      --text: #e9f3ff;
+      --text-dim: #8ea5c4;
+      --gold: #39d0ff;
+      --gold-dim: #16a5d4;
+      --ok: #6df2ba;
+      --warn: #ffcf70;
+      --danger: #ff8f8f;
+      --shadow: 0 24px 64px rgba(0, 7, 18, 0.42);
+      --radius-xl: 28px;
+      --radius-lg: 18px;
+      --radius-md: 14px;
+      --radius-sm: 10px;
+    }
+
     * { box-sizing: border-box; }
-    body { margin:0; font-family:"Noto Serif SC",serif; background:#000; color:var(--text); min-height:100vh; display:flex; flex-direction:column; align-items:center; }
-    .page-content { width:100%; max-width:720px; padding:24px 20px; }
-    .top-bar { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
-    .link-back { color:var(--gold-dim); text-decoration:none; }
-    .link-back:hover { color:var(--gold); }
-    h1 { font-size:1.2rem; color:var(--gold); margin:0 0 8px 0; }
-    .sub { font-size:0.78rem; color:var(--text-dim); margin-bottom:16px; }
-    .form-card { background:var(--black-light); border:1px solid var(--border); border-radius:6px; padding:20px; margin-bottom:16px; }
-    .skill-row { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--border); }
-    .skill-row:last-child { border-bottom:none; }
-    .skill-id { font-weight:600; color:var(--gold); min-width:120px; }
-    .skill-name { flex:1; }
-    .skill-desc { font-size:0.82rem; color:var(--text-dim); }
-    .skill-actions { display:flex; gap:8px; }
-    .btn-sm { padding:4px 10px; font-size:0.78rem; background:transparent; border:1px solid var(--border); border-radius:4px; color:var(--gold); cursor:pointer; font-family:inherit; }
-    .btn-sm:hover { background:rgba(201,162,39,0.1); }
-    .btn-sm.del { color:#e08080; border-color:rgba(224,128,128,0.5); }
-    .btn-add { padding:8px 16px; background:var(--gold); color:#000; border:none; border-radius:4px; cursor:pointer; font-family:inherit; margin-bottom:12px; }
-    .btn-add:hover { filter:brightness(1.1); }
-    input, select { padding:8px 12px; background:rgba(0,0,0,0.4); border:1px solid var(--border); border-radius:4px; color:var(--text); font-size:0.9rem; }
-    .form-row { margin-bottom:10px; }
-    .form-row label { display:block; font-size:0.8rem; color:var(--gold-dim); margin-bottom:4px; }
-    .toast { position:fixed; bottom:28px; left:50%; transform:translateX(-50%); padding:12px 24px; background:var(--black-light); border:1px solid var(--gold-dim); color:var(--gold); border-radius:6px; opacity:0; transition:opacity 0.2s; z-index:9999; }
-    .toast.show { opacity:1; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      font-family: "Space Grotesk","Noto Sans SC","PingFang SC",sans-serif;
+      background:
+        radial-gradient(circle at 18% 0%, rgba(17, 33, 61, 0.96), transparent 34%),
+        radial-gradient(circle at 84% 12%, rgba(22, 89, 126, 0.32), transparent 26%),
+        linear-gradient(180deg, #07101f 0%, #040912 44%, #02050b 100%);
+      color: var(--text);
+      position: relative;
+    }
+
+    #starfield {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 30% 20%, #10233f 0%, #091325 48%, #050a16 100%);
+    }
+    #starfield canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      opacity: 0.96;
+    }
+    #starfield::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0) 54%, rgba(0, 0, 0, 0.42) 100%);
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      width: min(1480px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 26px 0 40px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+      color: var(--text-dim);
+      font-size: 0.82rem;
+    }
+    .topbar-links {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .topbar a {
+      color: var(--gold-dim);
+      text-decoration: none;
+    }
+    .topbar a:hover { color: var(--gold); }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.9fr);
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .hero-main,
+    .hero-side,
+    .section-card,
+    .modal-card {
+      background: linear-gradient(180deg, rgba(9, 18, 34, 0.92), rgba(4, 10, 19, 0.96));
+      border: 1px solid var(--line);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow);
+    }
+    .hero-main {
+      padding: 26px 28px;
+      overflow: hidden;
+      position: relative;
+    }
+    .hero-main::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 0% 0%, rgba(57, 208, 255, 0.14), transparent 28%),
+        radial-gradient(circle at 100% 0%, rgba(57, 208, 255, 0.08), transparent 24%);
+      pointer-events: none;
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(57, 208, 255, 0.24);
+      background: rgba(9, 28, 48, 0.76);
+      color: var(--gold);
+      font-size: 0.78rem;
+      letter-spacing: 0.04em;
+      margin-bottom: 14px;
+    }
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(1.9rem, 2.8vw, 3.1rem);
+      line-height: 1.04;
+      color: var(--text);
+    }
+    .hero p {
+      margin: 14px 0 0;
+      max-width: 820px;
+      color: var(--text-dim);
+      line-height: 1.72;
+      font-size: 0.98rem;
+    }
+    .hero-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 18px;
+    }
+    .btn-primary,
+    .btn-secondary,
+    .btn-ghost {
+      border: 1px solid transparent;
+      border-radius: 999px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.86rem;
+      transition: 0.18s ease;
+    }
+    .btn-primary {
+      padding: 11px 18px;
+      color: #05111d;
+      background: linear-gradient(180deg, #4ad8ff, #2fc7f5);
+      font-weight: 700;
+    }
+    .btn-primary:hover { filter: brightness(1.06); }
+    .btn-secondary {
+      padding: 11px 18px;
+      color: var(--gold);
+      background: rgba(11, 26, 45, 0.9);
+      border-color: rgba(57, 208, 255, 0.28);
+    }
+    .btn-secondary:hover,
+    .btn-ghost:hover {
+      border-color: rgba(57, 208, 255, 0.44);
+      color: var(--text);
+    }
+    .btn-ghost {
+      padding: 10px 16px;
+      color: var(--text-dim);
+      background: rgba(10, 20, 36, 0.7);
+      border-color: rgba(57, 208, 255, 0.16);
+    }
+    .hero-side {
+      padding: 22px 22px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .stat-card {
+      padding: 14px 14px 12px;
+      border-radius: var(--radius-md);
+      background: rgba(8, 19, 34, 0.82);
+      border: 1px solid rgba(57, 208, 255, 0.16);
+    }
+    .stat-label {
+      color: var(--text-dim);
+      font-size: 0.72rem;
+      letter-spacing: 0.04em;
+      margin-bottom: 6px;
+    }
+    .stat-value {
+      color: var(--text);
+      font-size: 1.3rem;
+      font-weight: 700;
+    }
+    .side-note {
+      padding: 14px 14px 12px;
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(57, 208, 255, 0.16);
+      background: rgba(8, 19, 34, 0.82);
+    }
+    .side-note h3 {
+      margin: 0 0 8px;
+      font-size: 0.92rem;
+      color: var(--gold);
+    }
+    .side-note p {
+      margin: 0;
+      color: var(--text-dim);
+      font-size: 0.8rem;
+      line-height: 1.65;
+    }
+
+    .section-card {
+      padding: 20px;
+      margin-bottom: 18px;
+    }
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .section-head h2 {
+      margin: 0;
+      font-size: 1.08rem;
+      color: var(--text);
+    }
+    .section-head p {
+      margin: 4px 0 0;
+      color: var(--text-dim);
+      font-size: 0.82rem;
+    }
+
+    .template-strip {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .template-card {
+      padding: 14px;
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(57, 208, 255, 0.14);
+      background: linear-gradient(180deg, rgba(7, 17, 32, 0.9), rgba(7, 14, 25, 0.72));
+      cursor: pointer;
+      transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+    .template-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(57, 208, 255, 0.28);
+      box-shadow: 0 16px 28px rgba(0, 8, 18, 0.28);
+    }
+    .template-card-title {
+      color: var(--text);
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .template-card-meta {
+      color: var(--text-dim);
+      font-size: 0.76rem;
+      line-height: 1.6;
+    }
+    .template-card-skills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: minmax(280px, 1fr) auto auto;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    .search-box input {
+      width: 100%;
+      padding: 13px 14px;
+      border-radius: 14px;
+      background: rgba(7, 17, 31, 0.9);
+      border: 1px solid rgba(57, 208, 255, 0.18);
+      color: var(--text);
+      font: inherit;
+      outline: none;
+    }
+    .search-box input:focus {
+      border-color: rgba(57, 208, 255, 0.42);
+      box-shadow: 0 0 0 3px rgba(57, 208, 255, 0.08);
+    }
+    .filter-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .filter-chip,
+    .mini-chip,
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(57, 208, 255, 0.16);
+      background: rgba(9, 22, 40, 0.72);
+      color: var(--text-dim);
+      font-size: 0.76rem;
+      cursor: pointer;
+      user-select: none;
+    }
+    .filter-chip.active {
+      color: var(--text);
+      border-color: rgba(57, 208, 255, 0.36);
+      background: rgba(57, 208, 255, 0.12);
+    }
+    .mini-chip,
+    .badge { cursor: default; }
+    .badge.ok {
+      border-color: rgba(109, 242, 186, 0.24);
+      color: var(--ok);
+      background: rgba(109, 242, 186, 0.08);
+    }
+    .badge.warn {
+      border-color: rgba(255, 207, 112, 0.24);
+      color: var(--warn);
+      background: rgba(255, 207, 112, 0.08);
+    }
+
+    .featured-grid,
+    .skills-grid,
+    .candidate-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .candidate-card {
+      border-radius: 18px;
+      border: 1px solid rgba(57, 208, 255, 0.16);
+      background:
+        radial-gradient(circle at 100% 0%, rgba(57, 208, 255, 0.1), transparent 30%),
+        linear-gradient(180deg, rgba(8, 18, 34, 0.9), rgba(5, 12, 22, 0.96));
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 280px;
+    }
+    .candidate-card-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    .candidate-card-source {
+      color: var(--gold-dim);
+      font-size: 0.72rem;
+      letter-spacing: 0.04em;
+    }
+    .candidate-card-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .candidate-card-actions {
+      margin-top: auto;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .skill-card {
+      border-radius: 18px;
+      border: 1px solid rgba(57, 208, 255, 0.14);
+      background: linear-gradient(180deg, rgba(8, 18, 34, 0.88), rgba(5, 12, 22, 0.92));
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      min-height: 248px;
+      gap: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+    .skill-card.featured {
+      border-color: rgba(57, 208, 255, 0.24);
+      background:
+        radial-gradient(circle at 100% 0%, rgba(57, 208, 255, 0.12), transparent 32%),
+        linear-gradient(180deg, rgba(8, 18, 34, 0.96), rgba(5, 12, 22, 0.98));
+    }
+    .skill-card-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    .skill-card-title {
+      margin: 0;
+      font-size: 1rem;
+      color: var(--text);
+    }
+    .skill-card-id {
+      margin-top: 5px;
+      color: var(--gold);
+      font-size: 0.72rem;
+      font-family: "JetBrains Mono", monospace;
+      letter-spacing: 0.03em;
+    }
+    .skill-card-desc {
+      color: var(--text-dim);
+      font-size: 0.82rem;
+      line-height: 1.68;
+      min-height: 56px;
+    }
+    .skill-card-meta,
+    .skill-card-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .skill-card-actions {
+      margin-top: auto;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+    }
+    .skill-card-actions-left,
+    .skill-card-actions-right {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .icon-btn {
+      padding: 8px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(57, 208, 255, 0.18);
+      background: rgba(9, 22, 40, 0.72);
+      color: var(--gold);
+      cursor: pointer;
+      font: inherit;
+      font-size: 0.78rem;
+    }
+    .icon-btn:hover {
+      border-color: rgba(57, 208, 255, 0.34);
+      color: var(--text);
+    }
+    .icon-btn.danger {
+      color: var(--danger);
+      border-color: rgba(255, 143, 143, 0.2);
+      background: rgba(36, 11, 15, 0.62);
+    }
+
+    .empty-state {
+      padding: 26px 18px;
+      border-radius: var(--radius-md);
+      border: 1px dashed rgba(57, 208, 255, 0.18);
+      background: rgba(7, 17, 31, 0.72);
+      color: var(--text-dim);
+      text-align: center;
+      line-height: 1.7;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      background: rgba(2, 7, 14, 0.74);
+      backdrop-filter: blur(10px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal-card {
+      width: min(560px, calc(100vw - 24px));
+      padding: 22px 22px 18px;
+    }
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .modal-head h3 {
+      margin: 0 0 6px;
+      color: var(--text);
+      font-size: 1.05rem;
+    }
+    .modal-head p {
+      margin: 0;
+      color: var(--text-dim);
+      font-size: 0.8rem;
+      line-height: 1.6;
+    }
+    .form-grid {
+      display: grid;
+      gap: 12px;
+    }
+    .form-field label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--gold-dim);
+      font-size: 0.76rem;
+      letter-spacing: 0.03em;
+    }
+    .form-field input,
+    .form-field select,
+    .form-field textarea {
+      width: 100%;
+      padding: 12px 13px;
+      border-radius: 12px;
+      border: 1px solid rgba(57, 208, 255, 0.18);
+      background: rgba(7, 17, 31, 0.88);
+      color: var(--text);
+      font: inherit;
+      outline: none;
+    }
+    .form-field input:focus,
+    .form-field select:focus,
+    .form-field textarea:focus {
+      border-color: rgba(57, 208, 255, 0.42);
+      box-shadow: 0 0 0 3px rgba(57, 208, 255, 0.08);
+    }
+    .modal-actions {
+      margin-top: 16px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 28px;
+      transform: translateX(-50%);
+      z-index: 40;
+      min-width: 180px;
+      max-width: min(520px, calc(100vw - 24px));
+      padding: 12px 18px;
+      border-radius: 14px;
+      border: 1px solid rgba(57, 208, 255, 0.24);
+      background: rgba(7, 17, 31, 0.94);
+      color: var(--text);
+      box-shadow: var(--shadow);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.18s ease;
+      text-align: center;
+    }
+    .toast.show { opacity: 1; }
+
+    @media (max-width: 1180px) {
+      .hero,
+      .featured-grid,
+      .skills-grid,
+      .candidate-grid,
+      .template-strip {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .toolbar {
+        grid-template-columns: 1fr;
+      }
+    }
+    @media (max-width: 720px) {
+      .page {
+        width: calc(100vw - 20px);
+        padding-top: 16px;
+      }
+      .hero,
+      .featured-grid,
+      .skills-grid,
+      .candidate-grid,
+      .template-strip,
+      .stat-grid {
+        grid-template-columns: 1fr;
+      }
+      .hero-main,
+      .hero-side,
+      .section-card {
+        padding: 18px;
+      }
+      .topbar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .skill-card-actions {
+        flex-direction: column;
+        align-items: stretch;
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="page-content">
-    <div class="top-bar">
-      <a href="index.html" class="link-back">← 面板首页</a>
-      <a href="yang.html" class="link-back">阳配置</a>
-    </div>
-    <h1>技能库管理</h1>
-    <p class="sub">增删改查技能，供阳配置时选用。来源：ClawHub。</p>
+  <div id="starfield" aria-hidden="true"></div>
 
-    <div class="form-card">
-      <button type="button" class="btn-add" id="btnAdd">+ 新增技能</button>
-      <div id="skillList"></div>
+  <div class="page">
+    <div class="topbar">
+      <div class="topbar-links">
+        <a href="index.html">← 面板首页</a>
+        <a href="yang.html">策略配置</a>
+      </div>
+      <div>SkillHub 风格启发：精选推荐、安全审阅、中文场景。</div>
+    </div>
+
+    <section class="hero">
+      <div class="hero-main">
+        <div class="eyebrow">精选技能库 · 场景化编排</div>
+        <h1>让技能库从“能增删改查”变成“能发现、能复用、能编排”。</h1>
+        <p>这里不再只是维护一张技能列表，而是把技能做成可发现的资产：有精选推荐、有模板组合、有分类筛选，也能直接进入编辑和删除。</p>
+        <p>重点是帮助你快速判断“这个技能适合什么场景、该和哪些技能一起用、是否值得挂到员工身上”。</p>
+        <div class="hero-actions">
+          <button type="button" class="btn-primary" id="btnAddHero">+ 新增技能</button>
+          <button type="button" class="btn-secondary" id="btnScrollTemplates">查看编排模板</button>
+          <button type="button" class="btn-ghost" id="btnScrollAll">浏览全部技能</button>
+        </div>
+      </div>
+
+      <aside class="hero-side">
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-label">技能总数</div>
+            <div class="stat-value" id="statSkills">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">组合模板</div>
+            <div class="stat-value" id="statTemplates">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">分类数量</div>
+            <div class="stat-value" id="statCategories">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">精选技能</div>
+            <div class="stat-value" id="statFeatured">0</div>
+          </div>
+        </div>
+        <div class="side-note">
+          <h3>Skills 生态规划</h3>
+          <p>Skills 生态规划：精选 Top 技能、面向中文用户的场景化推荐、经过审核的可用性背书。</p>
+        </div>
+      </aside>
+    </section>
+
+    <section class="section-card" id="templatesSection">
+      <div class="section-head">
+        <div>
+          <h2>技能编排模板</h2>
+          <p>把常用技能组合沉淀成模板，供策略配置和员工技能挂载时快速复用。</p>
+        </div>
+      </div>
+      <div class="template-strip" id="templateStrip"></div>
+    </section>
+
+    <section class="section-card">
+      <div class="section-head">
+        <div>
+          <h2>精选技能</h2>
+          <p>按模板复用频次和配置价值排序，优先展示最常用的技能。</p>
+        </div>
+      </div>
+      <div class="featured-grid" id="featuredGrid"></div>
+    </section>
+
+    <section class="section-card" id="skillhubCandidatesSection">
+      <div class="section-head">
+        <div>
+          <h2>腾讯 SkillHub 候选区</h2>
+          <p>基于腾讯 SkillHub 公开精选页和公开技能数据筛出的候选技能。这里先放适合你当前系统的能力型技能，可一键导入到本地技能库。</p>
+        </div>
+        <div class="badge ok">公开候选精选</div>
+      </div>
+      <div class="candidate-grid" id="skillhubCandidateGrid"></div>
+    </section>
+
+    <section class="section-card" id="allSkillsSection">
+      <div class="section-head">
+        <div>
+          <h2>全部技能</h2>
+          <p>支持按名称、描述、分类和来源检索。编辑和删除都在卡片内完成。</p>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <div class="search-box">
+          <input type="search" id="searchInput" placeholder="搜索技能名、描述、ID 或模板命中…" />
+        </div>
+        <div class="filter-row" id="categoryFilters"></div>
+        <button type="button" class="btn-primary" id="btnAddToolbar">+ 新增技能</button>
+      </div>
+
+      <div class="skills-grid" id="skillsGrid"></div>
+      <div class="empty-state" id="emptyState" style="display:none;">当前筛选条件下没有命中技能。可以清空搜索，或者新增一个更贴近业务场景的技能。</div>
+    </section>
+  </div>
+
+  <div class="modal-overlay" id="modalOverlay" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div>
+          <h3 id="modalTitle">编辑技能</h3>
+          <p>维护技能的名称、描述和分类。保存后会直接同步到策略配置和项目技能编排。</p>
+        </div>
+        <button type="button" class="btn-ghost" id="editCancelTop">关闭</button>
+      </div>
+      <div class="form-grid">
+        <div class="form-field">
+          <label for="editId">ID</label>
+          <input type="text" id="editId" placeholder="例如 summarize" />
+        </div>
+        <div class="form-field">
+          <label for="editName">名称</label>
+          <input type="text" id="editName" placeholder="例如 Summarize" />
+        </div>
+        <div class="form-field">
+          <label for="editDesc">描述</label>
+          <textarea id="editDesc" rows="3" placeholder="简短描述该技能适合做什么"></textarea>
+        </div>
+        <div class="form-field">
+          <label for="editCategory">分类</label>
+          <select id="editCategory">
+            <option value="productivity">productivity</option>
+            <option value="development">development</option>
+            <option value="automation">automation</option>
+            <option value="security">security</option>
+            <option value="other">other</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-ghost" id="editCancel">取消</button>
+        <button type="button" class="btn-primary" id="editSave">保存技能</button>
+      </div>
     </div>
   </div>
+
   <div class="toast" id="toast"></div>
 
-  <div class="form-card" id="modalEdit" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:1000; min-width:320px;">
-    <h3 style="margin:0 0 12px 0; color:var(--gold);">编辑技能</h3>
-    <div class="form-row">
-      <label>ID（英文，不可改）</label>
-      <input type="text" id="editId" readonly style="opacity:0.7;" />
-    </div>
-    <div class="form-row">
-      <label>名称</label>
-      <input type="text" id="editName" placeholder="如：Summarize" />
-    </div>
-    <div class="form-row">
-      <label>描述</label>
-      <input type="text" id="editDesc" placeholder="简短描述" />
-    </div>
-    <div class="form-row">
-      <label>分类</label>
-      <select id="editCategory">
-        <option value="productivity">productivity</option>
-        <option value="development">development</option>
-        <option value="automation">automation</option>
-        <option value="other">other</option>
-      </select>
-    </div>
-    <div style="display:flex; gap:8px; margin-top:12px;">
-      <button type="button" class="btn-sm" id="editCancel">取消</button>
-      <button type="button" class="btn-add" id="editSave">保存</button>
-    </div>
-  </div>
-  <div id="modalOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:999;" onclick="document.getElementById('modalEdit').style.display='none'; document.getElementById('modalOverlay').style.display='none';"></div>
-
+  <script src="/assets/dot-grid-bg.js"></script>
   <script>
-    var skillList = document.getElementById('skillList');
-    var toast = document.getElementById('toast');
-    var skills = [];
+    if (window.initDotGridBackground) {
+      window.initDotGridBackground({
+        containerId: 'starfield',
+        dotSize: 1.8,
+        gap: 24,
+        baseColor: '85,125,168',
+        activeColor: '64,211,255',
+        bgColor: '5,10,22',
+        pulse: 0.26,
+        mouseRadius: 180,
+        mouseStrength: 1
+      });
+    }
 
-    function show(msg) {
+    var state = {
+      skills: [],
+      templates: [],
+      skillhubCandidates: [
+        { id: 'summarize', name: 'Summarize', description: '文档、网页、PDF、图片、音视频摘要，适合讨论总结与报告提炼。', category: 'productivity', source: 'SkillHub Featured', clawhubId: 'summarize', homepage: 'https://clawhub.ai/summarize', downloads: 62832, installs: 1281, stars: 295 },
+        { id: 'gog', name: 'Gog', description: 'Google Workspace CLI，适合 Gmail、Calendar、Drive、Docs 等办公协作场景。', category: 'productivity', source: 'SkillHub Featured', clawhubId: 'gog', homepage: 'https://clawhub.ai/gog', downloads: 75474, installs: 1343, stars: 593 },
+        { id: 'agent-browser', name: 'Agent Browser', description: '浏览器自动化技能，适合网页抓取、点击、输入、截图和客服网页操作。', category: 'automation', source: 'SkillHub Featured', clawhubId: 'agent-browser', homepage: 'https://clawhub.ai/agent-browser', downloads: 58645, installs: 668, stars: 304 },
+        { id: 'find-skills', name: 'Find Skills', description: '发现和安装技能，适合做 skills 生态入口和技能推荐。', category: 'automation', source: 'SkillHub Featured', clawhubId: 'find-skills', homepage: 'https://clawhub.ai/find-skills', downloads: 0, installs: 0, stars: 0 },
+        { id: 'automation-workflows', name: 'Automation Workflows', description: '自动化工作流设计与编排，适合企业流程和客服 SOP 场景。', category: 'automation', source: 'SkillHub Featured', clawhubId: 'automation-workflows', homepage: 'https://clawhub.ai/automation-workflows', downloads: 0, installs: 0, stars: 0 },
+        { id: 'frontend-design', name: 'Frontend Design', description: '前端界面设计与实现，适合页面搭建、体验升级和营销展示。', category: 'development', source: 'SkillHub Featured', clawhubId: 'frontend-design', homepage: 'https://clawhub.ai/frontend-design', downloads: 0, installs: 0, stars: 0 },
+        { id: 'self-improving-agent', name: 'Self Improving Agent', description: '记录错误与修正，实现持续改进，适合自治协作和长期运行系统。', category: 'automation', source: 'SkillHub Featured', clawhubId: 'self-improving-agent', homepage: 'https://clawhub.ai/self-improving-agent', downloads: 81094, installs: 873, stars: 958 },
+        { id: 'skill-creator', name: 'Skill Creator', description: '创建和设计技能，适合你后续搭建 C 端技能生态。', category: 'development', source: 'SkillHub Featured', clawhubId: 'skill-creator', homepage: 'https://clawhub.ai/skill-creator', downloads: 0, installs: 0, stars: 0 },
+        { id: 'skill-vetter', name: 'Skill Vetter', description: '技能审核与安全评估，适合技能市场和企业安全接入。', category: 'security', source: 'SkillHub Featured', clawhubId: 'skill-vetter', homepage: 'https://clawhub.ai/skill-vetter', downloads: 0, installs: 0, stars: 0 },
+        { id: 'ui-ux-pro-max', name: 'UI UX Pro Max', description: 'UI/UX 设计与实现指导，适合产品页面与设计系统。', category: 'development', source: 'SkillHub Featured', clawhubId: 'ui-ux-pro-max', homepage: 'https://clawhub.ai/ui-ux-pro-max', downloads: 0, installs: 0, stars: 0 },
+        { id: 'lexiang-mcp-skill', name: 'Lexiang Knowledge Base', description: '企业知识库与文档操作，适合知识检索、知识管理和内部问答。', category: 'productivity', source: 'Tencent Candidate', clawhubId: 'lexiang-mcp-skill', homepage: 'https://clawhub.ai/ajaxhe/lexiang-mcp-skill', downloads: 120, installs: 1, stars: 0 },
+        { id: 'tencentcloud-ocr', name: 'TencentCloud OCR', description: '高精度 OCR，适合文档识别、票据识别和复杂图片文字抽取。', category: 'automation', source: 'Tencent Candidate', clawhubId: 'tencentcloud-ocr', homepage: 'https://clawhub.ai/zt1314p-design/tencentcloud-ocr', downloads: 13, installs: 0, stars: 0 },
+        { id: 'tencentcloud-asr', name: 'TencentCloud ASR', description: '语音转文字，适合客服录音、会议转录和字幕生成。', category: 'automation', source: 'Tencent Candidate', clawhubId: 'tencentcloud-asr', homepage: 'https://clawhub.ai/Stardusten/tencentcloud-asr', downloads: 65, installs: 1, stars: 1 },
+        { id: 'tencentcloud-tts', name: 'TencentCloud TTS', description: '文本转语音，适合语音播报、语音客服和音频内容生产。', category: 'automation', source: 'Tencent Candidate', clawhubId: 'tencentcloud-tts', homepage: 'https://clawhub.ai/jizhouli/tencentcloud-tts', downloads: 56, installs: 1, stars: 1 },
+        { id: 'edgeone-clawscan', name: 'EdgeOne ClawScan', description: '安全扫描能力，适合企业环境的安全体检与风险巡检。', category: 'security', source: 'Tencent Candidate', clawhubId: 'edgeone-clawscan', homepage: 'https://clawhub.ai/aigsec/edgeone-clawscan', downloads: 571, installs: 3, stars: 37 },
+        { id: 'has-anonymizer', name: 'Has Anonymizer', description: '本地隐私脱敏与匿名化，适合企业文档、图片和隐私数据处理。', category: 'security', source: 'Tencent Candidate', clawhubId: 'has-anonymizer', homepage: 'https://clawhub.ai/XuanwuSkill/has-anonymizer', downloads: 198, installs: 0, stars: 5 }
+      ],
+      search: '',
+      category: 'all'
+    };
+
+    var toast = document.getElementById('toast');
+    var statSkills = document.getElementById('statSkills');
+    var statTemplates = document.getElementById('statTemplates');
+    var statCategories = document.getElementById('statCategories');
+    var statFeatured = document.getElementById('statFeatured');
+    var templateStrip = document.getElementById('templateStrip');
+    var featuredGrid = document.getElementById('featuredGrid');
+    var skillhubCandidateGrid = document.getElementById('skillhubCandidateGrid');
+    var skillsGrid = document.getElementById('skillsGrid');
+    var emptyState = document.getElementById('emptyState');
+    var categoryFilters = document.getElementById('categoryFilters');
+    var searchInput = document.getElementById('searchInput');
+
+    function showToast(msg) {
       toast.textContent = msg;
       toast.classList.add('show');
-      setTimeout(function() { toast.classList.remove('show'); }, 3000);
-    }
-
-    function loadSkills() {
-      return fetch('/api/skills').then(function(r) { return r.json(); })
-        .then(function(d) {
-          skills = d.skills || [];
-          render();
-          return skills;
-        })
-        .catch(function() { show('加载失败'); });
-    }
-
-    function render() {
-      skillList.innerHTML = '';
-      skills.forEach(function(s) {
-        var row = document.createElement('div');
-        row.className = 'skill-row';
-        row.innerHTML = '<span class="skill-id">' + escapeHtml(s.id) + '</span>' +
-          '<span class="skill-name"><span class="skill-desc">' + escapeHtml(s.name || '') + '</span>' +
-          (s.description ? '<br><span class="skill-desc" style="font-size:0.75rem;">' + escapeHtml(s.description) + '</span>' : '') + '</span>' +
-          '<span class="skill-actions"><button type="button" class="btn-sm btn-edit" data-id="' + escapeHtml(s.id) + '">编辑</button><button type="button" class="btn-sm del btn-del" data-id="' + escapeHtml(s.id) + '">删除</button></span>';
-        skillList.appendChild(row);
-      });
-      skillList.querySelectorAll('.btn-edit').forEach(function(btn) {
-        btn.onclick = function() { openEdit(btn.dataset.id); };
-      });
-      skillList.querySelectorAll('.btn-del').forEach(function(btn) {
-        btn.onclick = function() { doDelete(btn.dataset.id); };
-      });
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(function() { toast.classList.remove('show'); }, 2400);
     }
 
     function escapeHtml(s) {
-      if (!s) return '';
+      if (s == null) return '';
       var d = document.createElement('div');
-      d.textContent = s;
+      d.textContent = String(s);
       return d.innerHTML;
     }
 
-    function openEdit(id) {
-      var s = skills.find(function(x) { return x.id === id; });
-      if (!s) return;
-      document.getElementById('editId').value = s.id;
-      document.getElementById('editName').value = s.name || '';
-      document.getElementById('editDesc').value = s.description || '';
-      document.getElementById('editCategory').value = s.category || 'other';
-      document.getElementById('modalEdit').style.display = 'block';
-      document.getElementById('modalOverlay').style.display = 'block';
+    function sourceLabel(skill) {
+      if (skill.mcpPackage) return 'MCP';
+      if (skill.clawhubId) return 'ClawHub';
+      return 'Custom';
+    }
+
+    function templateCountMap() {
+      var map = {};
+      (state.templates || []).forEach(function(tpl) {
+        (tpl.skillIds || []).forEach(function(id) {
+          map[id] = (map[id] || 0) + 1;
+        });
+      });
+      return map;
+    }
+
+    function categoryLabel(value) {
+      return value === 'all' ? '全部' : value;
+    }
+
+    function scoreSkill(skill, usage) {
+      var score = usage * 10;
+      if (skill.category === 'automation') score += 3;
+      if (skill.category === 'productivity') score += 2;
+      if (skill.mcpPackage) score += 2;
+      if (skill.clawhubId) score += 1;
+      return score;
+    }
+
+    function filteredSkills() {
+      var search = state.search.trim().toLowerCase();
+      return state.skills.filter(function(skill) {
+        if (state.category !== 'all' && skill.category !== state.category) return false;
+        if (!search) return true;
+        var haystack = [
+          skill.id,
+          skill.name,
+          skill.description,
+          skill.category
+        ].join(' ').toLowerCase();
+        return haystack.indexOf(search) >= 0;
+      });
+    }
+
+    function featuredSkills() {
+      var usageMap = templateCountMap();
+      return state.skills
+        .slice()
+        .sort(function(a, b) {
+          return scoreSkill(b, usageMap[b.id] || 0) - scoreSkill(a, usageMap[a.id] || 0);
+        })
+        .slice(0, 3);
+    }
+
+    function importedSkillIds() {
+      return new Set((state.skills || []).map(function(skill) { return skill.id; }));
+    }
+
+    function renderStats() {
+      var categories = new Set((state.skills || []).map(function(s) { return s.category || 'other'; }));
+      statSkills.textContent = String(state.skills.length);
+      statTemplates.textContent = String((state.templates || []).length);
+      statCategories.textContent = String(categories.size);
+      statFeatured.textContent = String(Math.min(3, state.skills.length));
+    }
+
+    function renderTemplates() {
+      if (!state.templates.length) {
+        templateStrip.innerHTML = '<div class="empty-state">当前还没有技能编排模板。</div>';
+        return;
+      }
+      templateStrip.innerHTML = state.templates.map(function(tpl) {
+        var names = (tpl.skillIds || []).map(function(id) {
+          var skill = state.skills.find(function(s) { return s.id === id; });
+          return skill ? skill.name : id;
+        });
+        return ''
+          + '<div class="template-card">'
+          + '  <div class="template-card-title">' + escapeHtml(tpl.name || tpl.id) + '</div>'
+          + '  <div class="template-card-meta">模板 ID：' + escapeHtml(tpl.id) + '<br>包含 ' + (tpl.skillIds || []).length + ' 个技能</div>'
+          + '  <div class="template-card-skills">'
+          + names.map(function(name) { return '<span class="mini-chip">' + escapeHtml(name) + '</span>'; }).join('')
+          + '  </div>'
+          + '</div>';
+      }).join('');
+    }
+
+    function renderFilters() {
+      var counts = { all: state.skills.length };
+      state.skills.forEach(function(skill) {
+        counts[skill.category] = (counts[skill.category] || 0) + 1;
+      });
+      var keys = ['all'].concat(Object.keys(counts).filter(function(key) { return key !== 'all'; }).sort());
+      categoryFilters.innerHTML = keys.map(function(key) {
+        var active = state.category === key ? ' active' : '';
+        return '<button type="button" class="filter-chip' + active + '" data-category="' + escapeHtml(key) + '">' + escapeHtml(categoryLabel(key)) + ' · ' + counts[key] + '</button>';
+      }).join('');
+      categoryFilters.querySelectorAll('[data-category]').forEach(function(btn) {
+        btn.onclick = function() {
+          state.category = btn.getAttribute('data-category');
+          renderSkills();
+          renderFilters();
+        };
+      });
+    }
+
+    function renderFeatured() {
+      var usageMap = templateCountMap();
+      var list = featuredSkills();
+      featuredGrid.innerHTML = list.map(function(skill) {
+        var usage = usageMap[skill.id] || 0;
+        return renderSkillCard(skill, {
+          featured: true,
+          usage: usage,
+          showHighlight: true
+        });
+      }).join('');
+      bindCardActions(featuredGrid);
+    }
+
+    function renderCandidates() {
+      var imported = importedSkillIds();
+      skillhubCandidateGrid.innerHTML = state.skillhubCandidates.map(function(skill) {
+        var importedFlag = imported.has(skill.id);
+        return ''
+          + '<article class="candidate-card">'
+          + '  <div class="candidate-card-top">'
+          + '    <div>'
+          + '      <h3 class="skill-card-title">' + escapeHtml(skill.name) + '</h3>'
+          + '      <div class="skill-card-id">' + escapeHtml(skill.id) + '</div>'
+          + '      <div class="candidate-card-source">' + escapeHtml(skill.source) + '</div>'
+          + '    </div>'
+          + '    <span class="badge ' + (importedFlag ? 'ok' : 'warn') + '">' + (importedFlag ? '已导入' : '候选') + '</span>'
+          + '  </div>'
+          + '  <div class="skill-card-desc">' + escapeHtml(skill.description) + '</div>'
+          + '  <div class="candidate-card-stats">'
+          + '    <span class="badge">分类 ' + escapeHtml(skill.category) + '</span>'
+          + '    <span class="badge">下载 ' + Number(skill.downloads || 0) + '</span>'
+          + '    <span class="badge">安装 ' + Number(skill.installs || 0) + '</span>'
+          + '    <span class="badge">收藏 ' + Number(skill.stars || 0) + '</span>'
+          + '  </div>'
+          + '  <div class="candidate-card-actions">'
+          + '    <button type="button" class="icon-btn" data-candidate-import="' + escapeHtml(skill.id) + '"' + (importedFlag ? ' disabled' : '') + '>' + (importedFlag ? '已导入' : '导入本地') + '</button>'
+          + (skill.homepage ? '<a class="icon-btn" href="' + escapeHtml(skill.homepage) + '" target="_blank" rel="noopener noreferrer">查看详情</a>' : '')
+          + '  </div>'
+          + '</article>';
+      }).join('');
+      skillhubCandidateGrid.querySelectorAll('[data-candidate-import]').forEach(function(btn) {
+        btn.onclick = function() {
+          importCandidate(btn.getAttribute('data-candidate-import'));
+        };
+      });
+    }
+
+    function renderSkillCard(skill, opts) {
+      opts = opts || {};
+      var usage = Number(opts.usage || 0);
+      return ''
+        + '<article class="skill-card' + (opts.featured ? ' featured' : '') + '">'
+        + '  <div class="skill-card-head">'
+        + '    <div>'
+        + '      <h3 class="skill-card-title">' + escapeHtml(skill.name || skill.id) + '</h3>'
+        + '      <div class="skill-card-id">' + escapeHtml(skill.id) + '</div>'
+        + '    </div>'
+        + '    <span class="badge ' + (opts.featured ? 'ok' : 'warn') + '">' + (opts.featured ? '精选' : '技能') + '</span>'
+        + '  </div>'
+        + '  <div class="skill-card-desc">' + escapeHtml(skill.description || '暂无描述') + '</div>'
+        + '  <div class="skill-card-meta">'
+        + '    <span class="badge">' + escapeHtml(skill.category || 'other') + '</span>'
+        + '    <span class="badge">' + escapeHtml(sourceLabel(skill)) + '</span>'
+        + '    <span class="badge ' + (usage > 0 ? 'ok' : 'warn') + '">模板引用 ' + usage + '</span>'
+        + '  </div>'
+        + '  <div class="skill-card-tags">'
+        + (skill.clawhubId ? '<span class="mini-chip">clawhub:' + escapeHtml(skill.clawhubId) + '</span>' : '')
+        + (skill.mcpPackage ? '<span class="mini-chip">' + escapeHtml(skill.mcpPackage) + '</span>' : '')
+        + '  </div>'
+        + '  <div class="skill-card-actions">'
+        + '    <div class="skill-card-actions-left">'
+        + (opts.showHighlight ? '<span class="mini-chip">适合快速挂载到员工</span>' : '<span class="mini-chip">可加入模板编排</span>')
+        + '    </div>'
+        + '    <div class="skill-card-actions-right">'
+        + '      <button type="button" class="icon-btn" data-edit-id="' + escapeHtml(skill.id) + '">编辑</button>'
+        + '      <button type="button" class="icon-btn danger" data-del-id="' + escapeHtml(skill.id) + '">删除</button>'
+        + '    </div>'
+        + '  </div>'
+        + '</article>';
+    }
+
+    function renderSkills() {
+      var usageMap = templateCountMap();
+      var list = filteredSkills();
+      skillsGrid.innerHTML = list.map(function(skill) {
+        return renderSkillCard(skill, { usage: usageMap[skill.id] || 0 });
+      }).join('');
+      emptyState.style.display = list.length ? 'none' : 'block';
+      bindCardActions(skillsGrid);
+    }
+
+    function bindCardActions(root) {
+      root.querySelectorAll('[data-edit-id]').forEach(function(btn) {
+        btn.onclick = function() { openEdit(btn.getAttribute('data-edit-id')); };
+      });
+      root.querySelectorAll('[data-del-id]').forEach(function(btn) {
+        btn.onclick = function() { doDelete(btn.getAttribute('data-del-id')); };
+      });
+    }
+
+    function renderAll() {
+      renderStats();
+      renderTemplates();
+      renderFilters();
+      renderFeatured();
+      renderCandidates();
+      renderSkills();
+    }
+
+    function loadData() {
+      return Promise.all([
+        fetch('/api/skills').then(function(r) { return r.json(); }),
+        fetch('/api/skills/templates').then(function(r) { return r.json(); })
+      ])
+        .then(function(results) {
+          state.skills = results[0].skills || [];
+          state.templates = results[1].templates || [];
+          renderAll();
+        })
+        .catch(function() {
+          showToast('技能库加载失败');
+        });
+    }
+
+    var modalOverlay = document.getElementById('modalOverlay');
+    var modalTitle = document.getElementById('modalTitle');
+    var editId = document.getElementById('editId');
+    var editName = document.getElementById('editName');
+    var editDesc = document.getElementById('editDesc');
+    var editCategory = document.getElementById('editCategory');
+
+    function closeModal() {
+      modalOverlay.classList.remove('show');
+      modalOverlay.setAttribute('aria-hidden', 'true');
+      editId.readOnly = true;
     }
 
     function openAdd() {
-      document.getElementById('editId').value = '';
-      document.getElementById('editId').readOnly = false;
-      document.getElementById('editName').value = '';
-      document.getElementById('editDesc').value = '';
-      document.getElementById('editCategory').value = 'other';
-      document.getElementById('modalEdit').style.display = 'block';
-      document.getElementById('modalOverlay').style.display = 'block';
+      modalTitle.textContent = '新增技能';
+      editId.value = '';
+      editId.readOnly = false;
+      editName.value = '';
+      editDesc.value = '';
+      editCategory.value = 'other';
+      modalOverlay.classList.add('show');
+      modalOverlay.setAttribute('aria-hidden', 'false');
+      editId.focus();
     }
 
-    document.getElementById('editCancel').onclick = function() {
-      document.getElementById('modalEdit').style.display = 'none';
-      document.getElementById('modalOverlay').style.display = 'none';
-      document.getElementById('editId').readOnly = true;
-    };
+    function openEdit(id) {
+      var skill = state.skills.find(function(item) { return item.id === id; });
+      if (!skill) return;
+      modalTitle.textContent = '编辑技能';
+      editId.value = skill.id;
+      editId.readOnly = true;
+      editName.value = skill.name || '';
+      editDesc.value = skill.description || '';
+      editCategory.value = skill.category || 'other';
+      modalOverlay.classList.add('show');
+      modalOverlay.setAttribute('aria-hidden', 'false');
+      editName.focus();
+    }
 
-    document.getElementById('editSave').onclick = function() {
-      var id = document.getElementById('editId').value.trim();
-      var name = document.getElementById('editName').value.trim();
-      var desc = document.getElementById('editDesc').value.trim();
-      var category = document.getElementById('editCategory').value;
-      if (!id) { show('ID 不能为空'); return; }
-      var list = skills.slice();
-      var idx = list.findIndex(function(x) { return x.id === id; });
-      var item = { id: id, name: name || id, description: desc, category: category };
-      if (idx >= 0) {
-        list[idx] = Object.assign({}, list[idx], item);
-      } else {
-        if (list.some(function(x) { return x.id === id; })) { show('ID 已存在'); return; }
-        list.push(item);
-      }
+    function saveSkill() {
+      var id = editId.value.trim();
+      var name = editName.value.trim();
+      var description = editDesc.value.trim();
+      var category = editCategory.value;
+      if (!id) return showToast('ID 不能为空');
+      var next = state.skills.slice();
+      var idx = next.findIndex(function(item) { return item.id === id; });
+      var prev = idx >= 0 ? next[idx] : null;
+      var item = {
+        id: id,
+        name: name || id,
+        description: description,
+        category: category
+      };
+      if (prev && prev.clawhubId) item.clawhubId = prev.clawhubId;
+      if (prev && prev.mcpPackage) item.mcpPackage = prev.mcpPackage;
+      if (idx >= 0) next[idx] = Object.assign({}, prev, item);
+      else next.push(item);
+
       fetch('/api/skills', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ skills: list })
-      }).then(function(r) { return r.json(); }).then(function(d) {
-        if (d.error) { show(d.error); return; }
-        skills = d.skills || list;
-        render();
-        document.getElementById('editCancel').click();
-        show('已保存');
-      }).catch(function() { show('保存失败'); });
-    };
+        body: JSON.stringify({ skills: next })
+      })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.error) throw new Error(data.error);
+          state.skills = data.skills || next;
+          renderAll();
+          closeModal();
+          showToast('技能已保存');
+        })
+        .catch(function(err) {
+          showToast(err && err.message ? err.message : '保存失败');
+        });
+    }
 
     function doDelete(id) {
       if (!confirm('确定删除技能 ' + id + '？')) return;
-      var list = skills.filter(function(x) { return x.id !== id; });
+      var next = state.skills.filter(function(item) { return item.id !== id; });
       fetch('/api/skills', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ skills: list })
-      }).then(function(r) { return r.json(); }).then(function(d) {
-        if (d.error) { show(d.error); return; }
-        skills = d.skills || list;
-        render();
-        show('已删除');
-      }).catch(function() { show('删除失败'); });
+        body: JSON.stringify({ skills: next })
+      })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.error) throw new Error(data.error);
+          state.skills = data.skills || next;
+          renderAll();
+          showToast('技能已删除');
+        })
+        .catch(function(err) {
+          showToast(err && err.message ? err.message : '删除失败');
+        });
     }
 
-    document.getElementById('btnAdd').onclick = openAdd;
+    function importCandidate(id) {
+      var candidate = state.skillhubCandidates.find(function(item) { return item.id === id; });
+      if (!candidate) return;
+      if (state.skills.some(function(item) { return item.id === candidate.id; })) {
+        showToast('该技能已在本地技能库中');
+        return;
+      }
+      var next = state.skills.concat([{
+        id: candidate.id,
+        name: candidate.name,
+        description: candidate.description,
+        category: candidate.category,
+        clawhubId: candidate.clawhubId || null
+      }]);
+      fetch('/api/skills', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ skills: next })
+      })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.error) throw new Error(data.error);
+          state.skills = data.skills || next;
+          renderAll();
+          showToast('已导入技能：' + candidate.name);
+        })
+        .catch(function(err) {
+          showToast(err && err.message ? err.message : '导入失败');
+        });
+    }
 
-    loadSkills();
+    document.getElementById('btnAddHero').onclick = openAdd;
+    document.getElementById('btnAddToolbar').onclick = openAdd;
+    document.getElementById('btnScrollTemplates').onclick = function() {
+      document.getElementById('templatesSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+    document.getElementById('btnScrollAll').onclick = function() {
+      document.getElementById('allSkillsSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
+    searchInput.addEventListener('input', function() {
+      state.search = searchInput.value || '';
+      renderSkills();
+    });
+
+    document.getElementById('editCancel').onclick = closeModal;
+    document.getElementById('editCancelTop').onclick = closeModal;
+    document.getElementById('editSave').onclick = saveSkill;
+    modalOverlay.addEventListener('click', function(e) {
+      if (e.target === modalOverlay) closeModal();
+    });
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && modalOverlay.classList.contains('show')) closeModal();
+    });
+
+    loadData();
   </script>
+  <script src="/assets/auth-shell.js"></script>
 </body>
 </html>

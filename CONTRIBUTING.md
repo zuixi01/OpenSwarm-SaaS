@@ -1,6 +1,6 @@
 # 贡献指南
 
-感谢您对 Yinova 项目的关注！我们欢迎各种形式的贡献。
+感谢您对 OpenSwarm 项目的关注！我们欢迎各种形式的贡献。
 
 ## 如何贡献
 
@@ -8,7 +8,7 @@
 
 如果您发现了 bug 或有功能建议，请：
 
-1. 检查 [Issues](https://github.com/goldct/yinova/issues) 中是否已有相关问题
+1. 检查 [Issues](https://github.com/goldct/openswarm/issues) 中是否已有相关问题
 2. 如果没有，请创建新的 Issue，包含：
    - 清晰的问题描述
    - 复现步骤
@@ -20,8 +20,8 @@
 
 1. **Fork 项目**
    ```bash
-   git clone https://github.com/your-username/yinova.git
-   cd yinova
+   git clone https://github.com/your-username/openswarm.git
+   cd openswarm
    ```
 
 2. **创建分支**
@@ -86,8 +86,8 @@ docs: 更新 README 安装说明
 
 1. **克隆项目**
    ```bash
-   git clone https://github.com/goldct/yinova.git
-   cd yinova
+   git clone https://github.com/goldct/openswarm.git
+   cd openswarm
    ```
 
 2. **安装依赖**
@@ -111,13 +111,13 @@ docs: 更新 README 安装说明
 ## 项目结构
 
 ```
-yinova/
+openswarm/
 ├── panel-web/          # Web 面板后端和前端
 │   ├── server.js       # Express 服务器
 │   └── public/         # 前端页面
 ├── yin/                # Main gateway node
 │   └── workspace/      # 工作目录和技能
-├── hex-template/       # 卦模板
+├── hex-template/       # 员工模板
 ├── install.sh          # 安装脚本
 └── README.md           # 项目说明
 ```

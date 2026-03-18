@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Runtime & Quota 管理 · OpenSwarm</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --black: #05070c;
+      --black-light: #0d1322;
+      --white: #e9f3ff;
+      --white-dim: #8ea5c4;
+      --cyan: #39d0ff;
+      --cyan-dim: #16a5d4;
+      --border: rgba(57, 208, 255, 0.32);
+      --ok: #7bf0b6;
+      --warn: #ffce56;
+      --danger: #ff6b7f;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Space Grotesk", "Noto Sans SC", "PingFang SC", sans-serif;
+      background: radial-gradient(circle at 20% 0%, #121d35 0%, #060a14 50%, #02040a 100%);
+      color: var(--white);
+      min-height: 100vh;
+    }
+    #starfield {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+      background: radial-gradient(circle at 30% 20%, #10233f 0%, #091325 48%, #050a16 100%);
+    }
+    #starfield canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      opacity: 0.96;
+    }
+    #starfield::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0) 54%, rgba(0, 0, 0, 0.42) 100%);
+      pointer-events: none;
+    }
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px 18px 40px;
+    }
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .links {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .link-back {
+      color: var(--cyan-dim);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .link-back:hover { color: var(--cyan); }
+    h1 {
+      margin: 0;
+      color: var(--cyan);
+      font-size: 1.22rem;
+      letter-spacing: 0.1em;
+    }
+    .sub {
+      color: var(--white-dim);
+      font-size: 0.82rem;
+      margin-bottom: 14px;
+    }
+    .card {
+      background: var(--black-light);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 14px;
+      margin-bottom: 12px;
+      box-shadow: 0 0 24px rgba(0,0,0,0.35);
+    }
+    .row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .col {
+      flex: 1;
+      min-width: 200px;
+    }
+    label {
+      display: block;
+      color: var(--cyan-dim);
+      font-size: 0.74rem;
+      margin-bottom: 4px;
+      letter-spacing: 0.06em;
+    }
+    select, input {
+      width: 100%;
+      padding: 9px 10px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,0.35);
+      color: var(--white);
+      font-family: inherit;
+      font-size: 0.88rem;
+    }
+    .btn {
+      padding: 8px 12px;
+      border-radius: 4px;
+      border: 1px solid var(--cyan-dim);
+      background: transparent;
+      color: var(--cyan);
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.8rem;
+      white-space: nowrap;
+    }
+    .btn:hover { filter: brightness(1.1); border-color: var(--cyan); }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+    .btn-danger { border-color: rgba(255,107,127,0.8); color: var(--danger); }
+    .btn-danger:hover { border-color: var(--danger); }
+    .btn-ok { border-color: rgba(123,240,182,0.7); color: var(--ok); }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .kv {
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.25);
+      padding: 8px;
+    }
+    .kv .k { color: var(--white-dim); font-size: 0.7rem; display: block; margin-bottom: 2px; }
+    .kv .v { color: var(--cyan); font-size: 0.86rem; font-family: "JetBrains Mono", monospace; }
+    .status-running { color: var(--ok); }
+    .status-stopped { color: var(--warn); }
+    .status-failed { color: var(--danger); }
+    .events {
+      max-height: 260px;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: rgba(0,0,0,0.24);
+    }
+    .event {
+      padding: 8px 10px;
+      border-bottom: 1px solid rgba(57, 208, 255, 0.18);
+      font-size: 0.76rem;
+      color: var(--white-dim);
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .event:last-child { border-bottom: none; }
+    .event .kind {
+      font-family: "JetBrains Mono", monospace;
+      color: var(--cyan);
+    }
+    .agents {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .agent-chip {
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-size: 0.74rem;
+      color: var(--white-dim);
+      background: rgba(0,0,0,0.3);
+    }
+    .agent-card {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: rgba(0,0,0,0.28);
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+    }
+    .agent-card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    .agent-card-title {
+      color: var(--cyan);
+      font-size: 0.86rem;
+      font-weight: 600;
+    }
+    .agent-card-sub {
+      color: var(--white-dim);
+      font-size: 0.72rem;
+    }
+    .agent-card-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .agent-card-actions .btn {
+      padding: 6px 10px;
+      font-size: 0.72rem;
+    }
+    .runtime-mode-note {
+      color: var(--white-dim);
+      font-size: 0.76rem;
+      margin-left: auto;
+    }
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 10px 18px;
+      border-radius: 6px;
+      background: var(--black-light);
+      border: 1px solid var(--cyan-dim);
+      color: var(--cyan);
+      font-size: 0.84rem;
+      opacity: 0;
+      transition: opacity 0.2s;
+      pointer-events: none;
+      z-index: 9999;
+    }
+    .toast.show { opacity: 1; }
+    .members {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .member-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border: 1px solid rgba(57, 208, 255, 0.18);
+      border-radius: 4px;
+      background: rgba(0,0,0,0.24);
+      color: var(--white-dim);
+      font-size: 0.78rem;
+    }
+    .member-row strong { color: var(--cyan); display: block; }
+    .member-row .meta { color: var(--white-dim); font-size: 0.72rem; display: block; margin-top: 2px; }
+    .alert-critical { color: var(--danger); }
+    .alert-warn { color: var(--warn); }
+    .alert-info { color: var(--cyan); }
+  </style>
+</head>
+<body>
+  <div id="starfield"></div>
+  <div class="page">
+    <div class="top-bar">
+      <div class="links">
+        <a href="index.html" class="link-back">← 面板首页</a>
+        <a href="projects.html" class="link-back">项目空间</a>
+        <a href="billing.html" class="link-back">计费中心</a>
+      </div>
+      <h1>Runtime & Quota 管理</h1>
+    </div>
+    <div class="sub">每租户独立 Runtime 状态、配额限流、账单事件一体化管理</div>
+
+    <div class="card">
+      <div class="row">
+        <div class="col" style="min-width:280px;">
+          <label>租户</label>
+          <select id="tenantSelect"></select>
+        </div>
+        <button class="btn" id="btnSwitchTenant">切换为当前租户</button>
+        <div class="runtime-mode-note" id="runtimeModeNote">模式: 初始化中</div>
+        <button class="btn" id="btnRefresh">刷新</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row" style="justify-content:space-between; align-items:flex-end;">
+        <div style="font-size:0.94rem;color:var(--cyan);">Runtime 状态</div>
+        <div class="row">
+          <button class="btn" id="btnHealth">健康检查</button>
+          <button class="btn btn-ok" id="btnEnsure">确保运行</button>
+          <button class="btn" id="btnStart">启动</button>
+          <button class="btn btn-danger" id="btnStop">停止</button>
+        </div>
+      </div>
+      <div class="row" style="margin-top:8px;">
+        <div class="col" style="max-width:180px;">
+          <label>期望 Agent 数</label>
+          <input id="desiredAgents" type="number" min="1" step="1" value="1" />
+        </div>
+        <button class="btn" id="btnScale" style="align-self:flex-end;">应用缩放</button>
+        <button class="btn" id="btnAgents" style="align-self:flex-end;">刷新 Agent 列表</button>
+      </div>
+      <div class="grid" id="runtimeStats"></div>
+      <div class="agents" id="agentList"></div>
+    </div>
+
+    <div class="card" id="quotaCard">
+      <div class="row" style="justify-content:space-between; align-items:flex-end;">
+        <div style="font-size:0.94rem;color:var(--cyan);">配额配置</div>
+        <button class="btn" id="btnSaveQuota">保存配额</button>
+      </div>
+      <div class="row" style="margin-top:8px;">
+        <div class="col"><label>Plan</label><input id="qPlanCode" /></div>
+        <div class="col"><label>Max Runtimes</label><input id="qMaxRuntimes" type="number" min="1" step="1" /></div>
+        <div class="col"><label>Max Agents/Runtime</label><input id="qMaxAgents" type="number" min="1" step="1" /></div>
+        <div class="col"><label>Max Concurrency</label><input id="qMaxConcurrency" type="number" min="1" step="1" /></div>
+      </div>
+      <div class="row" style="margin-top:8px;">
+        <div class="col"><label>Requests/Minute</label><input id="qRpm" type="number" min="1" step="1" /></div>
+        <div class="col"><label>Daily Request Limit</label><input id="qDaily" type="number" min="1" step="1" /></div>
+        <div class="col"><label>Daily Budget USD</label><input id="qBudget" type="number" min="0" step="0.01" /></div>
+        <div class="col"><label>Idle Recycle (minutes)</label><input id="qIdle" type="number" min="1" step="1" /></div>
+      </div>
+      <div class="row" style="margin-top:8px;">
+        <div class="col"><label>CPU Limit (millicores)</label><input id="qCpu" type="number" min="100" step="100" /></div>
+        <div class="col"><label>Memory Limit (MB)</label><input id="qMem" type="number" min="256" step="128" /></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row" style="justify-content:space-between; align-items:flex-end;">
+        <div style="font-size:0.94rem;color:var(--cyan);">告警总览</div>
+        <button class="btn" id="btnReloadAlerts">刷新告警</button>
+      </div>
+      <div class="grid" id="alertSummary"></div>
+      <div class="events" id="alertList"></div>
+    </div>
+
+    <div class="card">
+      <div class="row" style="justify-content:space-between; align-items:flex-end;">
+        <div style="font-size:0.94rem;color:var(--cyan);">节点调度</div>
+        <div class="row">
+          <div class="col" style="min-width:220px;">
+            <label>分配节点 / Region</label>
+            <select id="nodeSelect"></select>
+          </div>
+          <button class="btn" id="btnAssignNode" style="align-self:flex-end;">应用节点</button>
+          <button class="btn" id="btnReloadNodes" style="align-self:flex-end;">刷新节点</button>
+        </div>
+      </div>
+      <div class="agents" id="nodeList"></div>
+    </div>
+
+    <div class="card">
+      <div class="row" style="justify-content:space-between; align-items:flex-end;">
+        <div style="font-size:0.94rem;color:var(--cyan);">账单事件</div>
+        <button class="btn" id="btnReloadEvents">刷新事件</button>
+      </div>
+      <div class="events" id="eventList"></div>
+    </div>
+
+    <div class="card">
+      <div class="row" style="justify-content:space-between; align-items:flex-end;">
+        <div style="font-size:0.94rem;color:var(--cyan);">租户成员</div>
+        <button class="btn" id="btnReloadMembers">刷新成员</button>
+      </div>
+      <div class="row" style="margin-top:8px;">
+        <div class="col"><label>成员邮箱</label><input id="memberEmail" placeholder="member@company.com" /></div>
+        <div class="col" style="max-width:180px;">
+          <label>角色</label>
+          <select id="memberRole">
+            <option value="member">member</option>
+            <option value="admin">admin</option>
+            <option value="owner">owner</option>
+          </select>
+        </div>
+        <button class="btn" id="btnSaveMember" style="align-self:flex-end;">添加/更新成员</button>
+      </div>
+      <div class="members" id="memberList"></div>
+    </div>
+
+    <div class="card">
+      <div class="row" style="justify-content:space-between; align-items:flex-end;">
+        <div style="font-size:0.94rem;color:var(--cyan);">审计日志</div>
+        <button class="btn" id="btnReloadAudit">刷新审计</button>
+      </div>
+      <div class="events" id="auditList"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="/assets/dot-grid-bg.js"></script>
+  <script src="/assets/auth-shell.js"></script>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const state = {
+      tenants: [],
+      tenantId: '',
+      role: '',
+      runtime: null,
+      quota: null,
+      mode: 'db',
+      apiBase: '/api/runtime-admin',
+      health: null,
+      members: [],
+      audit: [],
+      nodes: [],
+      alerts: [],
+    };
+
+    function toast(msg) {
+      const t = $('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 1800);
+    }
+
+    async function api(url, options) {
+      const res = await fetch(url, options || {});
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.error) {
+        throw new Error(data.error || ('HTTP ' + res.status));
+      }
+      return data;
+    }
+
+    function runtimeApi(pathname) {
+      return state.apiBase + pathname;
+    }
+
+    function applyMode(mode) {
+      state.mode = mode === 'local' ? 'local' : 'db';
+      state.apiBase = state.mode === 'local' ? '/api/tenant-runtime' : '/api/runtime-admin';
+      $('runtimeModeNote').textContent = state.mode === 'local'
+        ? '模式: 本地租户 runtime'
+        : '模式: 数据库 runtime';
+      $('quotaCard').style.display = state.mode === 'local' ? 'none' : '';
+      $('btnSaveQuota').disabled = state.mode === 'local';
+    }
+
+    function makeStars() {
+      if (window.initDotGridBackground) {
+        window.initDotGridBackground({
+          containerId: 'starfield',
+          dotSize: 1.8,
+          gap: 24,
+          baseColor: '85,125,168',
+          activeColor: '64,211,255',
+          bgColor: '5,10,22',
+          pulse: 0.26,
+          mouseRadius: 180,
+          mouseStrength: 1
+        });
+      }
+    }
+
+    function renderTenants() {
+      const sel = $('tenantSelect');
+      sel.innerHTML = '';
+      if (!state.tenants.length) {
+        const op = document.createElement('option');
+        op.value = '';
+        op.textContent = '暂无可用租户';
+        sel.appendChild(op);
+        return;
+      }
+      state.tenants.forEach((t) => {
+        const op = document.createElement('option');
+        op.value = t.tenantId;
+        op.textContent = t.tenantName + ' · ' + t.role + ' · ' + t.planCode;
+        if (t.tenantId === state.tenantId) op.selected = true;
+        sel.appendChild(op);
+      });
+    }
+
+    function setWriteEnabled(enabled) {
+      ['btnEnsure', 'btnStart', 'btnStop', 'btnScale', 'btnSaveQuota', 'btnHealth', 'btnSaveMember', 'btnAssignNode'].forEach((id) => {
+        $(id).disabled = !enabled;
+      });
+    }
+
+    function renderRuntime() {
+      const rt = state.runtime;
+      const stats = $('runtimeStats');
+      if (!rt) {
+        stats.innerHTML = '<div class="kv"><span class="k">状态</span><span class="v">未创建 runtime</span></div>';
+        return;
+      }
+      const statusClass = rt.status === 'running'
+        ? 'status-running'
+        : ((rt.status === 'failed' || rt.status === 'partial') ? 'status-failed' : 'status-stopped');
+      stats.innerHTML = [
+        ['Runtime ID', rt.id || '-'],
+        ['Status', '<span class="' + statusClass + '">' + (rt.status || '-') + '</span>'],
+        ['Endpoint', rt.endpoint || '-'],
+        ['Gateway Port', rt.gatewayPort == null ? '-' : rt.gatewayPort],
+        ['Desired Agents', rt.desiredAgents == null ? '-' : rt.desiredAgents],
+        ['Running Agents', rt.runningAgents == null ? '-' : rt.runningAgents],
+        ['PID', rt.pid == null ? '-' : rt.pid],
+        ['Heartbeat', rt.heartbeatAt || '-'],
+        ['Health', state.health ? (state.health.ok ? 'ok' : 'degraded') : '-'],
+        ['Idle Recycle', (state.quota && state.quota.recycleIdleMinutes) ? (state.quota.recycleIdleMinutes + ' min') : '-']
+      ].map((row) => '<div class="kv"><span class="k">' + row[0] + '</span><span class="v">' + row[1] + '</span></div>').join('');
+      $('desiredAgents').value = rt.desiredAgents || 1;
+    }
+
+    function renderQuota() {
+      const q = state.quota;
+      if (state.mode === 'local') return;
+      if (!q) return;
+      $('qPlanCode').value = q.planCode || '';
+      $('qMaxRuntimes').value = q.maxRuntimes || 1;
+      $('qMaxAgents').value = q.maxAgentsPerRuntime || 1;
+      $('qMaxConcurrency').value = q.maxConcurrency || 1;
+      $('qRpm').value = q.requestsPerMinute || 20;
+      $('qDaily').value = q.dailyRequestLimit || 500;
+      $('qBudget').value = q.dailyBudgetUsd || 0;
+      $('qIdle').value = q.recycleIdleMinutes || 20;
+      $('qCpu').value = q.cpuLimitMillicores || 1000;
+      $('qMem').value = q.memoryLimitMb || 2048;
+    }
+
+    function renderMembers(items) {
+      const wrap = $('memberList');
+      if (!items || !items.length) {
+        wrap.innerHTML = '<div class="member-row"><span>暂无成员</span><span>-</span></div>';
+        return;
+      }
+      wrap.innerHTML = items.map((it) => (
+        '<div class="member-row">'
+          + '<div><strong>' + (it.email || it.userId || '-') + '</strong><span class="meta">' + (it.userId || '-') + ' · ' + (it.userStatus || 'active') + '</span></div>'
+          + '<div>' + (it.role || 'member') + '</div>'
+        + '</div>'
+      )).join('');
+    }
+
+    function renderAlertSummary(summary) {
+      const wrap = $('alertSummary');
+      const s = summary || { total: 0, critical: 0, warn: 0, info: 0 };
+      wrap.innerHTML = [
+        ['总数', s.total, 'alert-info'],
+        ['Critical', s.critical, 'alert-critical'],
+        ['Warn', s.warn, 'alert-warn'],
+        ['Info', s.info, 'alert-info']
+      ].map((row) => '<div class="kv"><span class="k">' + row[0] + '</span><span class="v ' + row[2] + '">' + row[1] + '</span></div>').join('');
+    }
+
+    function renderEvents(items) {
+      const wrap = $('eventList');
+      if (!items || !items.length) {
+        wrap.innerHTML = '<div class="event"><span>暂无事件</span><span>-</span></div>';
+        return;
+      }
+      wrap.innerHTML = items.map((it) => {
+        return '<div class="event">'
+          + '<div><span class="kind">' + (it.eventType || '-') + '</span> '
+          + (it.metadata && typeof it.metadata === 'object' ? JSON.stringify(it.metadata) : '') + '</div>'
+          + '<div>' + (it.createdAt || '-') + '</div>'
+          + '</div>';
+      }).join('');
+    }
+
+    function renderAudit(items) {
+      const wrap = $('auditList');
+      if (!items || !items.length) {
+        wrap.innerHTML = '<div class="event"><span>暂无审计日志</span><span>-</span></div>';
+        return;
+      }
+      wrap.innerHTML = items.map((it) => {
+        return '<div class="event">'
+          + '<div><span class="kind">' + (it.action || '-') + '</span> '
+          + (it.actorEmail || '') + ' '
+          + (it.resourceType || '-') + '/' + (it.resourceId || '-') + ' '
+          + ((it.metadata && typeof it.metadata === 'object') ? JSON.stringify(it.metadata) : '') + '</div>'
+          + '<div>' + (it.createdAt || '-') + '</div>'
+          + '</div>';
+      }).join('');
+    }
+
+    function renderAlerts(items) {
+      const wrap = $('alertList');
+      if (!items || !items.length) {
+        wrap.innerHTML = '<div class="event"><span>暂无告警</span><span>-</span></div>';
+        return;
+      }
+      wrap.innerHTML = items.map((it) => {
+        const cls = it.level === 'critical' ? 'alert-critical' : (it.level === 'warn' ? 'alert-warn' : 'alert-info');
+        return '<div class="event">'
+          + '<div><span class="kind ' + cls + '">' + (it.title || it.code || '-') + '</span> ' + (it.detail || '') + '</div>'
+          + '<div>' + (it.level || '-') + '</div>'
+          + '</div>';
+      }).join('');
+    }
+
+    function renderNodes(items) {
+      const wrap = $('nodeList');
+      const sel = $('nodeSelect');
+      sel.innerHTML = '';
+      if (!items || !items.length) {
+        sel.innerHTML = '<option value="local">local</option>';
+        wrap.innerHTML = '<span class="agent-chip">暂无节点信息</span>';
+        return;
+      }
+      items.forEach((it) => {
+        const op = document.createElement('option');
+        op.value = it.region || 'local';
+        op.textContent = (it.region || 'local') + (it.assigned ? ' · 当前' : '');
+        if (it.assigned) op.selected = true;
+        sel.appendChild(op);
+      });
+      wrap.innerHTML = items.map((it) => (
+        '<div class="agent-card">'
+          + '<div class="agent-card-head">'
+            + '<div>'
+              + '<div class="agent-card-title">' + (it.region || 'local') + '</div>'
+              + '<div class="agent-card-sub">' + (it.assigned ? '当前已分配' : '可调度节点') + '</div>'
+            + '</div>'
+            + '<span class="agent-chip">' + (it.failedCount || 0) + ' failed</span>'
+          + '</div>'
+          + '<div class="agent-card-sub">runtimes: ' + (it.runtimeCount || 0) + ' · running: ' + (it.runningCount || 0) + '</div>'
+        + '</div>'
+      )).join('');
+    }
+
+    function renderAgents(items) {
+      const wrap = $('agentList');
+      if (!items || !items.length) {
+        wrap.innerHTML = '<span class="agent-chip">无 agent</span>';
+        return;
+      }
+      wrap.innerHTML = items.map((a) => {
+        const statusClass = a.status === 'running' ? 'status-running' : 'status-stopped';
+        const managed = a.managed ? '<span class="agent-chip">托管</span>' : '<span class="agent-chip">发现</span>';
+        return ''
+          + '<div class="agent-card">'
+          +   '<div class="agent-card-head">'
+          +     '<div>'
+          +       '<div class="agent-card-title">' + (a.role || a.agentKey || '-') + '</div>'
+          +       '<div class="agent-card-sub">' + (a.agentKey || '-') + ' · <span class="' + statusClass + '">' + (a.status || '-') + '</span></div>'
+          +     '</div>'
+          +     managed
+          +   '</div>'
+          +   '<div class="agent-card-sub">端口 ' + (a.port == null ? '-' : a.port) + '</div>'
+          +   '<div class="agent-card-actions">'
+          +     '<button class="btn" data-agent-start="' + (a.agentId || '') + '">启动</button>'
+          +     '<button class="btn btn-danger" data-agent-stop="' + (a.agentId || '') + '">停止</button>'
+          +   '</div>'
+          + '</div>';
+      }).join('');
+      wrap.querySelectorAll('[data-agent-start]').forEach((node) => {
+        node.addEventListener('click', async () => {
+          try {
+            await startRuntime(node.getAttribute('data-agent-start'));
+            toast('worker 已启动');
+          } catch (err) {
+            toast(err.message || 'worker 启动失败');
+          }
+        });
+      });
+      wrap.querySelectorAll('[data-agent-stop]').forEach((node) => {
+        node.addEventListener('click', async () => {
+          try {
+            await stopRuntime(node.getAttribute('data-agent-stop'));
+            toast('worker 已停止');
+          } catch (err) {
+            toast(err.message || 'worker 停止失败');
+          }
+        });
+      });
+    }
+
+    async function loadTenants() {
+      let data;
+      try {
+        data = await api('/api/runtime-admin/tenants');
+        applyMode('db');
+      } catch (err) {
+        const message = String(err.message || '');
+        if (!/DATABASE_URL|not configured/i.test(message)) throw err;
+        data = await api('/api/tenant-runtime/tenants');
+        applyMode('local');
+      }
+      state.tenants = Array.isArray(data.items) ? data.items : [];
+      if (!state.tenantId && state.tenants.length) state.tenantId = state.tenants[0].tenantId;
+      renderTenants();
+    }
+
+    async function loadOverview() {
+      if (!state.tenantId) return;
+      const data = await api(runtimeApi('/overview?tenantId=' + encodeURIComponent(state.tenantId)));
+      state.role = data.role || 'member';
+      state.runtime = data.runtime || null;
+      state.quota = data.quota || null;
+      state.health = null;
+      renderRuntime();
+      renderQuota();
+      renderEvents(data.events || []);
+      await loadMembers();
+      await loadAudit();
+      await loadNodes();
+      await loadAlerts();
+      setWriteEnabled(state.mode === 'local' || state.role === 'owner' || state.role === 'admin' || state.role === 'platform_admin');
+      await loadAgents();
+    }
+
+    async function loadAgents() {
+      if (!state.tenantId) return;
+      const data = await api(runtimeApi('/runtime/agents?tenantId=' + encodeURIComponent(state.tenantId)));
+      renderAgents(data.items || []);
+    }
+
+    async function reloadEvents() {
+      if (!state.tenantId) return;
+      const data = await api(runtimeApi('/events?tenantId=' + encodeURIComponent(state.tenantId) + '&limit=50'));
+      renderEvents(data.items || []);
+    }
+
+    async function loadMembers() {
+      if (!state.tenantId) return;
+      const data = await api(runtimeApi('/members?tenantId=' + encodeURIComponent(state.tenantId)));
+      state.members = data.items || [];
+      renderMembers(state.members);
+    }
+
+    async function loadAudit() {
+      if (!state.tenantId) return;
+      const data = await api(runtimeApi('/audit?tenantId=' + encodeURIComponent(state.tenantId) + '&limit=50'));
+      state.audit = data.items || [];
+      renderAudit(state.audit);
+    }
+
+    async function loadNodes() {
+      if (!state.tenantId || state.mode === 'local') {
+        renderNodes([{ region: 'local', assigned: true, runtimeCount: state.runtime ? 1 : 0, runningCount: state.runtime && state.runtime.status === 'running' ? 1 : 0, failedCount: 0 }]);
+        return;
+      }
+      const data = await api(runtimeApi('/nodes?tenantId=' + encodeURIComponent(state.tenantId)));
+      state.nodes = data.items || [];
+      renderNodes(state.nodes);
+    }
+
+    async function loadAlerts() {
+      if (!state.tenantId || state.mode === 'local') {
+        renderAlertSummary({ total: 0, critical: 0, warn: 0, info: 0 });
+        renderAlerts([]);
+        return;
+      }
+      const data = await api(runtimeApi('/alerts?tenantId=' + encodeURIComponent(state.tenantId)));
+      state.alerts = data.items || [];
+      renderAlertSummary(data.summary || null);
+      renderAlerts(state.alerts);
+    }
+
+    async function saveMember() {
+      if (!state.tenantId) return;
+      const email = $('memberEmail').value.trim();
+      const role = $('memberRole').value;
+      if (!email) throw new Error('请填写成员邮箱');
+      await api(runtimeApi('/members'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenantId: state.tenantId, email, role })
+      });
+      $('memberEmail').value = '';
+      await loadMembers();
+      await loadAudit();
+    }
+
+    async function switchTenant() {
+      if (!state.tenantId || state.mode === 'local') {
+        toast('当前模式无需切换租户');
+        return;
+      }
+      await api('/api/auth/web-switch-tenant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenantId: state.tenantId })
+      });
+    }
+
+    async function assignNode() {
+      if (!state.tenantId || state.mode === 'local') {
+        toast('本地模式仅支持 local 节点');
+        return;
+      }
+      await api(runtimeApi('/runtime/assign-node'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenantId: state.tenantId, region: $('nodeSelect').value || 'local' })
+      });
+      await loadOverview();
+      await loadNodes();
+      await loadAudit();
+    }
+
+    async function checkHealth() {
+      if (!state.tenantId) return null;
+      const data = await api(runtimeApi('/runtime/health?tenantId=' + encodeURIComponent(state.tenantId)));
+      state.health = data || null;
+      renderRuntime();
+      return data;
+    }
+
+    async function ensureRuntime() {
+      if (!state.tenantId) return;
+      const desiredAgents = Math.max(1, parseInt($('desiredAgents').value, 10) || 1);
+      await api(runtimeApi('/runtime/ensure'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenantId: state.tenantId, desiredAgents })
+      });
+      toast('runtime 已确保运行');
+      await loadOverview();
+    }
+
+    async function startRuntime(agentId) {
+      if (!state.tenantId) return;
+      await api(runtimeApi('/runtime/start'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenantId: state.tenantId, agentId: agentId || null })
+      });
+      await loadOverview();
+    }
+
+    async function stopRuntime(agentId) {
+      if (!state.tenantId) return;
+      await api(runtimeApi('/runtime/stop'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenantId: state.tenantId, agentId: agentId || null })
+      });
+      await loadOverview();
+    }
+
+    async function scaleRuntime() {
+      if (!state.tenantId) return;
+      const desiredAgents = Math.max(1, parseInt($('desiredAgents').value, 10) || 1);
+      await api(runtimeApi('/runtime/scale'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenantId: state.tenantId, desiredAgents })
+      });
+      toast('runtime 缩放已应用');
+      await loadOverview();
+    }
+
+    async function saveQuota() {
+      if (state.mode === 'local') {
+        toast('本地租户 runtime 模式不支持 quota 配置');
+        return;
+      }
+      if (!state.tenantId) return;
+      const body = {
+        tenantId: state.tenantId,
+        planCode: $('qPlanCode').value.trim(),
+        maxRuntimes: parseInt($('qMaxRuntimes').value, 10) || 1,
+        maxAgentsPerRuntime: parseInt($('qMaxAgents').value, 10) || 1,
+        maxConcurrency: parseInt($('qMaxConcurrency').value, 10) || 1,
+        requestsPerMinute: parseInt($('qRpm').value, 10) || 1,
+        dailyRequestLimit: parseInt($('qDaily').value, 10) || 1,
+        dailyBudgetUsd: parseFloat($('qBudget').value) || 0,
+        recycleIdleMinutes: parseInt($('qIdle').value, 10) || 1,
+        cpuLimitMillicores: parseInt($('qCpu').value, 10) || 100,
+        memoryLimitMb: parseInt($('qMem').value, 10) || 256,
+      };
+      await api(runtimeApi('/quota'), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      toast('配额已保存');
+      await loadOverview();
+    }
+
+    async function init() {
+      makeStars();
+      window.addEventListener('resize', makeStars, { passive: true });
+      try {
+        await loadTenants();
+        await loadOverview();
+      } catch (err) {
+        toast(err.message || '初始化失败');
+      }
+
+      $('tenantSelect').addEventListener('change', async (e) => {
+        state.tenantId = e.target.value;
+        try { await loadOverview(); } catch (err) { toast(err.message || '切换租户失败'); }
+      });
+      $('btnRefresh').addEventListener('click', async () => {
+        try { await loadOverview(); toast('已刷新'); } catch (err) { toast(err.message || '刷新失败'); }
+      });
+      $('btnEnsure').addEventListener('click', async () => {
+        try { await ensureRuntime(); } catch (err) { toast(err.message || 'ensure 失败'); }
+      });
+      $('btnStart').addEventListener('click', async () => {
+        try { await startRuntime(); toast('runtime 已启动'); } catch (err) { toast(err.message || '启动失败'); }
+      });
+      $('btnStop').addEventListener('click', async () => {
+        try { await stopRuntime(); toast('runtime 已停止'); } catch (err) { toast(err.message || '停止失败'); }
+      });
+      $('btnHealth').addEventListener('click', async () => {
+        try {
+          const data = await checkHealth();
+          toast(data && data.ok ? '健康检查通过' : 'runtime 健康降级');
+        } catch (err) {
+          toast(err.message || '健康检查失败');
+        }
+      });
+      $('btnScale').addEventListener('click', async () => {
+        try { await scaleRuntime(); } catch (err) { toast(err.message || '缩放失败'); }
+      });
+      $('btnSaveQuota').addEventListener('click', async () => {
+        try { await saveQuota(); } catch (err) { toast(err.message || '保存配额失败'); }
+      });
+      $('btnAgents').addEventListener('click', async () => {
+        try { await loadAgents(); toast('agent 列表已刷新'); } catch (err) { toast(err.message || '刷新 agent 失败'); }
+      });
+      $('btnReloadEvents').addEventListener('click', async () => {
+        try { await reloadEvents(); toast('事件已刷新'); } catch (err) { toast(err.message || '刷新事件失败'); }
+      });
+      $('btnReloadMembers').addEventListener('click', async () => {
+        try { await loadMembers(); toast('成员已刷新'); } catch (err) { toast(err.message || '刷新成员失败'); }
+      });
+      $('btnSaveMember').addEventListener('click', async () => {
+        try { await saveMember(); toast('成员已保存'); } catch (err) { toast(err.message || '保存成员失败'); }
+      });
+      $('btnReloadAudit').addEventListener('click', async () => {
+        try { await loadAudit(); toast('审计已刷新'); } catch (err) { toast(err.message || '刷新审计失败'); }
+      });
+      $('btnSwitchTenant').addEventListener('click', async () => {
+        try { await switchTenant(); toast('已切换当前租户'); } catch (err) { toast(err.message || '切换租户失败'); }
+      });
+      $('btnReloadNodes').addEventListener('click', async () => {
+        try { await loadNodes(); toast('节点已刷新'); } catch (err) { toast(err.message || '刷新节点失败'); }
+      });
+      $('btnAssignNode').addEventListener('click', async () => {
+        try { await assignNode(); toast('节点分配已更新'); } catch (err) { toast(err.message || '分配节点失败'); }
+      });
+      $('btnReloadAlerts').addEventListener('click', async () => {
+        try { await loadAlerts(); toast('告警已刷新'); } catch (err) { toast(err.message || '刷新告警失败'); }
+      });
+    }
+
+    init();
+  </script>
+</body>
+</html>

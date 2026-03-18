@@ -1,6 +1,6 @@
-# Yinova 技术路线图
+# OpenSwarm 技术路线图
 
-> 阴 = 运行时 + 枢纽 | 阳 = 配置 Agent (ClawDBot) | 卦 = 执行单元
+> 阴 = 运行时 + 枢纽 | 阳 = 配置 Agent (ClawDBot) | 员工 = 执行单元
 
 ## 一、目标架构
 
@@ -14,7 +14,7 @@
          ┌───────────────────┼───────────────────┐
          ▼                   ▼                   ▼
     ┌─────────┐         ┌─────────┐         ┌─────────┐
-    │  卦 A   │         │  卦 B   │         │  卦 C   │
+    │  员工 A   │         │  员工 B   │         │  员工 C   │
     │ Skill   │         │ Skill   │         │ Skill   │
     │ Tool    │         │ Tool    │         │ Tool    │
     └─────────┘         └─────────┘         └─────────┘
@@ -29,7 +29,7 @@
 
 ## 二、能力清单
 
-| 能力 | 阴（Yin） | 阳（Yang） | 卦（Hex） |
+| 能力 | 阴（Yin） | 阳（Yang） | 员工（Hex） |
 |------|-----------|------------|-----------|
 | **Skill** | 运行时挂载、注入 | 自动推理配置 | 执行 |
 | **Schedule** | 调度器执行 | 自动推理配置 | 被触发执行 |
@@ -48,25 +48,25 @@
 
 - [x] 阴：Gateway、TUI、worker 管理
 - [x] 阳：技能组装 UI（手动勾选）
-- [x] 卦：skill 挂载、任务执行
+- [x] 员工：skill 挂载、任务执行
 - [x] 项目：hexIds、hexSkills、tasks
 
 ---
 
 ### 阶段 1：Config 统一与阴可视化基础
 
-**目标**：统一项目/卦配置存储，在项目页展示阴的基础能力
+**目标**：统一项目/员工配置存储，在项目页展示阴的基础能力
 
 **1.1 数据模型扩展**
 
 - `project.config`：项目级配置（env、密钥占位、自定义键值）
-- `project.hexConfig`：`{ hexId: { key: value } }` 卦级配置
+- `project.hexConfig`：`{ hexId: { key: value } }` 员工级配置
 - 保留 `project.hexSkills`，与 config 分离
 
 **1.2 阴可视化 - 项目页 Dashboard**
 
 - 在 `project.html` 增加「阴 · 控制台」卡片
-- 展示：当前项目配置、卦技能列表、卦配置概览
+- 展示：当前项目配置、员工技能列表、员工配置概览
 - 预留：Schedule、Trigger、API、Memory 占位区块（后续实现）
 
 **1.3 API**
@@ -89,7 +89,7 @@
 **2.2 阴服务**
 
 - 在 `panel-web/server.js` 或独立 `scheduler.js` 内使用 `node-cron`
-- 按 project.schedules 注册 cron，到期触发对应卦的 task
+- 按 project.schedules 注册 cron，到期触发对应员工的 task
 
 **2.3 阳 UI**
 
@@ -101,7 +101,7 @@
 - `PUT /api/projects/:id` 支持 `schedules`
 - `POST /api/projects/:id/schedules/:scheduleId/trigger` 手动触发（测试用）
 
-**产出**：项目可配置定时任务，阴按时触发卦执行
+**产出**：项目可配置定时任务，阴按时触发员工执行
 
 ---
 
@@ -116,7 +116,7 @@
 **3.2 阴服务**
 
 - 新增 `POST /api/webhooks/:projectId/:triggerId` 接收 webhook
-- 触发时查找 project.triggers，匹配后 dispatch 到对应卦
+- 触发时查找 project.triggers，匹配后 dispatch 到对应员工
 
 **3.3 阳 UI**
 
@@ -127,7 +127,7 @@
 - `PUT /api/projects/:id` 支持 `triggers`
 - 生成 webhook URL 供外部调用
 
-**产出**：外部系统可通过 webhook 触发项目内卦执行
+**产出**：外部系统可通过 webhook 触发项目内员工执行
 
 ---
 
@@ -142,7 +142,7 @@
 
 **4.2 阳 Agent 技能**
 
-- 读：项目描述、任务列表、卦列表、技能库、schedule/trigger 模板
+- 读：项目描述、任务列表、员工列表、技能库、schedule/trigger 模板
 - 写：调用 `PUT /api/projects/:id` 更新 hexSkills、schedules、triggers、config
 
 **4.3 触发时机**
@@ -169,14 +169,14 @@
 
 **5.2 阴服务**
 
-- 卦任务完成时，检查是否在 workflow 的 steps 中
-- 若有 next，自动触发下一卦的 task
+- 员工任务完成时，检查是否在 workflow 的 steps 中
+- 若有 next，自动触发下一员工的 task
 
 **5.3 阳 UI**
 
 - 项目页「流程」区块：简单 DAG 或链式展示
 
-**产出**：项目可配置任务流，卦按顺序执行
+**产出**：项目可配置任务流，员工按顺序执行
 
 ---
 
@@ -187,14 +187,14 @@
 **6.1 Memory**
 
 - 阴：提供简单 KV 或向量存储接口
-- 卦：通过 skill 读/写 memory
+- 员工：通过 skill 读/写 memory
 
 **6.2 API**
 
 - 阴：`/api/projects/:id/run` 对外暴露，支持 token 鉴权
 - 项目页展示 API 端点、调用示例
 
-**产出**：卦可持久化记忆，外部系统可调用阴 API 触发任务
+**产出**：员工可持久化记忆，外部系统可调用阴 API 触发任务
 
 ---
 
@@ -214,7 +214,7 @@
 ## 五、文件与模块规划
 
 ```
-yinova/
+openswarm/
 ├── panel-web/
 │   ├── server.js              # 扩展：scheduler、webhook、trigger 路由
 │   ├── scheduler.js            # 新建：定时调度（可选独立）
@@ -240,7 +240,7 @@ yinova/
 
 ## 六、下一步（阶段 1–6 已完成）
 
-1. **修复与验证**：卦·技能加载失败时显示重试、阴网关未启动时阳配置提示 ✅
+1. **修复与验证**：员工·技能加载失败时显示重试、阴网关未启动时阳配置提示 ✅
 2. **Config 可编辑**：阴控制台配置卡片支持编辑键值对 ✅
 3. **文档**：补充阴控制台、阳、API 使用说明 ✅
 

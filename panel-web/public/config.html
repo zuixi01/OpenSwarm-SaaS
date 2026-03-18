@@ -3,29 +3,29 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>配置 · Yinova</title>
+  <title>配置 · OpenSwarm</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --black: #000000;
-      --black-light: #0c0c0c;
-      --white: #f0eeec;
-      --white-dim: #a8a6a4;
-      --gold: #c9a227;
-      --gold-dim: #9a7b20;
+      --black: #05070c;
+      --black-light: #0d1322;
+      --white: #e9f3ff;
+      --white-dim: #8ea5c4;
+      --gold: #39d0ff;
+      --gold-dim: #16a5d4;
       --text: var(--white);
       --text-dim: var(--white-dim);
-      --border: rgba(201, 162, 39, 0.3);
-      --glow: rgba(201, 162, 39, 0.45);
+      --border: rgba(57, 208, 255, 0.32);
+      --glow: rgba(57, 208, 255, 0.45);
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
       padding: 0;
-      font-family: "Noto Serif SC", "PingFang SC", serif;
-      background: #000;
+      font-family: "Space Grotesk", "Noto Sans SC", "PingFang SC", sans-serif;
+      background: radial-gradient(circle at 20% 0%, #121d35 0%, #060a14 50%, #02040a 100%);
       color: var(--text);
       min-height: 100vh;
       display: flex;
@@ -39,23 +39,38 @@
       z-index: 0;
       pointer-events: none;
       overflow: hidden;
+      background: radial-gradient(circle at 30% 20%, #10233f 0%, #091325 48%, #050a16 100%);
     }
-    .star {
+    #starfield canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      opacity: 0.96;
+    }
+    #starfield::after {
+      content: '';
       position: absolute;
-      border-radius: 50%;
-      background: rgba(255, 228, 200, 0.88);
-      animation: star-breathe var(--dur, 2.5s) ease-in-out var(--delay, 0s) infinite;
-    }
-    @keyframes star-breathe {
-      0%, 100% { filter: brightness(0.7); }
-      50% { filter: brightness(1.05); }
+      inset: 0;
+      background: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0) 54%, rgba(0, 0, 0, 0.42) 100%);
+      pointer-events: none;
     }
     .page-content {
       position: relative;
       z-index: 1;
       width: 100%;
-      max-width: 480px;
+      max-width: 1220px;
       padding: 40px 24px;
+    }
+    .page-shell {
+      display: grid;
+      grid-template-columns: minmax(0, 1.02fr) minmax(340px, 0.98fr);
+      gap: 22px;
+      align-items: start;
+    }
+    .form-columns {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 18px;
     }
     h1 {
       font-size: 1.25rem;
@@ -73,10 +88,14 @@
     .form-card {
       background: var(--black-light);
       border: 1px solid var(--border);
-      border-radius: 6px;
+      border-radius: 12px;
       padding: 24px;
       margin-bottom: 20px;
       box-shadow: 0 0 24px rgba(0,0,0,0.3);
+    }
+    .form-card.side-card {
+      position: sticky;
+      top: 24px;
     }
     .form-row {
       margin-bottom: 16px;
@@ -107,6 +126,107 @@
     .form-row input::placeholder {
       color: var(--text-dim);
       opacity: 0.7;
+    }
+    .section-title {
+      margin: 0 0 14px;
+      color: var(--gold);
+      font-size: 0.9rem;
+      letter-spacing: 0.12em;
+    }
+    .divider {
+      margin: 22px 0 18px;
+      border-top: 1px solid rgba(57, 208, 255, 0.18);
+    }
+    .card-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .card-kicker {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(57, 208, 255, 0.22);
+      background: rgba(57, 208, 255, 0.08);
+      color: var(--gold);
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    .switch-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .switch-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 12px 14px;
+      border: 1px solid rgba(57, 208, 255, 0.14);
+      border-radius: 8px;
+      background: rgba(0,0,0,0.18);
+    }
+    .switch-copy {
+      min-width: 0;
+    }
+    .switch-title {
+      font-size: 0.88rem;
+      color: var(--text);
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .switch-hint {
+      font-size: 0.74rem;
+      color: var(--text-dim);
+      line-height: 1.5;
+    }
+    .toggle {
+      position: relative;
+      width: 50px;
+      height: 28px;
+      flex-shrink: 0;
+    }
+    .toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+      position: absolute;
+    }
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(57, 208, 255, 0.22);
+      transition: 0.2s ease;
+      cursor: pointer;
+    }
+    .toggle-slider::after {
+      content: "";
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #d7f8ff;
+      transition: 0.2s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    }
+    .toggle input:checked + .toggle-slider {
+      background: rgba(57, 208, 255, 0.28);
+      border-color: rgba(57, 208, 255, 0.5);
+      box-shadow: 0 0 12px rgba(57, 208, 255, 0.12);
+    }
+    .toggle input:checked + .toggle-slider::after {
+      transform: translateX(22px);
+      background: var(--gold);
     }
     .form-row select.form-select {
       width: 100%;
@@ -158,7 +278,7 @@
       cursor: pointer;
       letter-spacing: 0.05em;
     }
-    .btn-check-ports:hover { border-color: var(--gold-dim); background: rgba(201,162,39,0.1); }
+    .btn-check-ports:hover { border-color: var(--gold-dim); background: rgba(57,208,255,0.1); }
     .port-result { margin-top: 10px; font-size: 0.8rem; color: var(--text-dim); line-height: 1.6; }
     .port-result .free { color: #81c784; }
     .port-result .used { color: #e57373; }
@@ -180,6 +300,119 @@
     }
     .msg.ok { background: rgba(76, 175, 80, 0.2); border: 1px solid rgba(76, 175, 80, 0.5); color: #81c784; }
     .msg.err { background: rgba(220, 80, 80, 0.2); border: 1px solid rgba(220, 80, 80, 0.5); color: #e57373; }
+    .status-panel {
+      margin: 16px 0 18px;
+      padding: 14px;
+      border: 1px solid rgba(57, 208, 255, 0.18);
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.2);
+    }
+    .status-summary {
+      font-size: 0.82rem;
+      color: var(--text);
+      line-height: 1.6;
+      margin-bottom: 12px;
+    }
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .status-item {
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(57, 208, 255, 0.16);
+      background: rgba(9, 18, 35, 0.78);
+    }
+    .status-item.ok { border-color: rgba(90, 214, 164, 0.36); }
+    .status-item.warn { border-color: rgba(245, 168, 76, 0.36); }
+    .status-item.off { border-color: rgba(255, 255, 255, 0.12); }
+    .status-item-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+    .status-item-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: 0.06em;
+    }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      border: 1px solid rgba(57, 208, 255, 0.18);
+      color: var(--text-dim);
+      background: rgba(255,255,255,0.04);
+    }
+    .status-badge.ok { color: #7fe3b7; border-color: rgba(90, 214, 164, 0.36); }
+    .status-badge.warn { color: #ffbf75; border-color: rgba(245, 168, 76, 0.36); }
+    .status-badge.off { color: #9fb0ca; }
+    .status-item-copy {
+      font-size: 0.74rem;
+      color: var(--text-dim);
+      line-height: 1.55;
+    }
+    .status-missing {
+      margin-top: 10px;
+      font-size: 0.74rem;
+      color: #ffbf75;
+      line-height: 1.5;
+    }
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .btn-row .btn-save,
+    .btn-row .btn-check-ports {
+      width: auto;
+      flex: 1 1 0;
+    }
+    .btn-save.secondary {
+      color: var(--gold);
+      background: transparent;
+      border-color: var(--border);
+    }
+    .btn-save.secondary:hover {
+      background: rgba(57,208,255,0.08);
+      filter: none;
+    }
+    .project-config-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+      font-size: 0.76rem;
+      color: var(--gold);
+      text-decoration: none;
+    }
+    .project-config-link:hover { color: #82e4ff; }
+    @media (max-width: 520px) {
+      .status-grid,
+      .btn-row {
+        grid-template-columns: 1fr;
+        display: grid;
+      }
+    }
+    @media (max-width: 980px) {
+      .page-shell {
+        grid-template-columns: 1fr;
+      }
+      .form-card.side-card {
+        position: static;
+      }
+      .page-content {
+        max-width: 760px;
+      }
+    }
   </style>
 </head>
 <body data-i18n-title="configTitle">
@@ -187,11 +420,17 @@
   <div class="page-content">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
       <h1 data-i18n="configFirst" style="margin:0;">首次配置</h1>
-      <span id="yinova-lang-toggle-wrap"></span>
+      <span id="openswarm-lang-toggle-wrap"></span>
     </div>
-    <p class="sub" data-i18n="configSub">选择模型提供商并填写 API Key，即可启用 Yinova 全部功能</p>
-    <div class="form-card">
-      <form id="configForm">
+    <p class="sub" data-i18n="configSub">选择模型提供商并填写 API Key，即可启用 OpenSwarm 全部功能</p>
+    <form id="configForm">
+      <div class="page-shell">
+        <div class="form-columns">
+          <div class="form-card">
+            <div class="card-title-row">
+              <h3 class="section-title" style="margin:0;">模型配置</h3>
+              <span class="card-kicker">Model</span>
+            </div>
         <div class="form-row">
           <label for="provider" data-i18n="modelProvider">模型提供商</label>
           <select id="provider" class="form-select"></select>
@@ -205,12 +444,18 @@
           <input type="password" id="apiKey" name="apiKey" data-i18n-placeholder="apiKeyPlaceholder" placeholder="sk-..." autocomplete="off" />
           <p class="hint" id="apiKeyHint" data-i18n="apiKeyHint">从对应提供商控制台获取 API Key</p>
         </div>
-        <div class="form-row">
+          </div>
+          <div class="form-card">
+            <div class="card-title-row">
+              <h3 class="section-title" style="margin:0;">运行端口</h3>
+              <span class="card-kicker">Runtime</span>
+            </div>
+            <div class="form-row">
           <label for="portMain" data-i18n="portMain">主网关端口</label>
           <input type="number" id="portMain" name="portMain" value="18789" min="1024" max="65535" />
         </div>
         <div class="form-row">
-          <label for="portHexStart" data-i18n="portHexLabel">六十四卦起始端口</label>
+          <label for="portHexStart" data-i18n="portHexLabel">数字员工起始端口</label>
           <input type="number" id="portHexStart" name="portHexStart" value="18791" min="1024" max="65535" />
         </div>
         <div class="form-row">
@@ -221,32 +466,120 @@
           <button type="button" class="btn-check-ports" id="btnCheckPorts" data-i18n="btnCheckPorts">检测端口占用</button>
           <div id="portResult" class="port-result"></div>
         </div>
-        <button type="submit" class="btn-save" id="btnSave" data-i18n="btnSaveConfig">保存配置</button>
-      </form>
-      <div id="msg"></div>
-    </div>
+          </div>
+          <div id="msg"></div>
+        </div>
+        <div class="form-card side-card">
+          <div class="card-title-row">
+            <h3 class="section-title" style="margin:0;">OpenClaw 设置</h3>
+            <span class="card-kicker">OpenClaw</span>
+          </div>
+        <div class="switch-grid">
+          <div class="switch-row">
+            <div class="switch-copy">
+              <div class="switch-title">全权限工具模式</div>
+              <div class="switch-hint">统一放开文件、执行、网页、浏览器、节点与消息工具，并关闭 exec 审批弹窗。</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="ocFullToolsAccess" checked />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="switch-row">
+            <div class="switch-copy">
+              <div class="switch-title">浏览器工具</div>
+              <div class="switch-hint">允许 OpenClaw 使用浏览器能力执行网页访问和交互。</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="ocBrowserEnabled" checked />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="switch-row">
+            <div class="switch-copy">
+              <div class="switch-title">网页抓取</div>
+              <div class="switch-hint">允许直接抓取网页正文内容，用于资料阅读、摘要和引用。</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="ocWebFetchEnabled" checked />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="switch-row">
+            <div class="switch-copy">
+              <div class="switch-title">网页搜索</div>
+              <div class="switch-hint">允许使用搜索引擎检索公开网页。需要在下方填写对应 provider 的 API key 才能真正联网搜索。</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="ocWebSearchEnabled" checked />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="switch-row">
+            <div class="switch-copy">
+              <div class="switch-title">Skills 自动放行</div>
+              <div class="switch-hint">执行任务时，skills 依赖的 CLI 和命令按已知 skill 规则自动放行。</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="ocAutoAllowSkills" checked />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-row" style="margin-top:16px;">
+          <label for="ocWebSearchProvider">搜索 Provider</label>
+          <select id="ocWebSearchProvider" class="form-select">
+            <option value="brave">Brave Search</option>
+            <option value="perplexity">Perplexity / OpenRouter</option>
+            <option value="firecrawl">Firecrawl</option>
+            <option value="kimi">Kimi / Moonshot</option>
+          </select>
+          <p class="hint">决定 OpenClaw 的 `web_search` 走哪类搜索能力。</p>
+        </div>
+        <div class="form-row">
+          <label for="ocWebSearchApiKey">搜索 API Key</label>
+          <input type="password" id="ocWebSearchApiKey" placeholder="例如 Brave / Perplexity / Kimi 的搜索 key" autocomplete="off" />
+          <p class="hint">只用于 OpenClaw 的网页搜索能力，不影响主模型 API Key。</p>
+        </div>
+        <div class="form-row">
+          <label for="ocFirecrawlApiKey">Firecrawl API Key（可选）</label>
+          <input type="password" id="ocFirecrawlApiKey" placeholder="用于增强网页正文抽取" autocomplete="off" />
+          <p class="hint">填写后，OpenClaw 的网页抓取可以优先使用 Firecrawl 作为增强抓取通道。</p>
+        </div>
+        <div class="status-panel" id="openclawStatusPanel">
+          <div class="status-summary" id="openclawStatusSummary">正在读取当前 OpenClaw 生效状态…</div>
+          <div class="status-grid" id="openclawStatusGrid"></div>
+          <div class="status-missing" id="openclawMissingKeys" style="display:none;"></div>
+        </div>
+        <div class="btn-row">
+          <button type="submit" class="btn-save" id="btnSave" data-i18n="btnSaveConfig">保存配置</button>
+          <button type="button" class="btn-save secondary" id="btnSaveAndRestart">保存并重启主控与员工</button>
+        </div>
+        </div>
+      </div>
+    </form>
     <a href="index.html" class="link-skip" data-i18n="linkBackPanel">已配置？返回主面板</a>
   </div>
 
+  <script src="/assets/dot-grid-bg.js"></script>
   <script src="i18n.js"></script>
   <script>
-    (function initStarfield() {
-      var container = document.getElementById('starfield');
-      if (!container) return;
-      for (var i = 0; i < 50; i++) {
-        var el = document.createElement('div');
-        el.className = 'star';
-        el.style.left = (Math.random() * 100) + '%';
-        el.style.top = (Math.random() * 100) + '%';
-        el.style.width = el.style.height = (1.5 + Math.random() * 2) + 'px';
-        el.style.opacity = [0.35, 0.5, 0.6][Math.floor(Math.random() * 3)];
-        el.style.setProperty('--dur', (1 + Math.random() * 2).toFixed(2) + 's');
-        el.style.setProperty('--delay', (Math.random() * 1.5).toFixed(2) + 's');
-        container.appendChild(el);
-      }
-    })();
+    if (window.initDotGridBackground) {
+      window.initDotGridBackground({
+        containerId: 'starfield',
+        dotSize: 1.8,
+        gap: 24,
+        baseColor: '85,125,168',
+        activeColor: '64,211,255',
+        bgColor: '5,10,22',
+        pulse: 0.26,
+        mouseRadius: 180,
+        mouseStrength: 1
+      });
+    }
 
-    var t = window.YINOVA_I18N && window.YINOVA_I18N.t ? window.YINOVA_I18N.t.bind(window.YINOVA_I18N) : function(k) { return k; };
+    var t = window.OPENSWARM_I18N && window.OPENSWARM_I18N.t ? window.OPENSWARM_I18N.t.bind(window.OPENSWARM_I18N) : function(k) { return k; };
     var msgEl = document.getElementById('msg');
     function showMsg(text, isErr) {
       msgEl.textContent = text;
@@ -259,6 +592,7 @@
 
     var hasExistingKey = false;
     var providersData = {};
+    var latestOpenClawStatus = null;
     var fallbackProviders = {
       zai: { id: 'zai', label: '智谱 ZAI', envKey: 'ZAI_API_KEY', url: 'https://open.bigmodel.cn', models: [{ id: 'zai/glm-5', name: 'GLM-5' }, { id: 'zai/glm-4.7', name: 'GLM-4.7' }] },
       openai: { id: 'openai', label: 'OpenAI', envKey: 'OPENAI_API_KEY', url: 'https://platform.openai.com', models: [{ id: 'openai/gpt-4o', name: 'GPT-4o' }, { id: 'openai/gpt-4o-mini', name: 'GPT-4o Mini' }] },
@@ -282,6 +616,58 @@
     providersData = fallbackProviders;
     fillProviderSelect();
 
+    function renderOpenClawStatus(status) {
+      latestOpenClawStatus = status || null;
+      var summaryEl = document.getElementById('openclawStatusSummary');
+      var gridEl = document.getElementById('openclawStatusGrid');
+      var missingEl = document.getElementById('openclawMissingKeys');
+      if (!status) {
+        summaryEl.textContent = '尚未读取到 OpenClaw 状态。';
+        gridEl.innerHTML = '';
+        missingEl.style.display = 'none';
+        missingEl.textContent = '';
+        return;
+      }
+      summaryEl.textContent = status.summary || 'OpenClaw 状态已同步。';
+      function itemClass(kind) {
+        return kind === 'ok' ? 'ok' : (kind === 'warn' ? 'warn' : 'off');
+      }
+      function badgeText(item) {
+        if (item && item.ready) return '已就绪';
+        if (item && item.enabled === false) return '已关闭';
+        return '需处理';
+      }
+      function badgeKind(item) {
+        if (item && item.ready) return 'ok';
+        if (item && item.enabled === false) return 'off';
+        return 'warn';
+      }
+      var cards = [
+        { title: '浏览器工具', data: status.browser },
+        { title: '网页抓取', data: status.webFetch },
+        { title: '网页搜索', data: status.webSearch },
+        { title: '执行与 Skills', data: status.exec }
+      ];
+      gridEl.innerHTML = cards.map(function(card) {
+        var kind = badgeKind(card.data);
+        return '<div class="status-item ' + itemClass(kind) + '">'
+          + '<div class="status-item-head">'
+          + '<div class="status-item-title">' + card.title + '</div>'
+          + '<span class="status-badge ' + kind + '">' + badgeText(card.data) + '</span>'
+          + '</div>'
+          + '<div class="status-item-copy">' + ((card.data && card.data.message) || '暂无状态说明') + '</div>'
+          + '</div>';
+      }).join('');
+      var missing = Array.isArray(status.missingKeys) ? status.missingKeys.filter(Boolean) : [];
+      if (missing.length) {
+        missingEl.style.display = 'block';
+        missingEl.textContent = '待补充配置：' + missing.join('、');
+      } else {
+        missingEl.style.display = 'none';
+        missingEl.textContent = '';
+      }
+    }
+
     fetch('/api/config').then(r => r.json()).then(function(c) {
       if (c.providers && c.providers.length) {
         providersData = {};
@@ -301,9 +687,20 @@
       if (c.portMain) document.getElementById('portMain').value = c.portMain;
       if (c.portHexStart) document.getElementById('portHexStart').value = c.portHexStart;
       if (c.panelPort) document.getElementById('panelPort').value = c.panelPort;
+      var oc = c.openclaw || {};
+      document.getElementById('ocFullToolsAccess').checked = oc.fullToolsAccess !== false;
+      document.getElementById('ocBrowserEnabled').checked = oc.browserEnabled !== false;
+      document.getElementById('ocWebFetchEnabled').checked = oc.webFetchEnabled !== false;
+      document.getElementById('ocWebSearchEnabled').checked = oc.webSearchEnabled !== false;
+      document.getElementById('ocAutoAllowSkills').checked = oc.autoAllowSkills !== false;
+      document.getElementById('ocWebSearchProvider').value = oc.webSearchProvider || 'brave';
+      if (oc.webSearchApiKey) document.getElementById('ocWebSearchApiKey').placeholder = '已配置（留空则不修改）';
+      if (oc.firecrawlApiKey) document.getElementById('ocFirecrawlApiKey').placeholder = '已配置（留空则不修改）';
+      renderOpenClawStatus(c.openclawStatus || null);
     }).catch(function() {
       providersData = fallbackProviders;
       fillProviderSelect();
+      renderOpenClawStatus(null);
     });
 
     document.getElementById('provider').addEventListener('change', function() {
@@ -365,19 +762,20 @@
         .finally(function() { btn.disabled = false; });
     });
 
-    document.getElementById('configForm').addEventListener('submit', function(e) {
-      e.preventDefault();
+    function submitConfig(restartAfterSave) {
       var apiKey = document.getElementById('apiKey').value.trim();
       var prov = providersData[document.getElementById('provider').value] || {};
       var needKey = prov.envKey && prov.envKey.length > 0;
       if (!apiKey && !hasExistingKey && needKey) {
         showMsg(t('fillApiKey'), true);
-        return;
+        return Promise.resolve(false);
       }
       var btn = document.getElementById('btnSave');
+      var restartBtn = document.getElementById('btnSaveAndRestart');
       btn.disabled = true;
+      restartBtn.disabled = true;
       hideMsg();
-      fetch('/api/config', {
+      return fetch('/api/config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -386,29 +784,70 @@
           modelPrimary: document.getElementById('modelPrimary').value || 'zai/glm-5',
           portMain: parseInt(document.getElementById('portMain').value, 10) || 18789,
           portHexStart: parseInt(document.getElementById('portHexStart').value, 10) || 18791,
-          panelPort: parseInt(document.getElementById('panelPort').value, 10) || 3999
+          panelPort: parseInt(document.getElementById('panelPort').value, 10) || 3999,
+          openclaw: {
+            fullToolsAccess: document.getElementById('ocFullToolsAccess').checked,
+            browserEnabled: document.getElementById('ocBrowserEnabled').checked,
+            webFetchEnabled: document.getElementById('ocWebFetchEnabled').checked,
+            webSearchEnabled: document.getElementById('ocWebSearchEnabled').checked,
+            autoAllowSkills: document.getElementById('ocAutoAllowSkills').checked,
+            webSearchProvider: document.getElementById('ocWebSearchProvider').value || 'brave',
+            webSearchApiKey: document.getElementById('ocWebSearchApiKey').value.trim(),
+            firecrawlApiKey: document.getElementById('ocFirecrawlApiKey').value.trim()
+          }
         })
       })
       .then(function(r) { return r.json(); })
       .then(function(data) {
-        if (data.ok) {
-          showMsg(t('configSaved'), false);
-          document.getElementById('apiKey').value = '';
-          document.getElementById('apiKey').placeholder = t('configured');
-        } else {
+        if (!data.ok) {
           showMsg(data.error || t('saveFailed'), true);
+          return false;
         }
+        renderOpenClawStatus((data.config && data.config.openclawStatus) || latestOpenClawStatus);
+        document.getElementById('apiKey').value = '';
+        document.getElementById('apiKey').placeholder = t('configured');
+        if (!restartAfterSave) {
+          showMsg(t('configSaved'), false);
+          return true;
+        }
+        showMsg('配置已保存，正在重启主控与当前在线员工…', false);
+        return fetch('/api/config/restart-openclaw', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        }).then(function(r) { return r.json(); }).then(function(restartData) {
+          if (!restartData.ok) {
+            showMsg(restartData.error || '配置已保存，但重启未完成', true);
+            return false;
+          }
+          var restartedCount = Array.isArray(restartData.restarted) ? restartData.restarted.length : 0;
+          showMsg('配置已保存，并完成 runtime 重启。已处理 ' + restartedCount + ' 个租户。', false);
+          return true;
+        });
       })
       .catch(function() {
         showMsg(t('requestFailed'), true);
+        return false;
       })
-      .finally(function() { btn.disabled = false; });
+      .finally(function() {
+        btn.disabled = false;
+        restartBtn.disabled = false;
+      });
+    }
+
+    document.getElementById('configForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      submitConfig(false);
     });
 
-    window.YINOVA_APPLY_I18N_EXTRAS = function() {
+    document.getElementById('btnSaveAndRestart').addEventListener('click', function() {
+      submitConfig(true);
+    });
+
+    window.OPENSWARM_APPLY_I18N_EXTRAS = function() {
       var prov = document.getElementById('provider');
       if (prov && prov.value) updateProviderUI(prov.value);
     };
   </script>
+  <script src="/assets/auth-shell.js"></script>
 </body>
 </html>

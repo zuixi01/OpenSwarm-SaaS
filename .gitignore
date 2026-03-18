@@ -5,75 +5,6 @@ workers.conf
 .env
 config.json
 
-# 根目录旧卦（已迁移至 hexes/）
-/乾
-/坤
-/泰
-/否
-/谦
-/豫
-/随
-/蛊
-/临
-/观
-/屯
-/蒙
-/需
-/讼
-/师
-/比
-/小畜
-/履
-/同人
-/大有
-/噬嗑
-/贲
-/剥
-/复
-/无妄
-/大畜
-/颐
-/大过
-/坎
-/离
-/咸
-/恒
-/遯
-/大壮
-/晋
-/明夷
-/家人
-/睽
-/蹇
-/解
-/损
-/益
-/夬
-/姤
-/萃
-/升
-/困
-/井
-/革
-/鼎
-/震
-/艮
-/渐
-/归妹
-/丰
-/旅
-/巽
-/兑
-/涣
-/节
-/中孚
-/小过
-/既济
-/未济
-/否2
-/泰2
-/坤2
-
 # 依赖
 node_modules/
 
@@ -112,7 +43,7 @@ yin/项目上下文识别问题修复.md
 # 临时预览（外部项目副本，不提交）
 nova-openclaw-preview/
 
-# 非Yinova核心（来自原项目副本）
+# 非OpenSwarm核心（来自原项目副本）
 /bala/
 /crewai/
 /crewai-studio/
@@ -136,7 +67,7 @@ TROUBLESHOOTING.md
 控制面板*.md
 目前实现了*.md
 端口占用*.md
-给64卦*.md
+给64员工*.md
 
 # panel-web 内部文档与用户数据
 panel-web/*.md
@@ -155,7 +86,7 @@ GITHUB_*.md
 OPENSOURCE_CHECKLIST.md
 
 # 本地打的发布包（不纳入版本库）
-yinova-*.zip
+openswarm-*.zip
 openclaw-offline.zip
 node*.pkg
 

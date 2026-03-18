@@ -2,10 +2,10 @@
 
 ## 一、面板访问鉴权
 
-设置环境变量 `YINOVA_PANEL_TOKEN` 后，面板将要求鉴权：
+设置环境变量 `OPENSWARM_PANEL_TOKEN` 后，面板将要求鉴权：
 
 ```bash
-export YINOVA_PANEL_TOKEN="your-secret-token"
+export OPENSWARM_PANEL_TOKEN="your-secret-token"
 ./start-panel.sh
 ```
 
@@ -24,14 +24,14 @@ export YINOVA_PANEL_TOKEN="your-secret-token"
 
 ### 3.1 密钥占位符
 
-在阴控制台「配置」中，可将敏感值设为占位符，由卦执行时从环境注入：
+在阴控制台「配置」中，可将敏感值设为占位符，由员工执行时从环境注入：
 
 | 配置 key | 说明 |
 |----------|------|
-| `API_KEY` | 留空或 `***`，实际值由卦进程的 env 注入 |
+| `API_KEY` | 留空或 `***`，实际值由员工进程的 env 注入 |
 | `SECRET` | 同上 |
 
-卦的 `moltbot.json` 或启动脚本可配置 `env` 注入，避免在面板中明文存储。
+员工的 `moltbot.json` 或启动脚本可配置 `env` 注入，避免在面板中明文存储。
 
 ### 3.2 文件权限
 
@@ -41,7 +41,7 @@ export YINOVA_PANEL_TOKEN="your-secret-token"
 ## 四、生产部署建议
 
 1. 使用 HTTPS（反向代理如 nginx）
-2. 设置 `YINOVA_PANEL_TOKEN` 并定期轮换
+2. 设置 `OPENSWARM_PANEL_TOKEN` 并定期轮换
 3. 不将 `config.json`、`yin/moltbot.json` 纳入版本库（已在 .gitignore）
 4. 备份时对敏感文件加密存储
 

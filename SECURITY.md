@@ -94,7 +94,7 @@
 默认端口：
 - 面板：3999
 - 主网关：18789
-- 卦网关：18791-18854
+- 员工网关：18791-18854
 
 **注意**：如果您的环境中这些端口已被占用，请在配置中修改端口号。
 
@@ -114,7 +114,7 @@ ZAI_API_KEY=your_key_here
 OPENAI_API_KEY=your_key_here
 
 # Gateway Token
-YINOVA_GATEWAY_TOKEN=your_token_here
+OPENSWARM_GATEWAY_TOKEN=your_token_here
 ```
 
 ## 漏洞赏金

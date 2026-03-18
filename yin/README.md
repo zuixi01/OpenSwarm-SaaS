@@ -1,13 +1,13 @@
 # Yin — 64 Hexagram Main Gateway
 
-Yin is Yinova's main gateway node (port 18789), managing 64 hexagram sub-nodes.
+Yin is OpenSwarm's main gateway node (port 18789), managing 64 hexagram sub-nodes.
 
 ## Start
 
 ```bash
 # After install and panel start, click "Yin · Start" on panel
 # Or manually:
-cd <Yinova root>/yin
+cd <OpenSwarm root>/yin
 ./start-yin.sh
 ```
 

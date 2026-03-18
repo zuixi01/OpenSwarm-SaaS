@@ -1,0 +1,28 @@
+[Unit]
+Description=OpenSwarm Panel Web
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=openswarm
+Group=openswarm
+WorkingDirectory=/opt/openswarm/panel-web
+EnvironmentFile=/etc/openswarm/panel.env
+ExecStart=/usr/bin/node /opt/openswarm/panel-web/server.js
+Restart=always
+RestartSec=2
+TimeoutStopSec=30
+KillMode=process
+
+# Capacity/safety
+LimitNOFILE=65535
+TasksMax=8192
+NoNewPrivileges=true
+
+# Logs go to journald (use journalctl -u openswarm-panel -f)
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

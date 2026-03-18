@@ -1,0 +1,6 @@
+{"type":"session","version":3,"id":"e447a7a1-a726-4ee1-8eff-493fbc2d6185","timestamp":"2026-03-13T06:46:33.204Z","cwd":"/Users/shenwei/Documents/source/yinova/hexes/乾/workspace"}
+{"type":"model_change","id":"12a152c7","parentId":null,"timestamp":"2026-03-13T06:46:33.231Z","provider":"moonshot","modelId":"kimi-k2.5"}
+{"type":"thinking_level_change","id":"5f919e51","parentId":"12a152c7","timestamp":"2026-03-13T06:46:33.231Z","thinkingLevel":"off"}
+{"type":"custom","customType":"model-snapshot","data":{"timestamp":1773384393234,"provider":"moonshot","modelApi":"openai-completions","modelId":"kimi-k2.5"},"id":"99e3cc32","parentId":"5f919e51","timestamp":"2026-03-13T06:46:33.234Z"}
+{"type":"message","id":"4ed4311c","parentId":"99e3cc32","timestamp":"2026-03-13T06:46:33.247Z","message":{"role":"user","content":[{"type":"text","text":"只回复OK"}],"timestamp":1773384393238}}
+{"type":"message","id":"c07b73a0","parentId":"4ed4311c","timestamp":"2026-03-13T06:46:35.695Z","message":{"role":"assistant","content":[],"api":"openai-completions","provider":"moonshot","model":"kimi-k2.5","usage":{"input":0,"output":0,"cacheRead":0,"cacheWrite":0,"totalTokens":0,"cost":{"input":0,"output":0,"cacheRead":0,"cacheWrite":0,"total":0}},"stopReason":"error","timestamp":1773384393244,"errorMessage":"401 Invalid Authentication"}}

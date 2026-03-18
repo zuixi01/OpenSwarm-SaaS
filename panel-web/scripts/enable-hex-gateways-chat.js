@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 /**
- * 为 64 卦的 moltbot.json 启用 HTTP Chat 接口，使「与卦对话」能收到各卦回复。
- * 用法（在Yinova项目根目录下）：
+ * 为 64 数字员工的 moltbot.json 启用 HTTP Chat 接口，使「与员工对话」能收到各员工回复。
+ * 用法（在OpenSwarm项目根目录下）：
  *   node panel-web/scripts/enable-hex-gateways-chat.js
  *
- * 会读取 workers.conf，对每卦的 stateDir/moltbot.json 写入
+ * 会读取 workers.conf，对每位员工的 stateDir/moltbot.json 写入
  * gateway.http.endpoints.chatCompletions.enabled = true。
- * 修改后需重启对应卦的网关（面板点该卦停止再启动）。
+ * 修改后需重启对应员工的网关（面板点该员工停止再启动）。
  */
 
 const fs = require('fs');
@@ -58,8 +58,8 @@ function main() {
     const moltbPath = path.join(r.stateDir, 'moltbot.json');
     if (enableChatInMoltbot(moltbPath)) updated++;
   });
-  console.log('已为 %d 个卦的 moltbot.json 启用 chatCompletions（共 %d 卦）', updated, rows.length);
-  console.log('重启对应卦的网关后，「与卦对话」即可收到该卦回复。');
+  console.log('已为 %d 个员工的 moltbot.json 启用 chatCompletions（共 %d 员工）', updated, rows.length);
+  console.log('重启对应员工的网关后，「与员工对话」即可收到该员工回复。');
 }
 
 main();

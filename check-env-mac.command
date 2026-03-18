@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Yinova 本机环境检测（Mac）- 缺什么会提示
+# OpenSwarm 本机环境检测（Mac）- 缺什么会提示
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
-echo "=== Yinova 环境检测 (Mac) ==="
+echo "=== OpenSwarm 环境检测 (Mac) ==="
 echo ""
 
 missing=0

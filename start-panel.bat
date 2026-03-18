@@ -1,6 +1,6 @@
 @echo off
 chcp 65001 >nul
-REM Yinova - Windows 启动脚本（通过 WSL 运行）
+REM OpenSwarm - Windows 启动脚本（通过 WSL 运行）
 REM 双击此文件，在 WSL 中启动面板
 
 set "SCRIPT_DIR=%~dp0"

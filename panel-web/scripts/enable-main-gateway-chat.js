@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 /**
- * 在阴的配置中启用 HTTP Chat 接口，使网页「与阴对话」可用。
- * 用法（在Yinova项目根目录下）：
+ * 在主控的配置中启用 HTTP Chat 接口，使网页「与主控对话」可用。
+ * 用法（在OpenSwarm项目根目录下）：
  *   node panel-web/scripts/enable-main-gateway-chat.js
  *
  * 会依次查找并修改：
- *   1) <Yinova root>/yin/moltbot.json
+ *   1) <OpenSwarm root>/yin/moltbot.json
  *   2) ~/.moltbot/moltbot.json
  * 找到后写入 gateway.http.endpoints.chatCompletions.enabled = true，并备份原文件。
- * 修改后需重启主网关（面板点「阴·停止」再「阴·启动」）。
+ * 修改后需重启主网关（面板点「主控·停止」再「主控·启动」）。
  */
 
 const fs = require('fs');
@@ -49,19 +49,19 @@ function ensureGatewayChatEnabled(configPath) {
 }
 
 function main() {
-  console.log('查找阴的网关配置...');
+  console.log('查找主控的网关配置...');
   for (const p of candidates) {
     if (ensureGatewayChatEnabled(p)) {
       console.log('');
-      console.log('请重启主网关后重试网页「与阴对话」：');
-      console.log('  面板点 阴·停止 再 阴·启动');
+      console.log('请重启主网关后重试网页「与主控对话」：');
+      console.log('  面板点 主控·停止 再 主控·启动');
       return;
     }
   }
   console.log('未找到配置文件。已检查:');
   candidates.forEach(p => console.log('  -', p));
   console.log('');
-  console.log('请手动在阴的 moltbot.json 中增加（或合并 gateway 段）：');
+  console.log('请手动在主控的 moltbot.json 中增加（或合并 gateway 段）：');
   console.log(JSON.stringify({
     gateway: {
       http: {

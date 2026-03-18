@@ -3,30 +3,30 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Yinova · 六十四卦控制面板</title>
+  <title>OpenSwarm - AI数字员工平台</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Serif+SC:wght@500;700&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --black: #000000;
-      --black-light: #0c0c0c;
-      --white: #f0eeec;
-      --white-dim: #a8a6a4;
-      --gold: #c9a227;
-      --gold-dim: #9a7b20;
+      --black: #05070c;
+      --black-light: #0d1322;
+      --white: #e9f3ff;
+      --white-dim: #8ea5c4;
+      --gold: #39d0ff;
+      --gold-dim: #16a5d4;
       --text: var(--white);
       --text-dim: var(--white-dim);
-      --border: rgba(201, 162, 39, 0.3);
-      --glow: rgba(201, 162, 39, 0.45);
-      --run-glow: rgba(201, 162, 39, 0.35);
+      --border: rgba(57, 208, 255, 0.32);
+      --glow: rgba(57, 208, 255, 0.45);
+      --run-glow: rgba(57, 208, 255, 0.35);
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
       padding: 0;
-      font-family: "Noto Serif SC", "PingFang SC", serif;
-      background: #000000;
+      font-family: "Space Grotesk", "Noto Sans SC", "PingFang SC", sans-serif;
+      background: radial-gradient(circle at 20% 0%, #121d35 0%, #060a14 50%, #02040a 100%);
       color: var(--text);
       min-height: 100vh;
       display: flex;
@@ -34,23 +34,27 @@
       align-items: center;
       position: relative;
     }
-    /* 星空背景：纯黑基底 + 随机星点层 */
+    /* Faulty Terminal 背景层 */
     #starfield {
       position: fixed;
       inset: 0;
       z-index: 0;
       pointer-events: none;
       overflow: hidden;
+      background: radial-gradient(circle at 30% 20%, #10233f 0%, #091325 48%, #050a16 100%);
     }
-    .star {
+    #starfield canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      opacity: 0.96;
+    }
+    #starfield::after {
+      content: '';
       position: absolute;
-      border-radius: 50%;
-      background: rgba(255, 228, 200, 0.88);
-      animation: star-breathe var(--dur, 2.5s) ease-in-out var(--delay, 0s) infinite;
-    }
-    @keyframes star-breathe {
-      0%, 100% { filter: brightness(0.7); }
-      50% { filter: brightness(1.05); }
+      inset: 0;
+      background: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0) 54%, rgba(0, 0, 0, 0.42) 100%);
+      pointer-events: none;
     }
     .page-content {
       position: relative;
@@ -81,6 +85,34 @@
       flex-shrink: 0;
     }
     .header-buttons { display: flex; gap: 8px; align-items: center; }
+    .yin-breathe-wrap {
+      display: flex;
+      align-items: center;
+      margin-right: 2px;
+    }
+    .yin-breathe {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      background: #95a5a6;
+    }
+    .yin-breathe.online {
+      background: #2ecc71;
+      animation: yin-breathe-green 2s ease-in-out infinite;
+    }
+    .yin-breathe.offline {
+      background: #e74c3c;
+      animation: yin-breathe-red 2s ease-in-out infinite;
+    }
+    @keyframes yin-breathe-green {
+      0%, 100% { opacity: 0.85; box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.45); }
+      50% { opacity: 1; box-shadow: 0 0 12px 4px rgba(46, 204, 113, 0.35); }
+    }
+    @keyframes yin-breathe-red {
+      0%, 100% { opacity: 0.85; box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.45); }
+      50% { opacity: 1; box-shadow: 0 0 12px 4px rgba(231, 76, 60, 0.35); }
+    }
     .header h1 {
       font-size: 1.5rem;
       font-weight: 700;
@@ -107,74 +139,112 @@
       border-color: var(--gold-dim);
       box-shadow: 0 0 12px var(--glow);
     }
-    .monitor {
+    .btn-header-project .btn-header-icon {
+      display: block;
+      object-fit: contain;
+    }
+    .btn-header-project.btn-header-text {
+      width: auto;
+      min-width: auto;
+      padding: 0 14px;
+      font-size: 0.88rem;
+      letter-spacing: 0.04em;
+    }
+    .yin-offline-banner {
+      position: relative;
       width: 100%;
-      max-width: 240px;
+      margin: 10px 0 2px;
       padding: 8px 12px;
-      border-radius: 4px;
-      background: var(--black-light);
-      border: 1px solid var(--border);
-      font-size: 0.72rem;
-      box-shadow: 0 0 24px rgba(0,0,0,0.3);
-      transition: box-shadow 0.15s, border-color 0.15s;
+      background: rgba(168, 72, 58, 0.15);
+      border: 1px solid rgba(193, 100, 82, 0.52);
+      border-radius: 6px;
+      font-size: 0.82rem;
+      color: #e8b8a8;
+      text-align: center;
+      box-shadow: inset 0 0 16px rgba(105, 39, 30, 0.28);
+      backdrop-filter: blur(2px);
+      z-index: 2;
     }
-    /* 告警：边框红光，国际 SOS 呼吸频率（3 短 3 长 3 短，约 8 秒一周期） */
-    .monitor.monitor--alert {
-      animation: sos-border 8s ease-in-out infinite;
-    }
-    @keyframes sos-border {
-      0%, 2.5%, 5%, 7.5%, 10% { box-shadow: 0 0 0 2px rgba(220,50,50,0.95), 0 0 20px rgba(220,50,50,0.4); border-color: rgba(220,50,50,0.9); }
-      12%, 15% { box-shadow: 0 0 24px rgba(0,0,0,0.3); border-color: var(--border); }
-      20%, 35%, 50%, 65%, 80% { box-shadow: 0 0 0 2px rgba(220,50,50,0.95), 0 0 20px rgba(220,50,50,0.4); border-color: rgba(220,50,50,0.9); }
-      82%, 85% { box-shadow: 0 0 24px rgba(0,0,0,0.3); border-color: var(--border); }
-      87%, 89%, 91%, 93%, 95% { box-shadow: 0 0 0 2px rgba(220,50,50,0.95), 0 0 20px rgba(220,50,50,0.4); border-color: rgba(220,50,50,0.9); }
-      97%, 100% { box-shadow: 0 0 24px rgba(0,0,0,0.3); border-color: var(--border); }
-    }
-    .monitor-header {
+    .yin-action-banner {
+      position: relative;
+      width: 100%;
+      margin: 10px 0 2px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid rgba(57, 208, 255, 0.26);
+      background: rgba(10, 25, 46, 0.72);
+      box-shadow: inset 0 0 18px rgba(18, 53, 92, 0.32);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 8px;
-      cursor: pointer;
-      user-select: none;
+      gap: 12px;
+      z-index: 2;
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity 0.24s ease, transform 0.24s ease;
     }
-    .monitor-header:hover { opacity: 0.9; }
-    .monitor h3 {
-      margin: 0;
-      font-size: 0.72rem;
-      color: var(--gold-dim);
-      font-weight: 500;
-      letter-spacing: 0.1em;
+    .yin-action-banner.is-hidden {
+      opacity: 0;
+      transform: translateY(-4px);
+      pointer-events: none;
     }
-    .monitor-toggle {
-      flex-shrink: 0;
-      width: 24px;
-      height: 24px;
-      padding: 0;
-      border: none;
-      background: transparent;
-      color: var(--gold-dim);
-      font-size: 0.9rem;
-      cursor: pointer;
-      border-radius: 2px;
-      transition: color 0.2s, background 0.2s;
+    .yin-action-banner[data-state="success"] {
+      border-color: rgba(109, 242, 186, 0.4);
+      background: rgba(8, 42, 38, 0.76);
+      box-shadow: inset 0 0 18px rgba(20, 82, 72, 0.28);
     }
-    .monitor-toggle:hover { color: var(--gold); background: rgba(201,162,39,0.1); }
-    .monitor-body { transition: opacity 0.2s; }
-    .monitor.monitor--collapsed .monitor-body { display: none; }
-    .monitor p.desc {
-      margin: 0 0 6px 0;
-      color: var(--text-dim);
-      font-size: 0.65rem;
-      line-height: 1.4;
+    .yin-action-banner[data-state="error"] {
+      border-color: rgba(193, 100, 82, 0.52);
+      background: rgba(64, 20, 20, 0.42);
+      box-shadow: inset 0 0 16px rgba(105, 39, 30, 0.28);
     }
-    .monitor-row { display: flex; justify-content: space-between; margin: 2px 0; }
-    .monitor .warn { color: var(--gold); }
-    .monitor .danger { color: var(--gold); font-weight: 600; }
-    .monitor .warnings { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border); }
-    .yin-offline-banner { padding: 10px 16px; margin: 0 24px 12px; background: rgba(180,80,60,0.15); border: 1px solid rgba(180,80,60,0.5); border-radius: 6px; font-size: 0.88rem; color: #e8b8a8; text-align: center; }
+    .yin-action-copy {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .yin-action-title {
+      color: #d6f3ff;
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+    .yin-action-desc {
+      color: #8fb4d1;
+      font-size: 0.76rem;
+      line-height: 1.5;
+    }
+    .yin-action-steps {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .yin-step-chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(57, 208, 255, 0.22);
+      background: rgba(255,255,255,0.04);
+      color: #7fa8c7;
+      font-size: 0.66rem;
+      letter-spacing: 0.04em;
+      font-family: "JetBrains Mono", monospace;
+    }
+    .yin-step-chip.active {
+      color: #d6f3ff;
+      border-color: rgba(57, 208, 255, 0.45);
+      box-shadow: 0 0 10px rgba(57, 208, 255, 0.18);
+    }
+    .yin-step-chip.done {
+      color: #8ce4be;
+      border-color: rgba(109, 242, 186, 0.35);
+    }
 
-    /* 阴阳：静态白线太极图，中间两枚不动圆点为按钮（阴/阳） */
+    /* 主控策略：静态白线中控环，中间两枚不动圆点为按钮（主控/策略） */
     .row-yinyang {
       display: flex;
       flex-wrap: wrap;
@@ -195,7 +265,7 @@
       height: 100%;
       pointer-events: none;
     }
-    /* 阴阳鱼：纯黑 #000000 / 纯白 #FFFFFF，鱼眼反色；外发光 + 呼吸光效 */
+    /* 主控策略鱼：纯黑 #000000 / 纯白 #FFFFFF，鱼眼反色；外发光 + 呼吸光效 */
     .taiji-wrap {
       filter: drop-shadow(0 0 24px rgba(255,255,255,0.25));
       animation: taiji-glow-breathe 4s ease-in-out infinite;
@@ -235,7 +305,7 @@
       background: #f0ece8;
       animation: breathe-dot-white 1.5s ease-in-out infinite;
     }
-    /* 阳：常亮假按钮，仅展示 */
+    /* 策略：常亮假按钮，仅展示 */
     .taiji-dot[data-robot="yang"] {
       animation: breathe-dot-black 2s ease-in-out infinite;
     }
@@ -248,10 +318,10 @@
       50% { box-shadow: 0 0 18px rgba(0,0,0,0.95), 0 0 28px rgba(50,50,70,0.6); }
     }
 
-    /* 六十四卦：8 列网格，背景若隐若现呼吸的八卦 */
+    /* 64数字员工：8 列网格，背景若隐若现呼吸的多智能体 */
     .section-hexagrams {
       width: 100%;
-      max-width: 920px;
+      max-width: min(96vw, 1840px);
       position: relative;
       padding: 8px 0;
     }
@@ -295,34 +365,56 @@
       position: relative;
       z-index: 1;
       display: grid;
-      grid-template-columns: repeat(8, 1fr);
-      gap: 10px;
-      justify-items: center;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 20px 16px;
+      align-items: start;
     }
     .card-hex {
       position: relative;
       width: 100%;
-      max-width: 100px;
-      padding: 10px 8px;
-      border-radius: 6px;
-      background: rgba(18, 18, 20, 0.55);
-      backdrop-filter: blur(6px);
-      border: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
-      transition: all 0.2s;
+      padding-top: 10px;
+      overflow: visible;
+      transition: transform 0.2s ease, filter 0.2s ease;
+    }
+    .card-hex:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.02);
+    }
+    .card-hex .card-shell {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 5900 / 3928;
+      background: url('assets/id-card/holder.png') center / contain no-repeat;
+      filter: drop-shadow(0 14px 20px rgba(0, 0, 0, 0.34));
+      --card-inset-x: 5.8%;
+      --card-inset-top: 17.4%;
+      --card-inset-bottom: 5.7%;
+    }
+    .card-hex .card-shell::before {
+      content: '';
+      position: absolute;
+      left: var(--card-inset-x);
+      right: var(--card-inset-x);
+      top: var(--card-inset-top);
+      bottom: var(--card-inset-bottom);
+      background: #ffffff;
+      border-radius: 0;
+      opacity: 1;
+      pointer-events: none;
+      z-index: 0;
     }
     .card-hex .status-dot {
       position: absolute;
-      top: 6px;
-      right: 6px;
-      width: 8px;
-      height: 8px;
+      left: 50.1%;
+      top: 12.0%;
+      transform: translate(-50%, -50%);
+      width: 10px;
+      height: 10px;
       border-radius: 50%;
       background: #6b6b6b;
+      border: 1px solid rgba(0, 0, 0, 0.3);
       transition: background 0.2s;
+      z-index: 8;
     }
     .card-hex .status-dot.running {
       background: var(--gold);
@@ -332,148 +424,549 @@
       0%, 100% { opacity: 0.85; box-shadow: 0 0 4px var(--gold); }
       50% { opacity: 1; box-shadow: 0 0 10px var(--gold); }
     }
-    .card-hex:hover {
-      border-color: var(--gold-dim);
-      box-shadow: 0 0 16px rgba(212, 168, 75, 0.15);
-    }
     .card-hex.starting {
       animation: breathe 1.2s ease-in-out infinite;
     }
-    .card-hex.running {
-      box-shadow: 0 0 14px var(--run-glow);
-      border-color: rgba(212, 168, 75, 0.5);
+    .card-hex.running .card-shell {
+      filter: drop-shadow(0 14px 20px rgba(0, 0, 0, 0.36)) drop-shadow(0 0 14px rgba(113, 236, 171, 0.22));
     }
     @keyframes breathe {
-      0%, 100% { box-shadow: 0 0 12px var(--breathe-color, var(--glow)); opacity: 1; }
-      50% { box-shadow: 0 0 28px var(--breathe-color, var(--glow)); opacity: 0.95; }
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.94; }
+    }
+    .card-hex .card-panel {
+      position: absolute;
+      left: var(--card-inset-x);
+      right: var(--card-inset-x);
+      top: var(--card-inset-top);
+      bottom: var(--card-inset-bottom);
+      border-radius: 0;
+      overflow: hidden;
+      border: none;
+      background: transparent;
+      z-index: 1;
+      perspective: 680px;
+    }
+    .card-hex .card-flip-inner {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.5s ease;
+    }
+    .card-hex.card-flipped .card-flip-inner {
+      transform: rotateY(180deg);
+    }
+    .card-hex .card-face {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      display: grid;
+      grid-template-columns: 34px 1fr;
+      border-radius: 0;
+      overflow: hidden;
+      backface-visibility: hidden;
+    }
+    .card-hex .card-face-front {
+      z-index: 2;
+    }
+    .card-hex .card-face-back {
+      transform: rotateY(180deg);
+      z-index: 1;
+    }
+    .card-hex .card-main-blank {
+      background: #ffffff;
+      min-height: 0;
+    }
+    .card-hex .card-side,
+    .card-hex .card-main {
+      position: relative;
+      z-index: 1;
+    }
+    .card-hex .card-side {
+      background: #efe622;
+      color: rgba(97, 97, 24, 0.52);
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      font-size: 0.54rem;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+    }
+    .card-hex .card-main {
+      padding: 12px 14px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      color: #252b33;
+      position: relative;
+      padding-bottom: 48px;
+      min-height: 0;
+    }
+    .card-hex .card-top {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      align-items: stretch;
+      padding-left: 0;
+      margin-bottom: 2px;
+    }
+    .card-hex .card-left {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-width: 0;
+    }
+    .card-hex .card-avatar-label {
+      min-height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+    }
+    .card-hex .card-avatar-label .card-label-inline {
+      justify-content: center;
     }
     .card-hex .card-title {
-      font-family: "ZCOOL KuaiLe", "Noto Serif SC", "PingFang SC", serif;
-      font-size: 1rem;
-      font-weight: 500;
-      margin: 0;
-      color: var(--text);
+      font-family: "JetBrains Mono", "Noto Sans SC", "PingFang SC", sans-serif;
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      margin: 2px 0 0;
+      color: #2f3238;
+      line-height: 1.15;
+      text-transform: uppercase;
     }
     html[lang="en"] .card-hex .card-title {
-      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: "Space Grotesk", "Noto Sans SC", "PingFang SC", sans-serif;
     }
-    .card-hex .card-gateway { font-size: 0.6rem; color: var(--text-dim); margin: 0; text-align: center; word-break: break-all; }
-    .card-hex .card-label-row { display: flex; align-items: center; justify-content: center; gap: 4px; margin: 2px 0 0; min-height: 20px; }
-    .card-hex .card-label { font-size: 0.7rem; color: var(--gold-dim); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .card-hex .btn-edit-label { background: none; border: none; color: var(--text-dim); cursor: pointer; padding: 2px 4px; font-size: 0.75rem; border-radius: 3px; flex-shrink: 0; }
-    .card-hex .btn-edit-label:hover { color: var(--gold); }
-    .card-hex .btn-edit-label.empty { font-size: 0.65rem; }
-    .card-hex .card-actions { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin-top: 4px; }
+    .card-hex .card-avatar-wrap {
+      width: 66px;
+      height: 66px;
+      border-radius: 50%;
+      border: 2px solid #e8dc27;
+      padding: 6px;
+      background: #f7f7f7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .card-hex .card-avatar {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: none;
+      background: #c2c7cf;
+      box-shadow: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .card-hex .card-avatar-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      display: block;
+      border-radius: 50%;
+    }
+    .card-hex .card-right {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding-top: 0;
+    }
+    .card-hex .card-barcode {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.58rem;
+      letter-spacing: 0.06em;
+      color: #2e2f33;
+      line-height: 1;
+      margin-bottom: 3px;
+      user-select: none;
+    }
+    .card-hex .card-info {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+    .card-hex .card-info-k {
+      font-size: 0.5rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: #1f2227;
+      text-transform: uppercase;
+      line-height: 1.2;
+    }
+    .card-hex .card-info-v {
+      font-size: 0.5rem;
+      color: #5a616a;
+      line-height: 1.3;
+      word-break: break-word;
+      font-family: "Noto Sans SC", "PingFang SC", sans-serif;
+    }
+    .card-hex .card-label-inline {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .card-hex .card-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #2f3238;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+    }
+    .card-hex .card-label.empty {
+      color: #6b7280;
+      font-weight: 500;
+    }
+    .card-hex .card-label:hover {
+      color: #1d2126;
+    }
+    .card-hex .card-label-input {
+      width: 100%;
+      min-width: 60px;
+      max-width: 120px;
+      padding: 2px 6px;
+      margin: -2px 0;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #2f3238;
+      letter-spacing: 0.02em;
+      font-family: inherit;
+      border: 1px solid #c9a227;
+      border-radius: 4px;
+      background: #fffef5;
+      outline: none;
+      box-sizing: border-box;
+    }
+    .card-hex .card-role {
+      margin: -1px 0 0;
+      width: 100%;
+      text-align: left;
+      font-size: 0.5rem;
+      font-weight: 700;
+      color: #7e858d;
+      line-height: 1.2;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .card-hex .card-motto {
+      margin: 2px 0 0;
+      width: 100%;
+      border-top: 1px dashed rgba(120, 124, 131, 0.35);
+      padding-top: 7px;
+      color: #6f747b;
+      font-size: 0.49rem;
+      line-height: 1.35;
+      text-align: left;
+      min-height: 0;
+    }
+    .card-hex .card-gateway {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.49rem;
+      letter-spacing: 0.01em;
+      text-transform: none;
+    }
+    .card-hex .card-actions {
+      display: flex;
+      gap: 6px;
+      justify-content: flex-end;
+      flex-wrap: nowrap;
+      margin-top: 0;
+      position: absolute;
+      right: 14px;
+      bottom: 10px;
+      align-self: auto;
+    }
     .card-hex .btn-start,
     .card-hex .btn-stop {
-      padding: 6px 14px;
-      font-size: 0.75rem;
-      border-radius: 4px;
+      min-width: 58px;
+      padding: 4px 8px;
+      font-size: 0.56rem;
+      border-radius: 6px;
       cursor: pointer;
-      font-weight: 600;
+      font-weight: 700;
+      letter-spacing: 0.08em;
       font-family: inherit;
-      transition: filter 0.2s;
+      transition: filter 0.2s, transform 0.2s;
     }
     .card-hex .btn-start {
-      border: none;
-      background: var(--gold);
-      color: var(--black);
+      border: 1px solid #222830;
+      background: #f0e51e;
+      color: #222830;
     }
-    .card-hex .btn-start:hover { filter: brightness(1.15); }
+    .card-hex .btn-start:hover { filter: brightness(1.05); transform: translateY(-1px); }
     .card-hex .btn-stop {
       display: none;
-      border: 1px solid rgba(220, 80, 80, 0.6);
-      background: transparent;
-      color: #dc5050;
+      border: 1px solid #5a2020;
+      background: #f08a8a;
+      color: #3e1010;
     }
-    .card-hex .btn-stop:hover { filter: brightness(1.2); }
+    .card-hex .btn-stop:hover { filter: brightness(1.05); transform: translateY(-1px); }
 
     .toast {
       position: fixed;
-      bottom: 28px;
       left: 50%;
-      transform: translateX(-50%);
-      padding: 12px 24px;
-      border-radius: 6px;
-      background: var(--black-light);
-      border: 1px solid var(--gold-dim);
-      color: var(--gold);
-      font-size: 0.875rem;
+      top: 50%;
+      transform: translate(-50%, -50%) scale(0.96);
+      width: min(78vw, 560px);
+      max-width: calc(100vw - 32px);
+      padding: 18px 22px;
+      border-radius: 16px;
+      background: linear-gradient(180deg, rgba(11, 22, 40, 0.97), rgba(6, 14, 28, 0.96));
+      border: 1px solid rgba(57, 208, 255, 0.5);
+      color: #eef7ff;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      letter-spacing: 0.03em;
       opacity: 0;
-      transition: opacity 0.2s;
+      transition: opacity 0.18s ease, transform 0.18s ease;
       pointer-events: none;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      text-align: center;
+      box-shadow: 0 18px 60px rgba(0,0,0,0.48), 0 0 26px rgba(57, 208, 255, 0.18);
+      backdrop-filter: blur(12px);
+      z-index: 99999;
     }
-    .toast.show { opacity: 1; }
+    .toast.show {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
 
-    @media (max-width: 900px) {
-      .grid-64 { grid-template-columns: repeat(4, 1fr); }
+    @media (max-width: 1700px) {
+      .grid-64 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
     }
-    @media (max-width: 520px) {
+    @media (max-width: 1450px) {
+      .grid-64 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+    @media (max-width: 1180px) {
+      .grid-64 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    @media (max-width: 900px) {
+      .grid-64 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 640px) {
       .row-yinyang { flex-direction: column; align-items: center; }
-      .grid-64 { grid-template-columns: repeat(4, 1fr); gap: 8px; }
-      .card-hex { max-width: 72px; padding: 8px 6px; }
-      .card-hex .card-title { font-size: 0.9rem; }
+      .grid-64 { grid-template-columns: 1fr; gap: 18px 0; }
+    }
+
+    /* AI数字游民主题覆盖 */
+    .page-content::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(circle at 85% 15%, rgba(57, 208, 255, 0.2), transparent 35%),
+        radial-gradient(circle at 20% 85%, rgba(36, 120, 210, 0.18), transparent 40%);
+      pointer-events: none;
+      z-index: -1;
+    }
+    .row-yinyang {
+      width: 100%;
+      margin: 6px 0 14px;
+    }
+    .taiji-wrap.control-bridge {
+      width: min(860px, 94vw);
+      min-height: 138px;
+      height: auto;
+      border-radius: 16px;
+      border: 1px solid rgba(57, 208, 255, 0.45);
+      background: linear-gradient(165deg, rgba(7, 22, 44, 0.94), rgba(7, 15, 33, 0.92));
+      box-shadow: 0 0 28px rgba(57, 208, 255, 0.16), inset 0 0 24px rgba(6, 34, 62, 0.5);
+      animation: bridge-breathe 3.2s ease-in-out infinite;
+      padding: 14px 16px 12px;
+      overflow: hidden;
+      position: relative;
+    }
+    .taiji-wrap.control-bridge::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, rgba(57, 208, 255, 0.08) 1px, transparent 1px) 0 0 / 20px 20px,
+        linear-gradient(0deg, rgba(57, 208, 255, 0.06) 1px, transparent 1px) 0 0 / 20px 20px;
+      opacity: 0.4;
+      pointer-events: none;
+    }
+    .taiji-wrap.control-bridge::after {
+      content: "";
+      position: absolute;
+      inset: -30% 25%;
+      background: radial-gradient(circle, rgba(57, 208, 255, 0.22), transparent 65%);
+      opacity: 0.4;
+      pointer-events: none;
+      filter: blur(16px);
+    }
+    .control-bridge .bridge-grid {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    .control-bridge .taiji-dot {
+      position: relative;
+      left: auto;
+      top: auto;
+      transform: none;
+      width: 100%;
+      height: auto;
+      border-radius: 12px;
+      border: 1px solid rgba(57, 208, 255, 0.38);
+      padding: 10px 12px;
+      background: rgba(8, 20, 38, 0.9);
+      box-shadow: inset 0 0 18px rgba(31, 102, 144, 0.34);
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      align-items: flex-start;
+    }
+    .control-bridge .taiji-dot::after { content: none !important; }
+    .control-bridge .taiji-dot[data-robot="main"] {
+      background: linear-gradient(160deg, rgba(8, 31, 58, 0.96), rgba(5, 23, 42, 0.95));
+    }
+    .control-bridge .taiji-dot[data-robot="yang"] {
+      background: linear-gradient(160deg, rgba(9, 36, 54, 0.96), rgba(6, 27, 43, 0.95));
+      cursor: pointer;
+    }
+    .control-bridge .taiji-dot[data-robot="teams"] {
+      background: linear-gradient(160deg, rgba(9, 36, 54, 0.96), rgba(6, 27, 43, 0.95));
+      cursor: pointer;
+    }
+    .control-bridge .taiji-dot:hover {
+      border-color: rgba(57, 208, 255, 0.66);
+      box-shadow: 0 0 18px rgba(57, 208, 255, 0.3), inset 0 0 20px rgba(31, 102, 144, 0.45);
+      /* 不使用 translateY，避免 hover 时按钮上移导致鼠标移出、反复触发造成乱跳 */
+    }
+    .control-bridge .taiji-dot[data-robot="main"].running,
+    .control-bridge .taiji-dot[data-robot="main"].starting {
+      border-color: rgba(109, 242, 186, 0.75);
+      background: linear-gradient(160deg, rgba(7, 46, 54, 0.96), rgba(7, 30, 34, 0.95));
+      box-shadow: 0 0 18px rgba(109, 242, 186, 0.38), inset 0 0 22px rgba(8, 70, 64, 0.45);
+      animation: none;
+    }
+    .control-bridge .bridge-btn-k {
+      font-family: "JetBrains Mono", monospace;
+      color: #b7e9ff;
+      font-size: 0.73rem;
+      letter-spacing: 0.12em;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .control-bridge .bridge-btn-v {
+      color: #88acc9;
+      font-size: 0.78rem;
+      line-height: 1.15;
+      letter-spacing: 0.04em;
+    }
+    .control-bridge .bridge-foot {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .control-bridge .bridge-chip {
+      border: 1px solid rgba(57, 208, 255, 0.3);
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 0.64rem;
+      letter-spacing: 0.08em;
+      color: #95cbeb;
+      background: rgba(6, 19, 35, 0.65);
+      font-family: "JetBrains Mono", monospace;
+    }
+    .card-hex .card-title {
+      font-family: "JetBrains Mono", monospace;
+      letter-spacing: 0.04em;
+    }
+    @keyframes bridge-breathe {
+      0%, 100% { box-shadow: 0 0 28px rgba(57, 208, 255, 0.2), inset 0 0 16px rgba(9, 30, 58, 0.7); }
+      50% { box-shadow: 0 0 42px rgba(57, 208, 255, 0.35), inset 0 0 28px rgba(10, 42, 74, 0.92); }
+    }
+    @media (max-width: 720px) {
+      .taiji-wrap.control-bridge {
+        width: min(94vw, 600px);
+        padding: 12px;
+      }
+      .control-bridge .bridge-grid {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
 <body data-i18n-title="title">
   <div id="starfield" aria-hidden="true"></div>
   <div class="page-content">
-  <div id="yinOfflineBanner" class="yin-offline-banner" style="display:none;">
-    阴网关未启动。请点击下方太极图阴眼「阴·启动」。
-  </div>
   <div class="header">
     <div class="header-row">
       <div class="header-left">
-        <h1>Yinova</h1>
+        <h1>OpenSwarm</h1>
       </div>
       <div class="header-right">
+        <div id="openswarm-auth-slot" class="header-auth-row"></div>
         <div class="header-buttons">
-          <span id="yinova-lang-toggle-wrap"></span>
+          <span id="tenantRuntimeAlertChip" style="display:none;padding:6px 10px;border-radius:999px;border:1px solid rgba(57,208,255,0.28);background:rgba(10,20,38,0.66);color:#8ea5c4;font-size:0.72rem;letter-spacing:0.04em;">告警检测中…</span>
+          <span id="yinBreatheWrap" class="yin-breathe-wrap" title="主控状态"><span class="yin-breathe" id="yinBreatheLight"></span></span>
+          <span id="openswarm-lang-toggle-wrap"></span>
           <a href="config.html" class="btn-header-project" data-i18n-title="btnConfig" title="配置" style="font-size:0.9rem;">⚙</a>
-          <a href="skills.html" class="btn-header-project" title="技能库管理">📚</a>
+          <a href="skills.html" class="btn-header-project btn-header-skills" title="技能库管理" aria-label="技能库管理"><img src="assets/icons/skills.svg" alt="" width="22" height="22" class="btn-header-icon"></a>
+          <a href="runtime-admin.html" class="btn-header-project" title="Runtime与配额管理" style="font-size:0.72rem;letter-spacing:0.08em;">RT</a>
           <a href="projects.html" class="btn-header-project" data-i18n-title="btnProjects" title="项目空间">+</a>
         </div>
-        <div class="monitor" id="monitor">
-    <div class="monitor-header" id="monitorHeader">
-      <h3 data-i18n="monitorTitle">系统负载</h3>
-      <button type="button" class="monitor-toggle" id="monitorToggle" data-i18n-title="monitorCollapse" aria-label="折叠" title="折叠">▼</button>
-    </div>
-    <div class="monitor-body">
-    <div class="monitor-row"><span data-i18n="mem">内存</span> <span id="mem">--</span></div>
-    <div class="monitor-row"><span data-i18n="cpuPct">CPU 使用率</span> <span id="cpuPct">--</span></div>
-    <div class="monitor-row"><span data-i18n="cpuLoad">CPU 负载 (1/5 min)</span> <span id="load">--</span></div>
-    <div class="monitor-row"><span data-i18n="cpus">CPU 核数</span> <span id="cpus">--</span></div>
-    <div class="monitor-row"><span data-i18n="swap">交换已用</span> <span id="swap">—</span></div>
-    <div class="monitor-row" style="color:var(--text-dim);font-size:0.7rem;"><span data-i18n="monitorRefresh">每 5 秒刷新 · 上次</span> <span id="updated">--</span></div>
-    <div class="warnings" id="warnings"></div>
-    </div>
-  </div>
       </div>
     </div>
   </div>
 
   <div class="row-yinyang" id="rowYinyang">
-    <div class="taiji-wrap">
-      <svg viewBox="0 0 100 100" aria-hidden="true">
-        <!-- 上半：白鱼，鱼眼为黑 -->
-        <path class="half half-white" d="M50 0 A25 25 0 0 1 50 50 A25 25 0 0 0 50 100 A50 50 0 0 0 50 0"/>
-        <!-- 下半：黑鱼，鱼眼为白 -->
-        <path class="half half-black" d="M50 100 A25 25 0 0 1 50 50 A25 25 0 0 0 50 0 A50 50 0 0 0 50 100"/>
-        <circle class="eye-black" cx="50" cy="25" r="5"/>
-        <circle class="eye-white" cx="50" cy="75" r="5"/>
-        <circle class="stroke" cx="50" cy="50" r="50"/>
-        <path class="stroke" d="M50 0 A25 25 0 0 1 50 50 A25 25 0 0 0 50 100"/>
-      </svg>
-      <button type="button" class="taiji-dot" data-robot="main" data-i18n-title="yinClickStart" title="阴 · 点击启动/停止" aria-label="阴"></button>
-      <button type="button" class="taiji-dot" data-robot="yang" data-i18n-title="yangDisplayOnly" title="阳 · 技能组装" aria-label="阳"></button>
+    <div class="taiji-wrap control-bridge">
+      <div class="bridge-grid">
+        <button type="button" class="taiji-dot" data-robot="main" data-i18n-title="yinClickStart" title="主控 · 点击启动/停止" aria-label="主控">
+          <span class="bridge-btn-k">COMMAND CORE</span>
+          <span class="bridge-btn-v">启动 / 停止主控</span>
+        </button>
+        <button type="button" class="taiji-dot" data-robot="yang" data-i18n-title="yangDisplayOnly" title="策略 · 技能组装" aria-label="策略">
+          <span class="bridge-btn-k">AGENT STUDIO</span>
+          <span class="bridge-btn-v">创建公司团队</span>
+        </button>
+        <button type="button" class="taiji-dot" data-robot="teams" title="团队管理 · 团队列表与新建" aria-label="团队管理">
+          <span class="bridge-btn-k">TEAM</span>
+          <span class="bridge-btn-v">团队管理</span>
+        </button>
+      </div>
+      <div class="bridge-foot">
+        <span class="bridge-chip">DIGITAL EMPLOYEE FABRIC</span>
+        <span class="bridge-chip">REALTIME ORCHESTRATION</span>
+        <span class="bridge-chip">TASK ROUTING BUS</span>
+      </div>
+      <div id="yinOfflineBanner" class="yin-offline-banner" style="display:none;">
+        主控网关未启动。请点击上方「COMMAND CORE」启动主控。
+      </div>
+      <div id="yinActionBanner" class="yin-action-banner" style="display:none;" aria-live="polite">
+        <div class="yin-action-copy">
+          <div id="yinActionTitle" class="yin-action-title">正在启动主控…</div>
+          <div id="yinActionDesc" class="yin-action-desc">正在准备运行环境，请稍候。</div>
+        </div>
+        <div id="yinActionSteps" class="yin-action-steps"></div>
+      </div>
     </div>
   </div>
   <div class="section-hexagrams">
     <div class="label-row">
-      <p class="label" id="hexLabel" data-i18n="hexLabelWithCount" data-i18n-args="[0]">卦象 · 已启动 0</p>
-      <button type="button" class="btn-close-all-terminals" id="btnCloseAllTerminals" data-i18n-title="btnCloseAllTerminalsTitle" data-i18n="btnCloseAllTerminals" title="关闭 64 卦中由面板打开的所有终端窗口（不停止网关）">一键关闭所有终端</button>
+      <p class="label" id="hexLabel" data-i18n="hexLabelWithCount" data-i18n-args="[0]">数字员工 · 已启动 0</p>
+      <button type="button" class="btn-close-all-terminals" id="btnCloseAllTerminals" data-i18n-title="btnCloseAllTerminalsTitle" data-i18n="btnCloseAllTerminals" title="关闭 64 员工中由面板打开的所有终端窗口（不停止网关）">一键关闭所有终端</button>
     </div>
     <div class="grid-64" id="grid64"></div>
   </div>
@@ -481,6 +974,7 @@
   </div>
 
   <script src="i18n.js"></script>
+  <script src="/assets/dot-grid-bg.js"></script>
   <script>
     // 未配置 API Key 时跳转到配置页（本地模型如 Ollama/vLLM 无需 Key，不跳转）
     (function checkConfig() {
@@ -497,97 +991,366 @@
       }).catch(function() {});
     })();
 
-    (function initStarfield() {
-      var container = document.getElementById('starfield');
-      if (!container) return;
-      var count = 60;
-      for (var i = 0; i < count; i++) {
-        var el = document.createElement('div');
-        el.className = 'star';
-        el.style.left = (Math.random() * 100) + '%';
-        el.style.top = (Math.random() * 100) + '%';
-        var size = 1.5 + Math.random() * 2.5;
-        el.style.width = size + 'px';
-        el.style.height = size + 'px';
-        el.style.opacity = [0.35, 0.5, 0.6, 0.75][Math.floor(Math.random() * 4)];
-        el.style.setProperty('--dur', (1 + Math.random() * 3).toFixed(2) + 's');
-        el.style.setProperty('--delay', (Math.random() * 2).toFixed(2) + 's');
-        container.appendChild(el);
-      }
-    })();
+    if (window.initDotGridBackground) {
+      window.initDotGridBackground({
+        containerId: 'starfield',
+        dotSize: 1.8,
+        gap: 24,
+        baseColor: '85,125,168',
+        activeColor: '64,211,255',
+        bgColor: '5,10,22',
+        pulse: 0.26,
+        mouseRadius: 180,
+        mouseStrength: 1
+      });
+    }
 
     const toast = document.getElementById('toast');
     const rowYinyang = document.getElementById('rowYinyang');
     const grid64 = document.getElementById('grid64');
 
-    var t = window.YINOVA_I18N && window.YINOVA_I18N.t ? window.YINOVA_I18N.t.bind(window.YINOVA_I18N) : function(k) { return k; };
-    var getHexDisplayName = window.YINOVA_I18N && window.YINOVA_I18N.getHexDisplayName ? function(id, name) { return window.YINOVA_I18N.getHexDisplayName(id, name); } : function(id, name) { return name || id; };
+    var t = window.OPENSWARM_I18N && window.OPENSWARM_I18N.t ? window.OPENSWARM_I18N.t.bind(window.OPENSWARM_I18N) : function(k) { return k; };
+    var getHexDisplayName = window.OPENSWARM_I18N && window.OPENSWARM_I18N.getHexDisplayName ? function(id, name) { return window.OPENSWARM_I18N.getHexDisplayName(id, name); } : function(id, name) { return name || id; };
+    var toastTimer = null;
     function esc(s) { if (s == null) return ''; var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
     function show(msg) {
       toast.textContent = msg;
       toast.classList.add('show');
-      setTimeout(function() { toast.classList.remove('show'); }, 3000);
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(function() {
+        toast.classList.remove('show');
+        toastTimer = null;
+      }, 3200);
     }
-
-    function updateMonitor() {
-      fetch('/api/system').then(r => r.json()).then(d => {
-        document.getElementById('mem').textContent = (d.memoryUsedPercent != null ? d.memoryUsedPercent : '—') + '% (' + (d.memoryUsedMB ?? '—') + ' / ' + (d.memoryTotalMB ?? '—') + ' MB)';
-        var cpuPctEl = document.getElementById('cpuPct');
-        if (cpuPctEl) cpuPctEl.textContent = (d.cpuUsagePercent != null ? d.cpuUsagePercent + '%' : '—');
-        document.getElementById('load').textContent = (d.loadAvg1 != null ? d.loadAvg1 : '—') + ' / ' + (d.loadAvg5 != null ? d.loadAvg5 : '—');
-        document.getElementById('cpus').textContent = (d.cpus != null && d.cpus > 0) ? d.cpus : '—';
-        const swapEl = document.getElementById('swap');
-        if (swapEl) swapEl.textContent = d.swapUsedMB != null ? d.swapUsedMB + ' MB' : '—';
-        document.getElementById('updated').textContent = new Date().toLocaleTimeString('zh-CN');
-        const monEl = document.getElementById('monitor');
-        if (monEl) monEl.classList.toggle('monitor--alert', !!d.alert);
-        const wEl = document.getElementById('warnings');
-        if (d.warnings && d.warnings.length) {
-          wEl.innerHTML = d.warnings.map(w => '<div class="' + w.level + '">⚠ ' + w.text + '</div>').join('');
-          wEl.style.display = 'block';
-        } else {
-          wEl.innerHTML = '';
-          wEl.style.display = 'none';
-        }
-      }).catch(() => {});
-    }
-    setInterval(updateMonitor, 5000);
-    updateMonitor();
-
-    (function initMonitorCollapse() {
-      var STORAGE_KEY = 'yinova_monitor_collapsed';
-      var mon = document.getElementById('monitor');
-      var header = document.getElementById('monitorHeader');
-      var btn = document.getElementById('monitorToggle');
-      if (!mon || !header || !btn) return;
-      var collapsed = localStorage.getItem(STORAGE_KEY) === '1';
-      function apply() {
-        mon.classList.toggle('monitor--collapsed', collapsed);
-        btn.textContent = collapsed ? '▶' : '▼';
-        var key = collapsed ? 'monitorExpand' : 'monitorCollapse';
-        btn.setAttribute('data-i18n-title', key);
-        btn.setAttribute('title', t(key));
-        btn.setAttribute('aria-label', t(key));
-      }
-      function toggle() {
-        collapsed = !collapsed;
-        localStorage.setItem(STORAGE_KEY, collapsed ? '1' : '0');
-        apply();
-      }
-      header.addEventListener('click', function(e) { if (e.target !== btn) toggle(); });
-      btn.addEventListener('click', function(e) { e.stopPropagation(); toggle(); });
-      apply();
-    })();
 
     function displayName(robot) {
-      if (robot.id === 'main') return '阴';
+      if (robot.id === 'main') return '主控';
       return robot.name;
+    }
+    var FIXED_BADGE_AVATAR_POOL = (function() {
+      var list = [];
+      for (var i = 1; i <= 9; i++) list.push('assets/avatar/avatar-' + String(i).padStart(2, '0') + '.svg');
+      ['female', 'professor', 'researcher'].forEach(function(kind) {
+        for (var j = 1; j <= 3; j++) list.push('assets/avatar/' + kind + '-' + String(j).padStart(2, '0') + '.svg');
+      });
+      for (var k = 19; k <= 64; k++) list.push('assets/avatar/employee-' + String(k).padStart(2, '0') + '.svg');
+      return list;
+    })();
+    function hashTextToIndex(text, mod) {
+      var h = 0;
+      var s = String(text || '');
+      for (var i = 0; i < s.length; i++) h = ((h << 5) - h + s.charCodeAt(i)) | 0;
+      return Math.abs(h) % mod;
+    }
+    function resolveBadgeAvatarIndex(robot) {
+      var p = Number(robot && robot.port);
+      if (Number.isFinite(p) && p >= 18791 && p <= 18854) return p - 18791;
+      var id = String(robot && robot.id || '');
+      var fixedTop = ['qian', 'kun', 'tai', 'pi', 'xun', 'yu', 'sui', 'gu', 'lin', 'guan'];
+      var topIdx = fixedTop.indexOf(id);
+      if (topIdx >= 0) return topIdx;
+      var m = id.match(/^h(\d{2})$/i);
+      if (m) {
+        var num = parseInt(m[1], 10);
+        if (num >= 11 && num <= 64) return num - 1;
+      }
+      return hashTextToIndex(id, FIXED_BADGE_AVATAR_POOL.length);
+    }
+    function resolveBadgeAvatarSrc(robot) {
+      return FIXED_BADGE_AVATAR_POOL[resolveBadgeAvatarIndex(robot)];
+    }
+
+    let currentRuntimeOverview = null;
+    let currentRuntimeAgents = [];
+    let currentRuntimeAlerts = null;
+    let runtimeActionState = null;
+    let runtimeActionTimer = null;
+    let runtimeActionFadeTimer = null;
+
+    function runtimeAgentMap() {
+      const byId = {};
+      (currentRuntimeAgents || []).forEach(function(agent) {
+        if (agent && agent.agentId) byId[agent.agentId] = agent;
+      });
+      return byId;
+    }
+
+    async function fetchTenantRuntimeOverview() {
+      try {
+        const r = await fetch('/api/tenant-runtime/overview');
+        if (!r.ok) return null;
+        return await r.json();
+      } catch (_) {
+        return null;
+      }
+    }
+
+    async function fetchTenantRuntimeAgents() {
+      try {
+        const r = await fetch('/api/tenant-runtime/runtime/agents');
+        if (!r.ok) return [];
+        const data = await r.json();
+        return Array.isArray(data && data.items) ? data.items : [];
+      } catch (_) {
+        return [];
+      }
+    }
+
+    async function fetchTenantRuntimeAlerts() {
+      try {
+        if (!window.__openswarmSession || !window.__openswarmSession.tenant || !window.__openswarmSession.tenant.id) return null;
+        const r = await fetch('/api/runtime-admin/alerts?tenantId=' + encodeURIComponent(window.__openswarmSession.tenant.id));
+        if (!r.ok) return null;
+        return await r.json();
+      } catch (_) {
+        return null;
+      }
+    }
+
+    function renderRuntimeAlertChip() {
+      const el = document.getElementById('tenantRuntimeAlertChip');
+      if (!el) return;
+      const summary = currentRuntimeAlerts && currentRuntimeAlerts.summary ? currentRuntimeAlerts.summary : null;
+      if (!summary) {
+        el.style.display = 'none';
+        return;
+      }
+      el.style.display = '';
+      if (!summary.total) {
+        el.textContent = '运行正常';
+        el.style.color = '#8ea5c4';
+        el.style.borderColor = 'rgba(57,208,255,0.28)';
+      } else if (summary.critical > 0) {
+        el.textContent = 'Critical ' + summary.critical + ' · Warn ' + (summary.warn || 0);
+        el.style.color = '#ff6b7f';
+        el.style.borderColor = 'rgba(255,107,127,0.38)';
+      } else {
+        el.textContent = 'Warn ' + (summary.warn || 0);
+        el.style.color = '#ffce56';
+        el.style.borderColor = 'rgba(255,206,86,0.38)';
+      }
+    }
+
+    async function startTenantMain() {
+      const r = await fetch('/api/tenant-runtime/runtime/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ target: 'main' })
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok || data.error) throw new Error(data.error || ('HTTP ' + r.status));
+      return data;
+    }
+
+    async function stopTenantMain() {
+      const r = await fetch('/api/tenant-runtime/runtime/stop', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ target: 'main' })
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok || data.error) throw new Error(data.error || ('HTTP ' + r.status));
+      return data;
+    }
+
+    function formatElapsedMs(ms) {
+      var seconds = Math.max(0, Math.round(Number(ms || 0) / 100) / 10);
+      return seconds.toFixed(seconds >= 10 ? 0 : 1) + ' 秒';
+    }
+
+    function clearRuntimeActionTimers() {
+      if (runtimeActionTimer) {
+        clearInterval(runtimeActionTimer);
+        runtimeActionTimer = null;
+      }
+      if (runtimeActionFadeTimer) {
+        clearTimeout(runtimeActionFadeTimer);
+        runtimeActionFadeTimer = null;
+      }
+    }
+
+    function renderRuntimeActionSteps(currentIndex, doneCount) {
+      const stepsEl = document.getElementById('yinActionSteps');
+      if (!stepsEl) return;
+      const labels = ['请求已发送', '网关拉起中', '状态确认中'];
+      stepsEl.innerHTML = labels.map(function(label, index) {
+        var cls = 'yin-step-chip';
+        if (index < doneCount) cls += ' done';
+        else if (index === currentIndex) cls += ' active';
+        return '<span class="' + cls + '">' + label + '</span>';
+      }).join('');
+    }
+
+    function setRuntimeActionState(payload) {
+      const banner = document.getElementById('yinActionBanner');
+      const titleEl = document.getElementById('yinActionTitle');
+      const descEl = document.getElementById('yinActionDesc');
+      if (!banner || !titleEl || !descEl) return;
+      clearRuntimeActionTimers();
+      if (!payload) {
+        runtimeActionState = null;
+        banner.classList.add('is-hidden');
+        banner.removeAttribute('data-state');
+        runtimeActionFadeTimer = setTimeout(function() {
+          if (!runtimeActionState) banner.style.display = 'none';
+        }, 240);
+        return;
+      }
+      runtimeActionState = {
+        state: payload.state || 'pending',
+        title: payload.title || '',
+        desc: payload.desc || '',
+        currentStep: Number.isFinite(payload.currentStep) ? payload.currentStep : 0,
+        doneCount: Number.isFinite(payload.doneCount) ? payload.doneCount : 0,
+        startedAt: Number(payload.startedAt || Date.now()),
+        autoHideMs: Number(payload.autoHideMs || 0),
+      };
+      banner.style.display = '';
+      requestAnimationFrame(function() {
+        banner.classList.remove('is-hidden');
+      });
+      function applyRuntimeActionState() {
+        if (!runtimeActionState) return;
+        banner.setAttribute('data-state', runtimeActionState.state);
+        titleEl.textContent = runtimeActionState.title;
+        descEl.textContent = runtimeActionState.desc + ' · 已耗时 ' + formatElapsedMs(Date.now() - runtimeActionState.startedAt);
+        renderRuntimeActionSteps(runtimeActionState.currentStep, runtimeActionState.doneCount);
+      }
+      applyRuntimeActionState();
+      if (runtimeActionState.state === 'pending') {
+        runtimeActionTimer = setInterval(applyRuntimeActionState, 200);
+      } else if (runtimeActionState.autoHideMs > 0) {
+        runtimeActionFadeTimer = setTimeout(function() {
+          setRuntimeActionState(null);
+        }, runtimeActionState.autoHideMs);
+      }
+    }
+
+    async function waitForMainRuntime(targetRunning, options) {
+      const timeoutMs = options && options.timeoutMs ? options.timeoutMs : 15000;
+      const stepTitle = options && options.stepTitle ? options.stepTitle : (targetRunning ? '正在确认主控状态…' : '正在确认主控已停止…');
+      const successTitle = options && options.successTitle ? options.successTitle : (targetRunning ? '主控已启动' : '主控已停止');
+      const successDesc = options && options.successDesc ? options.successDesc : (targetRunning ? '现在可以进入团队与项目空间了。' : '主控已完成关闭。');
+      const startedAt = options && options.startedAt ? options.startedAt : Date.now();
+      let attempt = 0;
+      while (Date.now() - startedAt < timeoutMs) {
+        attempt += 1;
+        setRuntimeActionState({
+          state: 'pending',
+          title: stepTitle,
+          desc: '第 ' + attempt + ' 次状态确认中，请稍候…',
+          currentStep: 2,
+          doneCount: 2,
+          startedAt,
+        });
+        try {
+          currentRuntimeOverview = await fetchTenantRuntimeOverview();
+          currentRuntimeAlerts = await fetchTenantRuntimeAlerts();
+          renderRuntimeAlertChip();
+        } catch (_) {}
+        const mainRunning = !!(currentRuntimeOverview && currentRuntimeOverview.runtime && currentRuntimeOverview.runtime.mainRunning);
+        applyYinGatewayStatus(mainRunning);
+        if (mainRunning === targetRunning) {
+          setRuntimeActionState({
+            state: 'success',
+            title: successTitle,
+            desc: successDesc,
+            currentStep: 2,
+            doneCount: 3,
+            startedAt,
+            autoHideMs: 2200,
+          });
+          return true;
+        }
+        await new Promise(function(resolve) { setTimeout(resolve, targetRunning ? 700 : 500); });
+      }
+      setRuntimeActionState({
+        state: 'error',
+        title: targetRunning ? '主控启动超时' : '主控停止超时',
+        desc: '后端已收到请求，但状态确认超时。可以稍候刷新再看，或再次操作。',
+        currentStep: 2,
+        doneCount: 2,
+        startedAt,
+      });
+      return false;
+    }
+
+    async function waitForWorkerRuntime(robotId, targetRunning, options) {
+      const timeoutMs = options && options.timeoutMs ? options.timeoutMs : 15000;
+      const display = options && options.displayName ? options.displayName : displayName({ id: robotId, name: robotId });
+      const successTitle = options && options.successTitle ? options.successTitle : (targetRunning ? (display + ' 已启动') : (display + ' 已停止'));
+      const successDesc = options && options.successDesc ? options.successDesc : (targetRunning ? '员工网关已就绪，可以立即接任务。' : '员工已完成关闭。');
+      const startedAt = options && options.startedAt ? options.startedAt : Date.now();
+      let attempt = 0;
+      while (Date.now() - startedAt < timeoutMs) {
+        attempt += 1;
+        setRuntimeActionState({
+          state: 'pending',
+          title: targetRunning ? ('正在启动 ' + display + '…') : ('正在停止 ' + display + '…'),
+          desc: '第 ' + attempt + ' 次状态确认中，请稍候…',
+          currentStep: 2,
+          doneCount: 2,
+          startedAt,
+        });
+        try {
+          currentRuntimeOverview = await fetchTenantRuntimeOverview();
+          currentRuntimeAgents = await fetchTenantRuntimeAgents();
+          currentRuntimeAlerts = await fetchTenantRuntimeAlerts();
+          renderRuntimeAlertChip();
+        } catch (_) {}
+        const agent = (currentRuntimeAgents || []).find(function(item) { return item && item.agentId === robotId; });
+        if (!!(agent && agent.running) === targetRunning) {
+          setRuntimeActionState({
+            state: 'success',
+            title: successTitle,
+            desc: successDesc,
+            currentStep: 2,
+            doneCount: 3,
+            startedAt,
+            autoHideMs: 2200,
+          });
+          return true;
+        }
+        await new Promise(function(resolve) { setTimeout(resolve, targetRunning ? 650 : 450); });
+      }
+      setRuntimeActionState({
+        state: 'error',
+        title: (targetRunning ? '启动' : '停止') + display + ' 超时',
+        desc: '请求已发送，但员工状态确认超时。可以稍候刷新再看，或再次操作。',
+        currentStep: 2,
+        doneCount: 2,
+        startedAt,
+      });
+      return false;
+    }
+
+    async function startTenantWorker(robotId) {
+      const r = await fetch('/api/tenant-runtime/runtime/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ agentId: robotId })
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok || data.error) throw new Error(data.error || ('HTTP ' + r.status));
+      return data;
+    }
+
+    async function stopTenantWorker(robotId) {
+      const r = await fetch('/api/tenant-runtime/runtime/stop', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ agentId: robotId })
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok || data.error) throw new Error(data.error || ('HTTP ' + r.status));
+      return data;
     }
 
     function updateCardsRunning(robots) {
       const byId = {};
+      const runtimeById = runtimeAgentMap();
       robots.forEach(r => { byId[r.id] = r; });
-      const hexRunning = robots.filter(r => r.id !== 'main' && r.running).length;
+      const hexRunning = Object.values(runtimeById).filter(r => r && r.running).length;
       const labelEl = document.getElementById('hexLabel');
       if (labelEl) labelEl.textContent = t('hexLabelWithCount', hexRunning);
       rowYinyang.querySelectorAll('.taiji-dot').forEach(btn => {
@@ -596,27 +1359,38 @@
           btn.title = t('yangDisplayOnly');
           return;
         }
+        const runtimeAgent = runtimeById[rid];
         const r = byId[rid];
-        const isRunning = !!r && !!r.running;
+        const isRunning = rid === 'main'
+          ? !!(currentRuntimeOverview && currentRuntimeOverview.runtime && currentRuntimeOverview.runtime.mainRunning)
+          : (runtimeAgent ? !!runtimeAgent.running : (!!r && !!r.running));
         btn.classList.toggle('running', isRunning);
         if (isRunning) {
           btn.classList.remove('starting');
-          btn.title = t('yinClickStop');
+          btn.title = rid === 'main' ? t('yinClickMainStop') : t('yinClickStop');
         } else {
-          btn.title = t('yinClickStart');
+          btn.title = rid === 'main' ? t('yinClickMainStart') : t('yinClickStart');
         }
       });
       grid64.querySelectorAll('.card-hex').forEach(card => {
         var robotId = card.dataset.robot;
         if (!robotId) return;
         var r = byId[robotId];
-        var running = !!(r && r.running);
+        var runtimeAgent = runtimeById[robotId];
+        var running = runtimeAgent ? !!runtimeAgent.running : !!(r && r.running);
         card.classList.toggle('running', running);
         if (running) card.classList.remove('starting');
         var dot = card.querySelector('.status-dot');
         if (dot) {
           dot.classList.toggle('running', running);
           dot.setAttribute('aria-label', running ? t('statusRunning') : t('statusStopped'));
+        }
+        var statusText = card.querySelector('.card-status-text');
+        if (statusText) statusText.textContent = running ? t('statusRunning') : t('statusStopped');
+        var gwText = card.querySelector('.card-gateway');
+        if (gwText) {
+          if (runtimeAgent && runtimeAgent.port) gwText.textContent = '127.0.0.1:' + String(runtimeAgent.port);
+          else if (r && r.gateway) gwText.textContent = String(r.gateway).replace('ws://', '');
         }
         var startBtn = card.querySelector('.btn-start');
         var stopBtn = card.querySelector('.btn-stop');
@@ -630,14 +1404,12 @@
       btn.addEventListener('click', async () => {
         (targetEl || btn).classList.add('starting');
         try {
-          const r = await fetch('/api/open-tui/' + robotId, { method: 'POST' });
-          const data = await r.json().catch(() => ({}));
-          if (r.ok && !data.error) {
-            show(data.reused ? t('toastTerminalReused') : t('toastTerminalOpened'));
-          } else {
-            show(data.error || t('toastStartFailed') + ' (HTTP ' + r.status + ')');
-            (targetEl || btn).classList.remove('starting');
-          }
+          await startTenantWorker(robotId);
+          currentRuntimeOverview = await fetchTenantRuntimeOverview();
+          currentRuntimeAgents = await fetchTenantRuntimeAgents();
+          currentRuntimeAlerts = await fetchTenantRuntimeAlerts();
+          renderRuntimeAlertChip();
+          show(t('toastTerminalOpened'));
         } catch (e) {
           show(t('toastRequestFailed') + ': ' + (e.message || ''));
           (targetEl || btn).classList.remove('starting');
@@ -649,15 +1421,14 @@
       btn.addEventListener('click', async () => {
         btn.disabled = true;
         try {
-          const r = await fetch('/api/stop/' + robotId, { method: 'POST' });
-          const data = await r.json().catch(() => ({}));
-          if (r.ok && !data.error) {
-            show(t('toastStopped'));
-            var next = await fetchRobots();
-            updateCardsRunning(next);
-          } else {
-            show(data.error || t('toastStopFailed'));
-          }
+          await stopTenantWorker(robotId);
+          currentRuntimeOverview = await fetchTenantRuntimeOverview();
+          currentRuntimeAgents = await fetchTenantRuntimeAgents();
+          currentRuntimeAlerts = await fetchTenantRuntimeAlerts();
+          renderRuntimeAlertChip();
+          show(t('toastStopped'));
+          var next = await fetchRobots();
+          updateCardsRunning(next);
         } catch (e) {
           show(t('toastRequestFailed') + ': ' + (e.message || ''));
         }
@@ -676,51 +1447,186 @@
       ];
     }
 
+    async function requireMainGatewayReady(nextUrl, sourceLabel) {
+      var mainRunning = false;
+      for (var attempt = 0; attempt < 5; attempt++) {
+        try {
+          currentRuntimeOverview = await fetchTenantRuntimeOverview();
+          currentRuntimeAlerts = await fetchTenantRuntimeAlerts();
+          renderRuntimeAlertChip();
+        } catch (_) {}
+        mainRunning = !!(currentRuntimeOverview && currentRuntimeOverview.runtime && currentRuntimeOverview.runtime.mainRunning);
+        if (mainRunning) break;
+        if (attempt === 0) {
+          show('正在确认主控状态，请稍候…');
+        }
+        await new Promise(function(resolve) { setTimeout(resolve, 800); });
+      }
+      applyYinGatewayStatus(mainRunning);
+      if (!mainRunning) {
+        show((sourceLabel || '当前操作') + '需要先启动主控。请先点击上方「COMMAND CORE」启动主控。');
+        return false;
+      }
+      if (nextUrl) location.href = nextUrl;
+      return true;
+    }
+
     async function render() {
       let robots = await fetchRobots();
+      currentRuntimeOverview = await fetchTenantRuntimeOverview();
+      currentRuntimeAgents = await fetchTenantRuntimeAgents();
+      currentRuntimeAlerts = await fetchTenantRuntimeAlerts();
+      renderRuntimeAlertChip();
       const hexagrams = robots.filter(r => r.id !== 'main');
 
       rowYinyang.querySelectorAll('.taiji-dot').forEach(btn => {
         const robotId = btn.dataset.robot;
         btn.addEventListener('click', async () => {
           if (robotId === 'yang') {
-            location.href = 'yang.html';
+            await requireMainGatewayReady('yang.html', '创建公司团队');
+            return;
+          }
+          if (robotId === 'teams') {
+            await requireMainGatewayReady('projects.html', '团队管理');
             return;
           }
           const robots = await fetchRobots();
+          currentRuntimeOverview = await fetchTenantRuntimeOverview();
+          currentRuntimeAgents = await fetchTenantRuntimeAgents();
+          currentRuntimeAlerts = await fetchTenantRuntimeAlerts();
+          renderRuntimeAlertChip();
+          const runtimeById = runtimeAgentMap();
           const robot = robots.find(r => r.id === robotId);
-          const isRunning = !!(robot && robot.running);
+          const isRunning = robotId === 'main'
+            ? !!(currentRuntimeOverview && currentRuntimeOverview.runtime && currentRuntimeOverview.runtime.mainRunning)
+            : (runtimeById[robotId] ? !!runtimeById[robotId].running : !!(robot && robot.running));
           if (isRunning) {
             // 运行中：点击停止
             btn.disabled = true;
+            btn.classList.add('starting');
+            var actionStartedAt = Date.now();
+            setRuntimeActionState({
+              state: 'pending',
+              title: '正在停止主控…',
+              desc: '正在发送停止请求并等待主控退出。',
+              currentStep: 0,
+              doneCount: 0,
+              startedAt: actionStartedAt,
+            });
             try {
-              const r = await fetch('/api/stop/' + robotId, { method: 'POST' });
-              const data = await r.json().catch(() => ({}));
-              if (r.ok && !data.error) {
-                show(t('toastStopped'));
-                var next = await fetchRobots();
-                updateCardsRunning(next);
+              if (robotId === 'main') {
+                await stopTenantMain();
+                setRuntimeActionState({
+                  state: 'pending',
+                  title: '正在停止主控…',
+                  desc: '停止请求已发送，正在等待主控完全退出。',
+                  currentStep: 1,
+                  doneCount: 1,
+                  startedAt: actionStartedAt,
+                });
+                await waitForMainRuntime(false, {
+                  successTitle: '主控已停止',
+                  successDesc: '已停止当前租户的主控 runtime。',
+                  startedAt: actionStartedAt,
+                });
               } else {
-                show(data.error || t('toastStopFailed'));
+                await stopTenantWorker(robotId);
+                await waitForWorkerRuntime(robotId, false, {
+                  displayName: displayName(robot || { id: robotId, name: robotId }),
+                  successDesc: '员工已完成停止。',
+                  startedAt: actionStartedAt,
+                });
               }
+              var next = await fetchRobots();
+              currentRuntimeOverview = await fetchTenantRuntimeOverview();
+              currentRuntimeAgents = await fetchTenantRuntimeAgents();
+              currentRuntimeAlerts = await fetchTenantRuntimeAlerts();
+              renderRuntimeAlertChip();
+              updateCardsRunning(next);
+              if (robotId !== 'main') show(t('toastStopped'));
             } catch (e) {
+              if (robotId === 'main') {
+                setRuntimeActionState({
+                  state: 'error',
+                  title: '停止主控失败',
+                  desc: e.message || '停止请求未完成，请稍后重试。',
+                  currentStep: 0,
+                  doneCount: 0,
+                  startedAt: actionStartedAt,
+                });
+              }
               show(t('toastRequestFailed') + ': ' + (e.message || ''));
             }
+            if (robotId === 'main') btn.classList.remove('starting');
             btn.disabled = false;
           } else {
             // 未运行：点击启动
             btn.classList.add('starting');
+            var actionStartedAt = Date.now();
             try {
-              const r = await fetch('/api/open-tui/' + robotId, { method: 'POST' });
-              const data = await r.json().catch(() => ({}));
-              if (r.ok && !data.error) {
-                show(data.reused ? t('toastTerminalReused') : t('toastTerminalOpened'));
+              if (robotId === 'main') {
+                setRuntimeActionState({
+                  state: 'pending',
+                  title: '正在启动主控…',
+                  desc: '正在准备运行环境并拉起主控网关。',
+                  currentStep: 0,
+                  doneCount: 0,
+                  startedAt: actionStartedAt,
+                });
+                await startTenantMain();
+                setRuntimeActionState({
+                  state: 'pending',
+                  title: '正在启动主控…',
+                  desc: '启动请求已发送，正在等待主控网关监听端口。',
+                  currentStep: 1,
+                  doneCount: 1,
+                  startedAt: actionStartedAt,
+                });
+                await waitForMainRuntime(true, {
+                  successTitle: '主控已启动',
+                  successDesc: '主控已就绪，可以继续创建团队和派发任务。',
+                  startedAt: actionStartedAt,
+                });
               } else {
-                show(data.error || t('toastStartFailed') + ' (HTTP ' + r.status + ')');
-                btn.classList.remove('starting');
+                await startTenantWorker(robotId);
+                await waitForWorkerRuntime(robotId, true, {
+                  displayName: displayName(robot || { id: robotId, name: robotId }),
+                  successDesc: '员工网关已就绪，可以继续派发任务。',
+                  startedAt: actionStartedAt,
+                });
+              }
+              currentRuntimeOverview = await fetchTenantRuntimeOverview();
+              currentRuntimeAgents = await fetchTenantRuntimeAgents();
+              currentRuntimeAlerts = await fetchTenantRuntimeAlerts();
+              renderRuntimeAlertChip();
+              updateCardsRunning(await fetchRobots());
+              if (robotId !== 'main') show(t('toastTerminalOpened'));
+              if (robotId === 'main' && typeof checkYinGatewayStatus === 'function') {
+                setTimeout(checkYinGatewayStatus, 800);
+                setTimeout(checkYinGatewayStatus, 2000);
+                setTimeout(checkYinGatewayStatus, 3500);
               }
             } catch (e) {
               show(t('toastRequestFailed') + ': ' + (e.message || ''));
+              if (robotId === 'main') {
+                setRuntimeActionState({
+                  state: 'error',
+                  title: '启动主控失败',
+                  desc: e.message || '启动请求未完成，请稍后重试。',
+                  currentStep: 0,
+                  doneCount: 0,
+                  startedAt: actionStartedAt,
+                });
+              } else {
+                setRuntimeActionState({
+                  state: 'error',
+                  title: '启动 ' + displayName(robot || { id: robotId, name: robotId }) + ' 失败',
+                  desc: e.message || '启动请求未完成，请稍后重试。',
+                  currentStep: 0,
+                  doneCount: 0,
+                  startedAt: actionStartedAt,
+                });
+              }
               btn.classList.remove('starting');
             }
           }
@@ -729,83 +1635,204 @@
 
       grid64.innerHTML = hexagrams.map(robot => {
         var label = robot.label ? String(robot.label).trim() : '';
-        var labelRow = label
-          ? '<span class="card-label" title="' + esc(label) + '">' + esc(label) + '</span><button type="button" class="btn-edit-label" data-robot="' + esc(robot.id) + '" title="' + (window.YINOVA_I18N && window.YINOVA_I18N.t('hexLabelEdit') || '编辑标签') + '">\u270E</button>'
-          : '<button type="button" class="btn-edit-label empty" data-robot="' + esc(robot.id) + '" title="' + (window.YINOVA_I18N && window.YINOVA_I18N.t('hexLabelSet') || '设置标签') + '">+ ' + (window.YINOVA_I18N && window.YINOVA_I18N.t('hexLabel') || '标签') + '</button>';
+        var cleanLabel = label.replace(/\s*(NO\.\d{2}|DG-\d{2})\s*$/i, '').trim();
+        var labelRow = cleanLabel
+          ? '<span class="card-label" data-robot="' + esc(robot.id) + '" title="' + esc(cleanLabel) + '">' + esc(cleanLabel) + '</span>'
+          : '';
+        var displayName = getHexDisplayName(robot.id, robot.name);
+        var cleanDisplayName = String(displayName || '').replace(/\s*(NO\.\d{2}|DG-\d{2})\s*$/i, '').trim() || displayName;
+        var roleText = cleanLabel || robot.name || cleanDisplayName || displayName || (window.OPENSWARM_I18N && window.OPENSWARM_I18N.t('badgeRoleFallback')) || '数字员工';
+        var mottoText = (window.OPENSWARM_I18N && window.OPENSWARM_I18N.t('badgeMotto')) || '先澄清目标，再执行动作。';
+        var statusText = robot.running ? t('statusRunning') : t('statusStopped');
+        var avatarSrc = resolveBadgeAvatarSrc(robot);
         return `
         <div class="card-hex" data-robot="${robot.id}" data-port="${robot.port != null ? robot.port : ''}">
           <span class="status-dot${robot.running ? ' running' : ''}" aria-label="${robot.running ? t('statusRunning') : t('statusStopped')}"></span>
-          <p class="card-title">${getHexDisplayName(robot.id, robot.name)}</p>
-          <p class="card-label-row">${labelRow}</p>
-          <p class="card-gateway">${(robot.gateway || '').replace('ws://', '')}</p>
-          <div class="card-actions">
-            <button type="button" class="btn-start" data-action="start">${t('btnStart')}</button>
-            <button type="button" class="btn-stop" data-action="stop">${t('btnStop')}</button>
+          <div class="card-shell">
+            <div class="card-panel">
+              <div class="card-flip-inner">
+                <div class="card-face card-face-front">
+                  <div class="card-side">DIGITAL EMPLOYEE</div>
+                  <div class="card-main">
+                    <div class="card-top">
+                      <div class="card-left">
+                        <div class="card-avatar-wrap">
+                          <div class="card-avatar" aria-hidden="true">
+                            <img class="card-avatar-img" src="${avatarSrc}" alt="">
+                          </div>
+                        </div>
+                        <div class="card-avatar-label">
+                          ${labelRow ? '<span class="card-label-inline">' + labelRow + '</span>' : ''}
+                          ${(!cleanLabel && roleText) ? '<p class="card-role" title="' + esc(roleText) + '">' + esc(roleText) + '</p>' : ''}
+                        </div>
+                      </div>
+                      <div class="card-right">
+                        <div class="card-info">
+                          <span class="card-info-k">STATUS</span>
+                          <span class="card-info-v card-status-text">${statusText}</span>
+                        </div>
+                        <div class="card-info">
+                          <span class="card-info-k">GATEWAY</span>
+                          <span class="card-info-v card-gateway">${(robot.gateway || '').replace('ws://', '')}</span>
+                        </div>
+                        <div class="card-info">
+                          <span class="card-info-k">NO.</span>
+                          <span class="card-info-v card-no">${esc(cleanDisplayName)}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <p class="card-motto">${esc(mottoText)}</p>
+                    <div class="card-actions">
+                      <button type="button" class="btn-start" data-action="start">${t('btnStart')}</button>
+                      <button type="button" class="btn-stop" data-action="stop">${t('btnStop')}</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="card-face card-face-back">
+                  <div class="card-side">DIGITAL EMPLOYEE</div>
+                  <div class="card-main card-main-blank"></div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       `;
       }).join('');
       // 事件委托：点哪张卡用哪张卡的 robot/port，避免谦/蛊错位、坤/泰点不动
       grid64.addEventListener('click', async function(e) {
-        if (e.target.closest('.btn-edit-label')) {
+        var labelEl = e.target.closest('.card-label');
+        if (labelEl && !labelEl.querySelector('.card-label-input')) {
           e.preventDefault();
           e.stopPropagation();
-          var editRobotId = e.target.closest('.btn-edit-label').dataset.robot;
+          var editRobotId = labelEl.dataset.robot;
           var robotForLabel = (await fetchRobots()).find(function(r) { return r.id === editRobotId; });
           var current = (robotForLabel && robotForLabel.label) ? String(robotForLabel.label).trim() : '';
-          var newLabel = window.prompt(window.YINOVA_I18N && window.YINOVA_I18N.t('hexLabelPrompt') || '编辑该卦的标签（方便区分角色，卦与卦可见）', current);
-          if (newLabel === null) return;
-          try {
-            var resp = await fetch('/api/hex/' + encodeURIComponent(editRobotId) + '/label', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ label: newLabel }) });
-            var data = await resp.json().catch(function() { return {}; });
-            if (resp.ok && !data.error) {
-              show(window.YINOVA_I18N && window.YINOVA_I18N.t('hexLabelSaved') || '标签已保存');
-              var next = await fetchRobots();
-              updateCardsRunning(next);
-              grid64.innerHTML = ''; // 重新渲染会重新绑定事件
-              render();
-            } else show(data.error || '保存失败');
-          } catch (err) { show((err.message || '请求失败')); }
+          var inline = labelEl.closest('.card-label-inline');
+          if (!inline) return;
+          var input = document.createElement('input');
+          input.type = 'text';
+          input.className = 'card-label-input';
+          input.value = current;
+          input.setAttribute('maxlength', '32');
+          input.setAttribute('placeholder', (window.OPENSWARM_I18N && window.OPENSWARM_I18N.t('hexLabel')) || '标签');
+          labelEl.style.display = 'none';
+          inline.appendChild(input);
+          input.focus();
+          input.select();
+          function commit() {
+            var newLabel = (input.value || '').trim();
+            input.remove();
+            labelEl.style.display = '';
+            if (newLabel === current) return;
+            fetch('/api/agent/' + encodeURIComponent(editRobotId) + '/label', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ label: newLabel }) })
+              .then(function(r) { return r.json().then(function(data) { return { ok: r.ok, data: data }; }).catch(function() { return { ok: r.ok, data: {} }; }); })
+              .then(function(result) {
+                if (result.ok && !(result.data && result.data.error)) {
+                  show(window.OPENSWARM_I18N && window.OPENSWARM_I18N.t('hexLabelSaved') || '标签已保存');
+                  labelEl.textContent = newLabel || ((window.OPENSWARM_I18N && window.OPENSWARM_I18N.t('hexLabel')) || '标签');
+                  labelEl.classList.toggle('empty', !newLabel);
+                  labelEl.title = newLabel ? newLabel : ((window.OPENSWARM_I18N && window.OPENSWARM_I18N.t('hexLabelSet')) || '设置标签');
+                } else show((result.data && result.data.error) || '保存失败');
+              })
+              .catch(function(err) { show(err && err.message || '请求失败'); });
+          }
+          input.addEventListener('blur', commit);
+          input.addEventListener('keydown', function(ev) {
+            if (ev.key === 'Enter') { ev.preventDefault(); input.blur(); }
+            if (ev.key === 'Escape') { input.value = current; input.blur(); }
+          });
           return;
         }
         const card = e.target.closest('.card-hex');
         if (!card) return;
+        if ((e.target.closest('.card-face-front') || e.target.closest('.card-face-back')) && !e.target.closest('.card-actions') && !e.target.closest('.card-label')) {
+          card.classList.toggle('card-flipped');
+          return;
+        }
         const robotId = card.dataset.robot;
         const port = card.dataset.port;
         const startBtn = e.target.closest('.btn-start');
         const stopBtn = e.target.closest('.btn-stop');
         if (startBtn) {
           card.classList.add('starting');
+          var actionStartedAt = Date.now();
           try {
-            const r = await fetch('/api/open-tui/' + robotId, { method: 'POST' });
-            const data = await r.json().catch(() => ({}));
-            if (r.ok && !data.error) show(data.reused ? t('toastTerminalReused') : t('toastTerminalOpened'));
-            else { show(data.error || t('toastStartFailed')); card.classList.remove('starting'); }
-          } catch (err) { show(t('toastRequestFailed') + ': ' + (err.message || '')); card.classList.remove('starting'); }
+            var startDisplayName = displayName({ id: robotId, name: card.querySelector('.card-no') ? card.querySelector('.card-no').textContent : robotId });
+            setRuntimeActionState({
+              state: 'pending',
+              title: '正在启动 ' + startDisplayName + '…',
+              desc: '正在发送启动请求并等待员工网关就绪。',
+              currentStep: 0,
+              doneCount: 0,
+              startedAt: actionStartedAt,
+            });
+            await startTenantWorker(robotId);
+            await waitForWorkerRuntime(robotId, true, {
+              displayName: startDisplayName,
+              successDesc: '员工网关已就绪，可以继续派发任务。',
+              startedAt: actionStartedAt,
+            });
+            updateCardsRunning(await fetchRobots());
+          } catch (err) {
+            show(t('toastRequestFailed') + ': ' + (err.message || ''));
+            setRuntimeActionState({
+              state: 'error',
+              title: '启动 ' + startDisplayName + ' 失败',
+              desc: err.message || '启动请求未完成，请稍后重试。',
+              currentStep: 0,
+              doneCount: 0,
+              startedAt: actionStartedAt,
+            });
+            card.classList.remove('starting');
+          }
         } else if (stopBtn) {
           stopBtn.disabled = true;
+          var actionStartedAt = Date.now();
           try {
-            const body = (port && port !== '') ? { port: parseInt(port, 10) } : {};
-            const r = await fetch('/api/stop/' + robotId, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-            const data = await r.json().catch(() => ({}));
-            if (r.ok && !data.error) {
-              show(t('toastStopped'));
-              var next = await fetchRobots();
-              updateCardsRunning(next);
-            } else show(data.error || t('toastStopFailed'));
-          } catch (err) { show(t('toastRequestFailed') + ': ' + (err.message || '')); }
+            var stopDisplayName = displayName({ id: robotId, name: card.querySelector('.card-no') ? card.querySelector('.card-no').textContent : robotId });
+            setRuntimeActionState({
+              state: 'pending',
+              title: '正在停止 ' + stopDisplayName + '…',
+              desc: '正在发送停止请求并等待员工退出。',
+              currentStep: 0,
+              doneCount: 0,
+              startedAt: actionStartedAt,
+            });
+            await stopTenantWorker(robotId);
+            await waitForWorkerRuntime(robotId, false, {
+              displayName: stopDisplayName,
+              successDesc: '员工已完成停止。',
+              startedAt: actionStartedAt,
+            });
+            var next = await fetchRobots();
+            updateCardsRunning(next);
+          } catch (err) {
+            show(t('toastRequestFailed') + ': ' + (err.message || ''));
+            setRuntimeActionState({
+              state: 'error',
+              title: '停止 ' + stopDisplayName + ' 失败',
+              desc: err.message || '停止请求未完成，请稍后重试。',
+              currentStep: 0,
+              doneCount: 0,
+              startedAt: actionStartedAt,
+            });
+          }
           stopBtn.disabled = false;
         }
       });
 
       updateCardsRunning(robots);
-      // 智能轮询：有卦处于过渡状态（starting）时 1s，否则 5s
+      // 智能轮询：有员工处于过渡状态（starting）时 1s，否则 5s
       let _pollTimer = null;
       function schedulePoll() {
         var hasStarting = !!document.querySelector('.card-hex.starting, .taiji-dot.starting');
         var interval = hasStarting ? 1000 : 5000;
         _pollTimer = setTimeout(async function() {
           const next = await fetchRobots();
+          currentRuntimeOverview = await fetchTenantRuntimeOverview();
+          currentRuntimeAgents = await fetchTenantRuntimeAgents();
+          currentRuntimeAlerts = await fetchTenantRuntimeAlerts();
+          renderRuntimeAlertChip();
           updateCardsRunning(next);
           schedulePoll();
         }, interval);
@@ -813,14 +1840,14 @@
       schedulePoll();
     }
 
-    // 「一键启动前10卦」按钮已移除，接口仍保留以兼容脚本调用
+    // 「一键启动前10员工」按钮已移除，接口仍保留以兼容脚本调用
 
     const btnCloseAllTerminals = document.getElementById('btnCloseAllTerminals');
     if (btnCloseAllTerminals) {
       btnCloseAllTerminals.addEventListener('click', async () => {
         btnCloseAllTerminals.disabled = true;
         try {
-          const r = await fetch('/api/close-all-hex-terminals', { method: 'POST' });
+          const r = await fetch('/api/close-all-agent-terminals', { method: 'POST' });
           const data = await r.json().catch(() => ({}));
           if (r.ok && data.ok) {
             const n = (data.closed != null ? data.closed : 0);
@@ -850,11 +1877,11 @@
 
     render();
 
-    window.YINOVA_APPLY_I18N_EXTRAS = function() {
+    window.OPENSWARM_APPLY_I18N_EXTRAS = function() {
       fetchRobots().then(function(r) {
         updateCardsRunning(r);
         var grid = document.getElementById('grid64');
-        if (grid && window.YINOVA_I18N) {
+        if (grid && window.OPENSWARM_I18N) {
           var byId = {};
           r.forEach(function(robot) { byId[robot.id] = robot; });
           grid.querySelectorAll('.card-hex').forEach(function(card) {
@@ -863,25 +1890,72 @@
             var title = card.querySelector('.card-title');
             if (title && robot) title.textContent = getHexDisplayName(robot.id, robot.name);
           });
-          grid.querySelectorAll('.btn-start').forEach(function(b) { b.textContent = window.YINOVA_I18N.t('btnStart'); });
-          grid.querySelectorAll('.btn-stop').forEach(function(b) { b.textContent = window.YINOVA_I18N.t('btnStop'); });
+          grid.querySelectorAll('.btn-start').forEach(function(b) { b.textContent = window.OPENSWARM_I18N.t('btnStart'); });
+          grid.querySelectorAll('.btn-stop').forEach(function(b) { b.textContent = window.OPENSWARM_I18N.t('btnStop'); });
         }
       });
     };
 
-    // 阴网关状态轮询（每15秒），未启动时显示提示条
+    // 主控心跳：轻量状态轮询（每 2 秒），更新呼吸灯与未启动提示条
     var yinOfflineBanner = document.getElementById('yinOfflineBanner');
-    function checkYinGatewayHealth() {
-      fetch('/api/yin/gateway/health').then(function(r) { return r.json(); })
-        .then(function(d) {
-          if (yinOfflineBanner) yinOfflineBanner.style.display = (d && d.ok) ? 'none' : 'block';
+    var yinBreatheLight = document.getElementById('yinBreatheLight');
+    var yinBreatheWrap = document.getElementById('yinBreatheWrap');
+    function updateYinBreathe(ok) {
+      if (!yinBreatheLight) return;
+      yinBreatheLight.classList.remove('online', 'offline');
+      yinBreatheLight.classList.add(ok ? 'online' : 'offline');
+      if (yinBreatheWrap) yinBreatheWrap.title = ok ? '主控已连接' : '主控未连接';
+    }
+    function applyYinGatewayStatus(ok) {
+      if (yinOfflineBanner) yinOfflineBanner.style.display = ok ? 'none' : 'block';
+      updateYinBreathe(ok);
+    }
+    function checkYinGatewayStatus() {
+      fetchTenantRuntimeOverview()
+        .then(function(overview) {
+          currentRuntimeOverview = overview || null;
+          return fetchTenantRuntimeAlerts().then(function(alerts) {
+            currentRuntimeAlerts = alerts;
+            renderRuntimeAlertChip();
+            return overview;
+          }).catch(function() {
+            renderRuntimeAlertChip();
+            return overview;
+          });
+        })
+        .then(function(overview) {
+          var ok = !!(overview && overview.runtime && overview.runtime.mainRunning);
+          applyYinGatewayStatus(ok);
         })
         .catch(function() {
-          if (yinOfflineBanner) yinOfflineBanner.style.display = 'block';
+          fetch('/api/robots')
+            .then(function(r) {
+              if (!r.ok) throw new Error('robots http ' + r.status);
+              return r.json();
+            })
+            .then(function(list) {
+              var arr = Array.isArray(list) ? list : [];
+              var main = arr.find(function(item) { return item && item.id === 'main'; });
+              renderRuntimeAlertChip();
+              applyYinGatewayStatus(!!(main && main.running));
+            })
+            .catch(function() {
+              renderRuntimeAlertChip();
+              applyYinGatewayStatus(false);
+            });
         });
     }
-    checkYinGatewayHealth();
-    setInterval(checkYinGatewayHealth, 15000);
+    window.addEventListener('openswarm-auth-session', async function() {
+      currentRuntimeOverview = await fetchTenantRuntimeOverview();
+      currentRuntimeAgents = await fetchTenantRuntimeAgents();
+      currentRuntimeAlerts = await fetchTenantRuntimeAlerts();
+      renderRuntimeAlertChip();
+      updateCardsRunning(await fetchRobots());
+      checkYinGatewayStatus();
+    });
+    checkYinGatewayStatus();
+    setInterval(checkYinGatewayStatus, 2000);
   </script>
+  <script src="/assets/auth-shell.js"></script>
 </body>
 </html>

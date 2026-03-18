@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
-# Yinova - 首次安装
-# 从 hex-template 生成 64 卦 + workers.conf
+# OpenSwarm - 首次安装
+# 从 hex-template 生成 64 数字员工 + workers.conf
 
 set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$SCRIPT_DIR"
 TEMPLATE="$ROOT/hex-template"
 
-HEX_NAMES=(乾 坤 泰 否 谦 豫 随 蛊 临 观 屯 蒙 需 讼 师 比 小畜 履 同人 大有 噬嗑 贲 剥 复 无妄 大畜 颐 大过 坎 离 咸 恒 遯 大壮 晋 明夷 家人 睽 蹇 解 损 益 夬 姤 萃 升 困 井 革 鼎 震 艮 渐 归妹 丰 旅 巽 兑 涣 节 中孚 小过 既济 未济)
+HEX_NAMES=(数据分析师 爬虫专家 专业客服 产品经理 前端工程师 架构师 小红书写作 小红书运营 视频剪辑大神 后端工程师 小程序开发工程师 文案助手 市场专员 金牌销售 拓客专员 电商客服 英语老师 数学老师 语文老师 物理老师 化学老师 地理老师 历史老师 生物老师 科学老师 投流运营专员 视频下载助手 股票分析大师 商务 
+市场情报员 内容创作者 投资研究 财务审计员 战略策划师 AI训练师 安全审计 算法工程师 视觉设计师 法务合规官  供应链专员 DevOps工程师 用户体验研究员 知识管理师 售前咨询专员 售中跟进专员 售后处理专员 投诉升级专员 产品知识专家 物流协调专员 支付风控专员 客服质检专员 数据分析师（客服方向） 客服主管/组 商业战略顾问 财务规划顾问 职业规划顾问 技术架构顾问 品牌策划顾问 健康管理顾问  教育规划顾问 法律合规顾问 数字化转型顾问 心理情绪顾问 职场顾问)
 
-echo "=== Yinova 安装 ==="
+echo "=== OpenSwarm 安装 ==="
 echo "项目目录: $ROOT"
 
 # 确保关键脚本可执行（clone 后可能丢失权限）
@@ -17,12 +18,12 @@ chmod +x "$ROOT/install.sh" "$ROOT/start-panel.sh" "$ROOT/start-panel.command" 2
 chmod +x "$ROOT/start-worker.sh" "$ROOT/stop-worker.sh" 2>/dev/null || true
 [[ -f "$ROOT/yin/start-yin.sh" ]] && chmod +x "$ROOT/yin/start-yin.sh" 2>/dev/null || true
 
-# 移除根目录下的旧卦目录（现已改用 hexes/）
+# 移除根目录下的旧员工目录（现已改用 hexes/）
 removed=0
 for name in "${HEX_NAMES[@]}"; do
   [[ -d "$ROOT/$name" ]] && rm -rf "$ROOT/$name" && ((removed++))
 done
-[[ $removed -gt 0 ]] && echo "已移除 $removed 个旧卦目录"
+[[ $removed -gt 0 ]] && echo "已移除 $removed 个旧员工目录"
 
 if [[ ! -d "$TEMPLATE" ]]; then
   echo "错误: hex-template 不存在" >&2
@@ -88,10 +89,10 @@ else
   fi
 fi
 
-# 生成统一 token（64 卦共用）
-GATEWAY_TOKEN="${YINOVA_GATEWAY_TOKEN:-$(openssl rand -hex 20 2>/dev/null || echo "yinova_local_$(date +%s)")}"
+# 生成统一 token（64 数字员工共用）
+GATEWAY_TOKEN="${OPENSWARM_GATEWAY_TOKEN:-$(openssl rand -hex 20 2>/dev/null || echo "openswarm_local_$(date +%s)")}"
 
-# 1. 生成 64 卦
+# 1. 生成 64 数字员工
 for i in "${!HEX_NAMES[@]}"; do
   id=$((i + 1))
   name="${HEX_NAMES[$i]}"
@@ -103,15 +104,15 @@ for i in "${!HEX_NAMES[@]}"; do
 
   # 替换 placeholders
   if [[ "$(uname)" == "Darwin" ]]; then
-    sed -i '' "s|__YINOVA_ROOT__|$ROOT|g" "$hex_dir/moltbot.json"
+    sed -i '' "s|__OPENSWARM_ROOT__|$ROOT|g" "$hex_dir/moltbot.json"
     sed -i '' "s|__HEX_NAME__|$name|g" "$hex_dir/moltbot.json"
     sed -i '' "s|99999|$port|g" "$hex_dir/moltbot.json"
-    sed -i '' "s|yinova_local_replace_me|$GATEWAY_TOKEN|g" "$hex_dir/moltbot.json"
+    sed -i '' "s|openswarm_local_replace_me|$GATEWAY_TOKEN|g" "$hex_dir/moltbot.json"
   else
-    sed -i "s|__YINOVA_ROOT__|$ROOT|g" "$hex_dir/moltbot.json"
+    sed -i "s|__OPENSWARM_ROOT__|$ROOT|g" "$hex_dir/moltbot.json"
     sed -i "s|__HEX_NAME__|$name|g" "$hex_dir/moltbot.json"
     sed -i "s|99999|$port|g" "$hex_dir/moltbot.json"
-    sed -i "s|yinova_local_replace_me|$GATEWAY_TOKEN|g" "$hex_dir/moltbot.json"
+    sed -i "s|openswarm_local_replace_me|$GATEWAY_TOKEN|g" "$hex_dir/moltbot.json"
   fi
 done
 
@@ -127,7 +128,7 @@ done
 } > "$ROOT/workers.conf"
 echo "已生成 workers.conf"
 
-# 3. 阴：若 moltbot.json 不存在，从 .example 自动生成
+# 3. 主控：若 moltbot.json 不存在，从 .example 自动生成
 YIN_CONF="$ROOT/yin/moltbot.json"
 YIN_EXAMPLE="$ROOT/yin/moltbot.json.example"
 if [[ ! -f "$YIN_CONF" ]] && [[ -f "$YIN_EXAMPLE" ]]; then
@@ -136,12 +137,12 @@ if [[ ! -f "$YIN_CONF" ]] && [[ -f "$YIN_EXAMPLE" ]]; then
 fi
 if [[ -f "$YIN_CONF" ]]; then
   if [[ "$(uname)" == "Darwin" ]]; then
-    sed -i '' "s|__YINOVA_ROOT__|$ROOT|g" "$YIN_CONF"
-    sed -i '' "s|yinova_local_replace_me|$GATEWAY_TOKEN|g" "$YIN_CONF"
+    sed -i '' "s|__OPENSWARM_ROOT__|$ROOT|g" "$YIN_CONF"
+    sed -i '' "s|openswarm_local_replace_me|$GATEWAY_TOKEN|g" "$YIN_CONF"
     sed -i '' "s|replace_with_random_secret_token|$GATEWAY_TOKEN|g" "$YIN_CONF"
   else
-    sed -i "s|__YINOVA_ROOT__|$ROOT|g" "$YIN_CONF"
-    sed -i "s|yinova_local_replace_me|$GATEWAY_TOKEN|g" "$YIN_CONF"
+    sed -i "s|__OPENSWARM_ROOT__|$ROOT|g" "$YIN_CONF"
+    sed -i "s|openswarm_local_replace_me|$GATEWAY_TOKEN|g" "$YIN_CONF"
     sed -i "s|replace_with_random_secret_token|$GATEWAY_TOKEN|g" "$YIN_CONF"
   fi
   # 修正 workspace 路径（复制项目后可能指向旧目录）

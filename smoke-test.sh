@@ -1,12 +1,12 @@
 #!/bin/bash
-# Yinova 冒烟测试：验证 install + 面板能起
+# OpenSwarm 冒烟测试：验证 install + 面板能起
 # 用法：在项目根目录执行 ./smoke-test.sh
 
 set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-TEST_DIR="/tmp/yinova-smoke-$$"
+TEST_DIR="/tmp/openswarm-smoke-$$"
 
-echo "=== Yinova 冒烟测试 ==="
+echo "=== OpenSwarm 冒烟测试 ==="
 echo "复制到 $TEST_DIR ..."
 
 mkdir -p "$TEST_DIR"
@@ -37,7 +37,7 @@ echo "运行 install.sh ..."
 ./install.sh
 
 echo "验证 hexes、workers.conf、yin ..."
-[[ -d hexes/乾 ]] || { echo "FAIL: hexes/乾 不存在"; rm -rf "$TEST_DIR"; exit 1; }
+[[ -d hexes/数据分析师 ]] || { echo "FAIL: hexes/数据分析师 不存在"; rm -rf "$TEST_DIR"; exit 1; }
 [[ -f workers.conf ]] || { echo "FAIL: workers.conf 不存在"; rm -rf "$TEST_DIR"; exit 1; }
 [[ -f yin/moltbot.json ]] || [[ -f yin/moltbot.json.example ]] || { echo "FAIL: yin 配置不存在"; rm -rf "$TEST_DIR"; exit 1; }
 [[ -x yin/start-yin.sh ]] || { echo "FAIL: yin/start-yin.sh 不可执行"; rm -rf "$TEST_DIR"; exit 1; }

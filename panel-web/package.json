@@ -1,16 +1,25 @@
 {
   "name": "panel-web",
   "version": "1.0.0",
-  "description": "本地总控制页：主、LAN、易经64卦 状态与一键启停",
+  "description": "本地总控制页：主、LAN、易经64 数字员工 状态与一键启停",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "db:migrate": "node scripts/db-migrate.js",
+    "db:migrate:phase1": "node scripts/db-migrate-phase1.js",
+    "db:migrate:phase2": "node scripts/db-migrate-phase2.js",
+    "db:migrate:phase3": "node scripts/db-migrate-phase3.js",
+    "seed:phase1": "node scripts/phase1-seed-bootstrap.js",
+    "openapi:check": "node scripts/check-openapi.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
     "node-cron": "^4.2.1",
+    "pg": "^8.13.3",
+    "yaml": "^2.8.1",
     "ws": "^8.19.0"
   }
 }

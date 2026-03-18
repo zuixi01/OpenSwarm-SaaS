@@ -4,7 +4,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
-echo "=== Yinova Offline Setup (Mac) ==="
+echo "=== OpenSwarm Offline Setup (Mac) ==="
 
 # 1. 检查 Node 是否已安装
 if ! command -v node >/dev/null 2>&1; then
