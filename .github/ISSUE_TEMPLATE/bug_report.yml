@@ -1,0 +1,33 @@
+name: Bug report / 缺陷报告
+description: Report a reproducible problem. Please report vulnerabilities privately.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: "For vulnerabilities, follow SECURITY.md. Never include API keys, tokens, cookies, .env files, chat history, or customer data."
+  - type: input
+    id: revision
+    attributes:
+      label: Commit or release / 版本
+      description: Include git rev-parse --short HEAD.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment / 运行环境
+      description: OS, Node version, local or SaaS mode, and browser where relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce / 复现步骤
+      description: Include expected and actual behavior using synthetic data.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Redacted logs / 脱敏日志
+      description: Remove credentials and personal data before submitting.

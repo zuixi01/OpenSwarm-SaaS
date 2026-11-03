@@ -71,9 +71,9 @@ Then fill at least:
 
 Google OAuth detailed setup:
 
-- [/Users/shenwei/Documents/source/yinova/docs/cloud-mvp/google-oauth-setup.md](/Users/shenwei/Documents/source/yinova/docs/cloud-mvp/google-oauth-setup.md)
-- [/Users/shenwei/Documents/source/yinova/docs/cloud-mvp/server-beta-deploy-runbook.md](/Users/shenwei/Documents/source/yinova/docs/cloud-mvp/server-beta-deploy-runbook.md)
-- [/Users/shenwei/Documents/source/yinova/docs/cloud-mvp/alicloud-ecs-47.110.157.215-beta-deploy.md](/Users/shenwei/Documents/source/yinova/docs/cloud-mvp/alicloud-ecs-47.110.157.215-beta-deploy.md)
+- [docs/cloud-mvp/google-oauth-setup.md](../../docs/cloud-mvp/google-oauth-setup.md)
+- [docs/cloud-mvp/server-beta-deploy-runbook.md](../../docs/cloud-mvp/server-beta-deploy-runbook.md)
+- [docs/cloud-mvp/alicloud-ecs-beta-deploy.md](../../docs/cloud-mvp/alicloud-ecs-beta-deploy.md)
 
 ## 4) Install systemd service
 
@@ -130,7 +130,7 @@ Then test real traffic paths gradually.
 
 Before public beta or production release, follow:
 
-- [/Users/shenwei/Documents/source/yinova/docs/cloud-mvp/saas-release-checklist.md](/Users/shenwei/Documents/source/yinova/docs/cloud-mvp/saas-release-checklist.md)
+- [docs/cloud-mvp/saas-release-checklist.md](../../docs/cloud-mvp/saas-release-checklist.md)
 
 ## Logs
 

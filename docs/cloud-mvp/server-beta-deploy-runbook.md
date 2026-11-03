@@ -66,7 +66,7 @@ node scripts/phase1-seed-bootstrap.js
 
 推荐从这里复制：
 
-- [/Users/shenwei/Documents/source/yinova/ops/production-500/panel.env.saas.template](/Users/shenwei/Documents/source/yinova/ops/production-500/panel.env.saas.template)
+- [ops/production-500/panel.env.saas.template](../../ops/production-500/panel.env.saas.template)
 
 部署到：
 
@@ -93,7 +93,7 @@ node scripts/phase1-seed-bootstrap.js
 
 完整说明：
 
-- [/Users/shenwei/Documents/source/yinova/docs/cloud-mvp/google-oauth-setup.md](/Users/shenwei/Documents/source/yinova/docs/cloud-mvp/google-oauth-setup.md)
+- [docs/cloud-mvp/google-oauth-setup.md](google-oauth-setup.md)
 
 ## 6. 启动服务
 
@@ -129,7 +129,7 @@ curl -I https://app.example.com/register.html
 
 逐项过这份清单：
 
-- [/Users/shenwei/Documents/source/yinova/docs/cloud-mvp/saas-release-checklist.md](/Users/shenwei/Documents/source/yinova/docs/cloud-mvp/saas-release-checklist.md)
+- [docs/cloud-mvp/saas-release-checklist.md](saas-release-checklist.md)
 
 重点检查：
 

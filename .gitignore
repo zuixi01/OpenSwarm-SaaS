@@ -23,7 +23,7 @@ yin/workspace/*
 !yin/workspace/skills/
 !yin/workspace/IDENTITY.md
 !yin/workspace/SOUL.md
-!yin/workspace/MEMORY.md
+yin/workspace/MEMORY.md
 yin/canvas/
 yin/cron/
 yin/devices/
@@ -105,3 +105,18 @@ node*.pkg
 *.swp
 .cursor/
 .vscode/
+
+# Local credentials and generated tenant/agent state
+.env.*
+!.env.example
+!.env.sample
+!.env.template
+yin/tenants/
+yin/agents/
+yin/claws/
+yin/.openswarm-shims/
+test-results/
+playwright-report/
+coverage/
+*.p12
+*.pfx

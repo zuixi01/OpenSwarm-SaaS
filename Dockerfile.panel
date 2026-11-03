@@ -1,5 +1,5 @@
 # OpenSwarm 面板 - 仅 Web 面板（主控/数字员工需在宿主机或其它方式启动）
-FROM node:18-alpine
+FROM node:22-alpine
 
 WORKDIR /app
 
@@ -7,16 +7,25 @@ WORKDIR /app
 COPY panel-web/package*.json panel-web/
 COPY panel-web/public panel-web/public
 COPY panel-web/server.js panel-web/
+COPY panel-web/lib panel-web/lib
+COPY panel-web/routes panel-web/routes
+COPY panel-web/middleware panel-web/middleware
+COPY panel-web/scripts panel-web/scripts
+COPY docs/cloud-mvp/week1/schema.sql docs/cloud-mvp/week1/schema.sql
+COPY docs/cloud-mvp/phase1-package/schema.phase1.sql docs/cloud-mvp/phase1-package/schema.phase1.sql
+COPY docs/cloud-mvp/phase2-runtime-data.sql docs/cloud-mvp/phase2-runtime-data.sql
+COPY docs/cloud-mvp/phase3-package/schema.phase3.sql docs/cloud-mvp/phase3-package/schema.phase3.sql
 
 # 安装依赖与健康检查工具
-RUN cd panel-web && npm install --omit=dev && apk add --no-cache curl
+RUN cd panel-web && npm ci --omit=dev --ignore-scripts && apk add --no-cache curl
 
-# 创建必要目录与占位文件（config.json 可由挂载覆盖）
+# 创建必要目录与占位文件；config.json 留在容器层，重建前需另行备份。
 RUN mkdir -p panel-web/data && echo '{}' > config.json
 
 EXPOSE 3999
 
 ENV NODE_ENV=production
 ENV PANEL_WEB_PORT=3999
+ENV PANEL_WEB_HOST=0.0.0.0
 
 CMD ["node", "panel-web/server.js"]

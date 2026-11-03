@@ -1,149 +1,40 @@
 # 贡献指南
 
-感谢您对 OpenSwarm 项目的关注！我们欢迎各种形式的贡献。
+本仓库是基于 [goldct/openswarm](https://github.com/goldct/openswarm) 的 SaaS 扩展，目前处于预发布阶段。[English](CONTRIBUTING.en.md)
 
-## 如何贡献
+## 获取代码与检查
 
-### 报告问题
+Fork 本仓库后克隆你的 fork；直接检查当前仓库可执行：
 
-如果您发现了 bug 或有功能建议，请：
-
-1. 检查 [Issues](https://github.com/goldct/openswarm/issues) 中是否已有相关问题
-2. 如果没有，请创建新的 Issue，包含：
-   - 清晰的问题描述
-   - 复现步骤
-   - 预期行为和实际行为
-   - 环境信息（操作系统、Node.js 版本等）
-   - 相关日志或截图
-
-### 提交代码
-
-1. **Fork 项目**
-   ```bash
-   git clone https://github.com/your-username/openswarm.git
-   cd openswarm
-   ```
-
-2. **创建分支**
-   ```bash
-   git checkout -b feature/your-feature-name
-   # 或
-   git checkout -b fix/your-bug-fix
-   ```
-
-3. **开发**
-   - 遵循项目的代码风格
-   - 添加必要的注释
-   - 确保代码可以正常运行
-
-4. **测试**
-   - 测试您的更改
-   - 确保没有破坏现有功能
-
-5. **提交**
-   ```bash
-   git add .
-   git commit -m "feat: 添加新功能描述"
-   # 或
-   git commit -m "fix: 修复问题描述"
-   ```
-
-6. **推送并创建 Pull Request**
-   ```bash
-   git push origin feature/your-feature-name
-   ```
-   然后在 GitHub 上创建 Pull Request
-
-## 代码规范
-
-### JavaScript/Node.js
-
-- 使用 2 空格缩进
-- 使用单引号（除非字符串中包含单引号）
-- 添加必要的注释，特别是复杂逻辑
-- 函数和变量使用有意义的名称
-
-### 提交信息规范
-
-我们使用 [Conventional Commits](https://www.conventionalcommits.org/) 规范：
-
-- `feat:` 新功能
-- `fix:` 修复 bug
-- `docs:` 文档更新
-- `style:` 代码格式调整（不影响功能）
-- `refactor:` 代码重构
-- `test:` 测试相关
-- `chore:` 构建过程或辅助工具的变动
-
-示例：
-```
-feat: 添加项目管理功能
-fix: 修复端口检测问题
-docs: 更新 README 安装说明
+```bash
+git clone https://github.com/zuixi01/OpenSwarm-SaaS.git
+cd OpenSwarm-SaaS
+git switch -c fix/your-change
+node scripts/check-repository.js
+node --test scripts/check-repository.test.js
+cd panel-web
+npm ci --ignore-scripts
+npm run check
+npm run test:smoke
+npm start
 ```
 
-## 开发环境设置
+使用 Node.js 22.12+ 和 npm。CI 覆盖 Node.js 22、24。面板地址默认为 <http://localhost:3999>；停止时按 Ctrl+C。完整 OpenClaw runtime 需从仓库根目录执行 `bash install.sh`；SaaS 数据库与环境变量加载见 [README](README.zh.md)。
 
-1. **克隆项目**
-   ```bash
-   git clone https://github.com/goldct/openswarm.git
-   cd openswarm
-   ```
+根目录的 repository 检查防止当前工作树重新混入运行数据或敏感文件，配套测试验证其规则；它不审查全部 Git 历史。`npm run check` 依次运行 JavaScript 语法检查、OpenAPI 文档结构检查和自动测试；OpenAPI 检查目前解析文档并核对四个必需路径，不是完整 API 契约验证。`npm run test:smoke` 在临时干净目录中验证面板启动、健康检查、首页与 token 认证。通过这些检查仍需验证改动涉及的实际行为。数据库、外部模型和多 runtime 场景需要单独环境；没有执行时请在 PR 中说明。
 
-2. **安装依赖**
-   ```bash
-   ./install.sh
-   cd panel-web
-   npm install
-   ```
+## 报告问题
 
-3. **启动开发环境**
-   ```bash
-   ./start-panel.sh
-   ```
+先搜索 [当前仓库 Issues](https://github.com/zuixi01/OpenSwarm-SaaS/issues)。普通 bug 请提供复现步骤、预期与实际行为、操作系统、Node.js 版本及脱敏日志。不要附带 API Key、Cookie、token、数据库连接串或完整 `.env`。
 
-4. **测试**
-   ```bash
-   # 如果添加了测试文件
-   npm test
-   ```
+安全漏洞请按 [安全策略](SECURITY.md) 私下报告，不要提交公开 Issue 或公开复现材料。
 
-## 项目结构
+## 提交 Pull Request
 
-```
-openswarm/
-├── panel-web/          # Web 面板后端和前端
-│   ├── server.js       # Express 服务器
-│   └── public/         # 前端页面
-├── yin/                # Main gateway node
-│   └── workspace/      # 工作目录和技能
-├── hex-template/       # 员工模板
-├── install.sh          # 安装脚本
-└── README.md           # 项目说明
-```
+保持修改聚焦，遵循所在文件现有风格。行为改变时补充相关文档，并按风险添加能验证边界或回归的测试。不要提交生成的 runtime、用户数据、日志或凭据。
 
-## Pull Request 流程
+PR 描述应说明问题、修改后的行为、实际运行的检查及未覆盖的场景。可使用 `fix:`、`feat:`、`docs:`、`test:` 等提交前缀。避免将不相关格式化或重构混入修复。
 
-1. 确保您的代码可以正常运行
-2. 确保代码符合项目规范
-3. 更新相关文档（如果需要）
-4. 创建 Pull Request，包含：
-   - 清晰的标题和描述
-   - 相关 Issue 编号（如果有）
-   - 测试说明
+## 许可与协作
 
-## 问题反馈
-
-如果您在贡献过程中遇到问题，可以：
-
-- 在 Issues 中提问
-- 查看现有文档
-- 联系维护者
-
-## 行为准则
-
-请保持友好和尊重。我们致力于为所有人提供一个开放和欢迎的环境。
-
----
-
-再次感谢您的贡献！🎉
+提交贡献前请确认你有权提供代码，且贡献可按本仓库的 [GPL-3.0-or-later](LICENSE) 许可分发；保留上游及第三方署名和许可证。对讨论对象保持尊重，针对事实和代码交流。

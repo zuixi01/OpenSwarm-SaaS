@@ -1,6 +1,11 @@
 {
   "name": "panel-web",
   "version": "1.0.0",
+  "private": true,
+  "license": "GPL-3.0-or-later",
+  "engines": {
+    "node": ">=22"
+  },
   "description": "本地总控制页：主、LAN、易经64 数字员工 状态与一键启停",
   "main": "server.js",
   "scripts": {
@@ -11,7 +16,14 @@
     "db:migrate:phase2": "node scripts/db-migrate-phase2.js",
     "db:migrate:phase3": "node scripts/db-migrate-phase3.js",
     "seed:phase1": "node scripts/phase1-seed-bootstrap.js",
+    "check": "npm run check:syntax && npm run openapi:check && npm test",
+    "check:syntax": "node scripts/check-syntax.js",
+    "test": "node --test test/*.test.js",
+    "test:smoke": "node scripts/smoke-panel.js",
     "openapi:check": "node scripts/check-openapi.js"
+  },
+  "overrides": {
+    "qs": "^6.16.2"
   },
   "dependencies": {
     "cors": "^2.8.5",

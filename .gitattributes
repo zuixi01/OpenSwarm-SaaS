@@ -1,0 +1,4 @@
+# Keep Bash entry points runnable when a checkout is shared with WSL.
+*.sh text eol=lf
+*.command text eol=lf
+*.bat text eol=crlf

@@ -1,0 +1,18 @@
+name: Feature request / 功能建议
+description: Describe a concrete use case and expected behavior.
+title: "[Feature]: "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / 使用场景
+      description: What task are you trying to complete? What is missing today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior / 期望行为
+      description: Include constraints, alternatives, and how you would verify the result.
+    validations:
+      required: true

@@ -4,7 +4,7 @@ services:
     environment:
       POSTGRES_DB: openswarm
       POSTGRES_USER: openswarm
-      POSTGRES_PASSWORD: openswarm
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the root .env file}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -21,16 +21,18 @@ services:
       postgres:
         condition: service_healthy
     ports:
-      - "3999:3999"
+      - "127.0.0.1:3999:3999"
     env_file:
-      - ./panel-web/.env.example
+      - ./.env
     volumes:
       - ./panel-web/data:/app/panel-web/data
-      - ./config.json:/app/config.json
     environment:
       - PANEL_WEB_PORT=3999
-      - DATABASE_URL=postgres://openswarm:openswarm@postgres:5432/openswarm
+      - PANEL_WEB_HOST=0.0.0.0
+      - DATABASE_URL=${DATABASE_URL:?Set DATABASE_URL using host postgres in the root .env file}
       - OPENSWARM_REQUIRE_USER_AUTH=1
+      - OPENSWARM_AUTH_JWT_SECRET=${OPENSWARM_AUTH_JWT_SECRET:?Set OPENSWARM_AUTH_JWT_SECRET in the root .env file}
+      - OPENSWARM_AUTH_REFRESH_SECRET=${OPENSWARM_AUTH_REFRESH_SECRET:?Set OPENSWARM_AUTH_REFRESH_SECRET in the root .env file}
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://127.0.0.1:3999/api/health"]

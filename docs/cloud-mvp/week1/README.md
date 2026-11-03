@@ -10,7 +10,7 @@ This package is the implementation baseline for OpenSwarm cloud MVP.
 
 ## Quick start commands
 ```bash
-cd /Users/shenwei/Documents/source/openswarm/panel-web
+cd panel-web
 export DATABASE_URL='postgres://user:pass@host:5432/openswarm'
 npm run db:migrate
 npm run openapi:check
@@ -75,14 +75,14 @@ export OPENSWARM_V1_BOOTSTRAP_PASSWORD='replace-with-strong-password'
 - Use feature flag: `OPENSWARM_RUNTIME_MODE=local|k8s`.
 
 ## Runtime Adapter integration (PR-3)
-- Local adapter implementation: `/Users/shenwei/Documents/source/openswarm/panel-web/lib/runtime-adapter.js`
-- Mounted in server layer: `/Users/shenwei/Documents/source/openswarm/panel-web/server.js`
+- Local adapter implementation: `panel-web/lib/runtime-adapter.js`
+- Mounted in server layer: `panel-web/server.js`
 - Current mode resolution:
   - `OPENSWARM_RUNTIME_MODE=local` (default): use existing scripts/process lifecycle.
   - `OPENSWARM_RUNTIME_MODE=k8s`: adapter skeleton is present; methods are intentionally not implemented yet.
 
 ## Task repository integration (PR-4)
-- Task repository: `/Users/shenwei/Documents/source/openswarm/panel-web/lib/task-repo.js`
+- Task repository: `panel-web/lib/task-repo.js`
 - `/v1/tasks/:taskId` now reads via repository (DB-backed).
 - New async task submit endpoint: `POST /v1/projects/:projectId/chat/yin`
   - Inserts task row (`queued` -> `running` -> `done|error`).
