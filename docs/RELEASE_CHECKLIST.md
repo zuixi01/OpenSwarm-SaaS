@@ -1,50 +1,57 @@
-# 发布前检查清单（GitHub / Gitee）
+# 开源与预发布检查清单
 
-## 一、已完成
+维护者应逐项记录提交 SHA、执行日期、环境及结果。未勾选表示待核实，不能据此宣称项目成熟或已通过验证。适用于本 SaaS 扩展，历史上游更新日志不代替当前验收。
 
-- [x] CHANGELOG.md / CHANGELOG.zh.md 更新至 v1.3
-- [x] README.md / README.zh.md 版本号与特性更新
-- [x] .gitignore 调整：docs 用户文档可提交
-- [x] 文档链接：阴控制台、阳、API、部署、安全、技术路线
+## 已确认的公开阻断（2026-11-03）
 
-## 二、发布前自检
+本次全历史 Gitleaks 扫描得到 **1,970 条命中**，其中包含第三方材料误报，尚未全量 triage，不能将命中数等同于已确认泄漏数。进一步从历史中的 **49 个运行身份 JSON** 解析出 **23 把不同、格式有效的私钥**；这里只确认材料可解析，未验证其在线有效性，**parseable 不等于 live**。
 
-1. **本地测试**
-   - `./install.sh` 无报错
-   - `./start-panel.sh` 启动成功
-   - 配置页填写 API Key 保存
-   - 创建项目、选员工、与员工对话
-   - 技能库管理、项目模板、阳应用模板
+当前尚未完成相关身份或凭据的吊销、轮换，也未重写 Git 历史，**不得直接公开此仓库**。当前工作树清理及 repository 检查通过不能解除该阻断。维护者需先完成风险确认、必要的吊销/轮换、历史处理与复扫，并记录结果。不要在公开记录中贴出秘密值或完整敏感路径。
 
-2. **Git 提交**
-   ```bash
-   git status
-   git add .
-   git commit -m "v1.3: 文档、部署、安全、技能库、项目模板、员工任务重试"
-   git tag v1.3
-   ```
+## 公开仓库前
 
-3. **推送**
-   ```bash
-   git push origin master
-   git push origin v1.3
-   # Gitee 镜像
-   git push gitee master
-   git push gitee v1.3
-   ```
+- [ ] README、Issue/PR 链接和安装命令指向 `zuixi01/OpenSwarm-SaaS`，保留上游来源与原作者署名。
+- [ ] `LICENSE` 保留 GPL-3.0-or-later 声明并附 GNU 官方完整正文；随附第三方许可仍在。
+- [ ] 检查当前工作树及全部可公开 Git 历史，确认没有实际 API Key、数据库口令、Cookie、token、私钥、用户数据或内部部署资料。若曾提交实际秘密，先撤销/轮换并处理历史；添加 `.gitignore` 无法清除旧提交。
+- [ ] 按 [.github/REPO_SETTINGS.md](../.github/REPO_SETTINGS.md) 配置并验证私密漏洞报告渠道；不可用时不得引导用户公开报告漏洞。
+- [ ] 审阅部署示例中的主机、路径和组织信息，只保留可公开且可复用的示例。
+- [ ] 由仓库所有者确认可见性变更及首次公开的范围。本清单不会改变仓库可见性。
 
-4. **Release 说明**（可选）
-   - GitHub: https://github.com/goldct/openswarm/releases/new?tag=v1.3
-   - 标题：OpenSwarm v1.3
-   - 描述：复制 CHANGELOG.md 中 1.3 部分
+## 自动检查与本地预览
 
-## 三、文档与链接
+从干净检出开始，使用 Node.js 22 与 24 分别执行，并记录结果：
 
-| 文档 | 路径 |
-|------|------|
-| 阴控制台 | docs/YIN_CONSOLE.md |
-| 阳配置 | docs/YANG.md |
-| API 调用 | docs/API.md |
-| 部署运维 | docs/DEPLOY.md |
-| 安全实践 | docs/SECURITY_BEST_PRACTICES.md |
-| 技术路线 | docs/TECH_ROADMAP.md |
+```bash
+# 从仓库根目录开始。
+node scripts/check-repository.js
+node --test scripts/check-repository.test.js
+cd panel-web
+npm ci --ignore-scripts
+npm run check
+npm run test:smoke
+npm start
+```
+
+- [ ] 当前工作树 repository 检查与其配套测试通过；不将此结果当作历史秘密审查。
+- [ ] 安装、语法检查、OpenAPI 文档结构检查、自动测试与面板 smoke 测试通过。OpenAPI 检查仅解析文档并核对四个必需路径，不验证完整 API 契约。
+- [ ] 浏览器打开 `http://localhost:3999`，确认页面可用。
+- [ ] `GET /api/health` 返回预期响应，停止进程后端口释放。
+- [ ] 在 macOS/Linux/WSL 中分别核实需要声称支持的安装与启动脚本。没有执行的平台不写成已验证。
+
+## SaaS 与 runtime 集成验收
+
+这些内容需要独立环境，不能由语法检查或单元测试代替：
+
+- [ ] 在新建 PostgreSQL 数据库显式加载根 `.env` 后，依次执行 `db:migrate`、`db:migrate:phase1`、`db:migrate:phase2`、`db:migrate:phase3`；验证重跑、备份与恢复路径。
+- [ ] 真实测试注册、登录、刷新、退出；配置 Google OAuth 时验证回调、Cookie 和账号绑定。
+- [ ] 两个独立租户互相访问项目、文件、聊天记录和 runtime 时均被拒绝；验证各角色权限。
+- [ ] 按需测试真实模型调用、错误/超时处理、取消任务及重试，核对实际模型费用。
+- [ ] 执行 `bash install.sh` 后核对生成配置；按发布声明测试主网关和 Agent 启停、健康检查、恢复。
+- [ ] 若声称支持 64 个 runtime 或特定并发数，实际压测并记录硬件、资源峰值、负载和失败率。
+- [ ] 公网部署前核对 HTTPS、监听地址、认证、随机密钥、权限、日志脱敏、备份与回滚。
+
+## 发布记录
+
+- [ ] Release 指向本次验收的提交，并标记 **pre-release**。
+- [ ] 说明实际完成项、未覆盖项、已知限制和升级步骤；不写未经测量的容量、性能或成本收益。
+- [ ] 不将自动检查通过表述为完整安全审计，也不将当前工作树扫描表述为 Git 历史无秘密。

@@ -1,95 +1,81 @@
-# OpenSwarm
+# OpenSwarm SaaS
 
-64 员工群控面板 · openclaw 多开 · 一键部署 · v1.3.1
+基于 [goldct/openswarm](https://github.com/goldct/openswarm) 的实验性 SaaS 扩展，围绕 OpenClaw 控制面板和 Agent runtime 构建。
 
-> 通过 Web 面板统一管理 openclaw 多实例（阴主网关 + 64 员工子节点），支持主流 AI 模型提供商，填写 API Key 即可使用。
+[English](README.md) · [贡献指南](CONTRIBUTING.md) · [安全策略](SECURITY.md)
 
-## 快速开始
+**当前阶段：pre-release（预发布）。** 本仓库在上游本地面板基础上增加用户认证、租户管理、PostgreSQL 持久化和租户 runtime 控制。这些功能仍在开发与验证中，目前不宣称达到生产成熟度或特定并发容量。
+
+## 本地预览面板
+
+需要 **Node.js 22.12+** 和 npm；CI 目标版本为 Node.js 22、24。macOS、Linux 可执行 Bash 脚本；Windows 可用 Node.js 预览面板，完整 runtime 建议使用 WSL。
 
 ```bash
-# 1. 克隆并安装（GitHub 或 Gitee）
-git clone https://github.com/goldct/openswarm && cd openswarm
-# 国内用户可用: git clone https://gitee.com/goldct/openswarm && cd openswarm
-chmod +x install.sh start-panel.sh
-./install.sh
-
-# 2. 启动面板
-./start-panel.sh
-# 或 Mac：双击 start-panel.command（自动打开浏览器）
+git clone https://github.com/zuixi01/OpenSwarm-SaaS.git
+cd OpenSwarm-SaaS/panel-web
+npm ci --ignore-scripts
+npm start
 ```
 
-3. 打开 http://localhost:3999
+打开 <http://localhost:3999>，默认仅监听 `127.0.0.1`。这一步仅启动面板。执行 Agent 需要下方的完整 runtime 安装；SaaS 登录和持久化需要配置 PostgreSQL。调用模型需要自行提供服务商凭据，并可能产生模型服务费用。
 
-4. **首次使用**：自动跳转配置页 → 选择模型提供商 → 填写 API Key → 保存。阴与 64 员工均可直接使用，无需重启。
+远程或容器访问必须显式设置 `PANEL_WEB_HOST`（容器需 `0.0.0.0`），并通过 `OPENSWARM_PANEL_TOKEN` 或已配置的 SaaS 用户认证启用鉴权。面板可操作本地文件与进程，无鉴权预览仅用于本机。公网服务还需要 HTTPS 和经过审阅的网络边界。
 
-## 支持的模型提供商
+## 安装完整本地 runtime
 
-面板动态加载 openclaw 内置模型目录，主流提供商均已覆盖。
+在仓库根目录，使用 macOS、Linux 或 WSL 中的 Bash：
 
-## 支持环境
-
-| 系统 | 说明 |
-|------|------|
-| **macOS** | ✅ 支持。终端执行脚本，或双击 `start-panel.command` |
-| **Linux** | ✅ 支持。[Ubuntu](https://ubuntu.com/) 等发行版：`./install.sh`、`./start-panel.sh` |
-| **Windows** | ✅ 支持（需 WSL，推荐 Ubuntu on WSL）。在 WSL 中执行 `./install.sh`、`./start-panel.sh`，或双击 `start-panel.bat`。详见 [docs/WINDOWS.md](docs/WINDOWS.md) |
-
-依赖 **Node.js 18+**、**npm**。openclaw 由 `install.sh` 自动拉取。
-
-## 结构
-
-```
-openswarm/
-├── openclaw/          # install 拉取
-├── hex-template/      # 员工模板
-├── hexes/             # install 生成，64 员工
-├── yin/               # 总控（主网关 18789）
-├── panel-web/         # Web 面板（端口 3999）
-├── install.sh         # 首次安装
-├── start-panel.sh     # 启动面板
-├── start-panel.command # Mac 双击启动
-└── start-panel.bat    # Windows 通过 WSL 启动
+```bash
+bash install.sh
+bash start-panel.sh
 ```
 
-## 常见问题
+安装器会下载 OpenClaw、安装依赖并生成本地网关与 Agent 配置，需要能够访问 npm 和 GitHub。启动 Agent 前先在面板中配置模型服务商。运行前请阅读安装脚本；默认布局包含一个主网关及最多 64 个 Agent 定义。
 
-- **阴连不上 / 返回网页而非 JSON**：1) 先点击「阴·启动」；2) 确认 `yin/moltbot.json` 中 `gateway.http.endpoints.chatCompletions.enabled = true`；3) 复制项目后重新执行 `./install.sh` 以修正路径（含 molbot.json 的 workspace）、token 和配置。
-- **端口占用**：默认面板 3999、主网关 18789、员工 18791 起。配置页点击「检测端口占用」—若端口被占用，面板会自动查找空闲端口并更新 config.json、workers.conf、moltbot.json，无需手动编辑。
-- **No API key**：配置页选择提供商、填写 API Key 并保存。
-- **模型列表为空**：确保 `./install.sh` 已执行完成。
-- **GitHub 克隆/拉取失败**（如 `Error in the HTTP2 framing layer`）：改用 Gitee：`git clone https://gitee.com/goldct/openswarm`，或 `git remote set-url origin https://gitee.com/goldct/openswarm.git` 后 `git pull`。国内网络下 Gitee 更稳定。
+## 配置 SaaS 认证与存储
 
-## 功能特性
+准备自己控制的 PostgreSQL 数据库。将配置放在**仓库根目录的 `.env`**，变量说明见 [OAuth 配置指南](docs/cloud-mvp/google-oauth-setup.md) 和 [面板环境变量模板](panel-web/.env.example)。不要提交该文件。
 
-- 统一管理、一键部署、自动配置
-- 实时监控、项目管理、项目模板、智能协调
-- 技能库管理、技能模板、阳自动配置
-- 部署：Docker、健康检查、可选面板鉴权
+迁移和启动前显式加载变量。以下 Bash 命令要求 `.env` 是你编写的、可由 shell 加载的配置：
 
-## 阳 · 技能组装
+```bash
+# 在仓库根目录执行。
+set -a
+source .env
+set +a
+cd panel-web
+npm run db:migrate
+npm run db:migrate:phase1
+npm run db:migrate:phase2
+npm run db:migrate:phase3
+npm start
+```
 
-点击太极阳眼，按项目为员工配置技能。员工执行任务时自动挂载所选技能。详见 [技能来源](docs/SKILL_SOURCES.zh.md)。
+先在新建开发数据库验证迁移；已有部署应先备份并审阅迁移内容。Google OAuth 为可选项，回调地址和本地 HTTP 的 cookie 设置见 [配置指南](docs/cloud-mvp/google-oauth-setup.md)。
 
-## 链接
+## 开发与验证
 
-- [阴控制台](docs/YIN_CONSOLE.md) · [阳配置](docs/YANG.md) · [API 调用](docs/API.md) · [部署运维](docs/DEPLOY.md) · [Windows/WSL](docs/WINDOWS.md) · [安全实践](docs/SECURITY_BEST_PRACTICES.md) · [技术路线](docs/TECH_ROADMAP.md)
-- [使用手册](docs/USER_GUIDE.zh.md)
-- [项目架构](docs/ARCHITECTURE.zh.md)
-- [English README](README.md)
-- [贡献指南](CONTRIBUTING.md)
-- [安全策略](SECURITY.md)
-- [更新日志](CHANGELOG.md)
-- [免责声明](DISCLAIMER.md)
+```bash
+cd panel-web
+npm ci --ignore-scripts
+npm run check
+npm run test:smoke
+```
 
-## 版权与许可
+环境和检查范围见 [CONTRIBUTING.md](CONTRIBUTING.md)。自动检查不代表已验证 PostgreSQL 迁移、真实模型调用、全部 64 个 runtime、实际部署中的租户隔离，或 Git 历史中不存在秘密。公开或部署前请逐项完成 [发布检查清单](docs/RELEASE_CHECKLIST.md)。
 
-OpenSwarm 采用 **GPL v3** 许可。基于本项目的衍生作品需遵守 GPL v3 并保留原作者署名。
+## 目录说明
 
-如需在闭源产品、SaaS 或商业场景中使用而不受 GPL 约束，可联系获取**商业许可**：
+- `panel-web/`：Express 后端、浏览器界面、认证及租户服务。
+- `yin/`、`hex-template/`：主网关工作区与 Agent 模板。
+- `install.sh`、`start-panel.sh`：本地 runtime 安装与启动。
+- `docs/cloud-mvp/`：持续演进的 SaaS 数据结构、API 和操作记录。
+- `ops/production-500/`：部署示例；目录名称不代表已测得的容量。
 
-- 邮箱：2304671698@qq.com
-- 微信：hundunai001（扫下方二维码添加）
+[部署文档](docs/DEPLOY.md) 和 [历史更新日志](CHANGELOG.md) 包含上游内容；SaaS 实施记录可能包含计划事项。已验证范围以当前代码、检查结果和发布清单为准。
 
-![OpenSwarm 开源 · 微信](docs/wechat-qr.png)
+## 许可与来源
 
-详见 [LICENSE](LICENSE)
+本项目衍生自 **goldct/openswarm**，保留原作者版权声明。仓库按 [LICENSE](LICENSE) 中的 **GPL-3.0-or-later** 发布。随附第三方组件保留各自许可与声明，包括 [Agent Reach](yin/workspace/skills/agent-reach/LICENSE)。
+
+本 fork 不授予上游或第三方许可证之外的商业例外。历史上游版本号不代表 SaaS 扩展已有稳定版本。

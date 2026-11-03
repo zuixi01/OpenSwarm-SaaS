@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased — SaaS open-source readiness
+
+- Correct this fork's onboarding, contribution and reporting documentation; restore the complete GPL v3 text while preserving the existing license grant and upstream attribution.
+- Default panel access to loopback, stop forcibly killing occupied ports, and make container credentials explicit.
+- Remove generated tenant/session state from the tracked tree; add repository hygiene checks, contributor templates and dependency updates.
+- Add Node 22/24 CI, isolated panel smoke checks, and HTTP, tenant-boundary, parser and WebSocket regression tests; update production dependencies within existing major versions.
+- **Release blocker:** historical runtime secrets require rotation/revocation and an approved history/publication strategy. Database, OpenClaw and deployment integration remain separate acceptance work. See [release checklist](docs/RELEASE_CHECKLIST.md).
+
+The versions below describe upstream history, not stable releases of this SaaS extension.
+
 ## 1.3.1 (2026-02-27)
 
 ### Windows & Ubuntu

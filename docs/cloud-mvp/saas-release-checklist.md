@@ -75,8 +75,8 @@
 
 ## 当前代码对应入口
 
-- 面板：`/Users/shenwei/Documents/source/yinova/panel-web/server.js`
-- SaaS 登录：`/Users/shenwei/Documents/source/yinova/panel-web/routes/phase1-auth.js`
-- 运行后台：`/Users/shenwei/Documents/source/yinova/panel-web/routes/runtime-admin.js`
-- 租户 runtime：`/Users/shenwei/Documents/source/yinova/panel-web/routes/tenant-runtime.js`
-- Google 登录说明：`/Users/shenwei/Documents/source/yinova/docs/cloud-mvp/google-oauth-setup.md`
+- 面板：`panel-web/server.js`
+- SaaS 登录：`panel-web/routes/phase1-auth.js`
+- 运行后台：`panel-web/routes/runtime-admin.js`
+- 租户 runtime：`panel-web/routes/tenant-runtime.js`
+- Google 登录说明：`docs/cloud-mvp/google-oauth-setup.md`

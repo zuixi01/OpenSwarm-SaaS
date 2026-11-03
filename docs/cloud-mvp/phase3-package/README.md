@@ -10,7 +10,7 @@ DATABASE_URL=postgres://127.0.0.1:5432/openswarm npm run db:migrate:phase3
 
 Schema file:
 
-- `/Users/shenwei/Documents/source/openswarm/docs/cloud-mvp/phase3-package/schema.phase3.sql`
+- `docs/cloud-mvp/phase3-package/schema.phase3.sql`
 
 ## Runtime APIs (`/v1`)
 

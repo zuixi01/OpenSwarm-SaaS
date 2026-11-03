@@ -715,7 +715,8 @@
       var html = '<div style="font-size:0.82rem;">'
         + '<p style="margin:0 0 8px 0;"><strong>POST</strong> ' + window.escapeHtml(url) + '</p>'
         + '<p style="margin:0 0 8px 0;color:var(--text-dim);">Token: ' + (hasToken ? '<span style="color:var(--gold);">已设置</span> ' + window.escapeHtml(tokenHint) : '<span style="color:var(--text-dim);">未设置</span>') + '</p>'
-        + '<pre style="margin:8px 0 0 0;padding:10px;background:rgba(0,0,0,0.4);border:1px solid var(--border);border-radius:4px;font-size:0.75rem;overflow-x:auto;">curl -X POST "' + window.escapeHtml(url) + '" \\\n  -H "Content-Type: application/json" \\\n  -H "Authorization: Bearer YOUR_TOKEN" \\\n  -d \'{"hexId":"' + (data.hexList && data.hexList[0] ? data.hexList[0].id : 'h11') + '","message":"执行指令"}\'</pre>'
+        + '<p style="margin:8px 0;font-size:0.75rem;">先在终端设置 OPENSWARM_RUN_TOKEN，再运行下面的示例。</p>'
+        + '<pre style="margin:8px 0 0 0;padding:10px;background:rgba(0,0,0,0.4);border:1px solid var(--border);border-radius:4px;font-size:0.75rem;overflow-x:auto;">curl -X POST "' + window.escapeHtml(url) + '" \\\n  -H "Content-Type: application/json" \\\n  -H "Authorization: Bearer $OPENSWARM_RUN_TOKEN" \\\n  -d \'{"hexId":"' + (data.hexList && data.hexList[0] ? data.hexList[0].id : 'h11') + '","message":"执行指令"}\'</pre>'
         + '<p style="margin:8px 0 0 0;font-size:0.75rem;color:var(--text-dim);">支持: hexId+message | workflowId | triggerId</p>'
         + '</div>';
       container.innerHTML = html;

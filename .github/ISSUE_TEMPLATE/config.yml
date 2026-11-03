@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security policy / 安全报告
+    url: https://github.com/zuixi01/OpenSwarm-SaaS/blob/master/SECURITY.md
+    about: Read the private reporting policy before reporting a vulnerability.

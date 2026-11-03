@@ -1,59 +1,40 @@
 # Contributing
 
-Thank you for your interest in OpenSwarm! We welcome all forms of contribution.
+This repository is a pre-release SaaS extension of [goldct/openswarm](https://github.com/goldct/openswarm). [简体中文](CONTRIBUTING.md)
 
-## How to Contribute
+## Setup and checks
 
-### Report Issues
-
-If you found a bug or have a feature suggestion:
-
-1. Check [Issues](https://github.com/goldct/openswarm/issues) for existing reports
-2. If none, create a new Issue with: clear description, steps to reproduce, expected vs actual behavior, environment info, logs/screenshots
-
-### Submit Code
-
-1. **Fork** the project
-2. **Create branch**: `git checkout -b feature/your-feature-name` or `fix/your-bug-fix`
-3. **Develop**: Follow code style, add comments, ensure it runs
-4. **Test**: Verify changes, no regressions
-5. **Commit**: Use [Conventional Commits](https://www.conventionalcommits.org/) — `feat:`, `fix:`, `docs:`, etc.
-6. **Push and open Pull Request**
-
-## Code Style
-
-- 2-space indent
-- Single quotes (unless string contains one)
-- Meaningful names
-- Comments for complex logic
-
-## Dev Setup
+Fork this repository and clone your fork. To inspect the current repository directly:
 
 ```bash
-git clone https://github.com/goldct/openswarm.git && cd openswarm
-./install.sh
-cd panel-web && npm install
-./start-panel.sh
+git clone https://github.com/zuixi01/OpenSwarm-SaaS.git
+cd OpenSwarm-SaaS
+git switch -c fix/your-change
+node scripts/check-repository.js
+node --test scripts/check-repository.test.js
+cd panel-web
+npm ci --ignore-scripts
+npm run check
+npm run test:smoke
+npm start
 ```
 
-## Project Structure
+Use Node.js 22.12+ and npm. CI targets Node.js 22 and 24. The default panel URL is <http://localhost:3999>; stop it with Ctrl+C. Full OpenClaw runtime setup requires `bash install.sh` from the repository root. See [README](README.md) for SaaS database configuration and explicit environment loading.
 
-```
-openswarm/
-├── panel-web/     # Backend + frontend
-├── yin/            # Main gateway
-├── hex-template/   # Hexagram template
-├── install.sh
-└── README.md
-```
+The root repository check guards the current working tree against runtime data and sensitive files; its tests verify those rules. It does not audit all Git history. `npm run check` runs JavaScript syntax checks, OpenAPI document structure checks and repository tests. The OpenAPI check currently parses the document and checks four required paths; it is not complete API contract validation. `npm run test:smoke` verifies startup, health, the home page and token authentication in a temporary clean directory. Also verify the actual behavior affected by your change. Database, external-model and multiple-runtime scenarios require separate environments; state clearly when you have not run them.
 
-## Pull Request
+## Report an issue
 
-1. Code runs correctly
-2. Follows project style
-3. Update docs if needed
-4. Clear title, description, test notes
+Search [this repository's Issues](https://github.com/zuixi01/OpenSwarm-SaaS/issues) first. For ordinary bugs, include reproduction steps, expected and actual behavior, OS, Node.js version and redacted logs. Never attach API keys, cookies, tokens, database credentials or a complete `.env`.
 
----
+Follow [the security policy](SECURITY.en.md) for vulnerabilities. Do not publish vulnerability details or proof-of-concept material in an Issue.
 
-[中文贡献指南](CONTRIBUTING.md)
+## Submit a pull request
+
+Keep changes focused and follow the surrounding code style. Update related documentation when behavior changes, and add tests that cover relevant boundaries or regressions. Do not commit generated runtimes, user data, logs or credentials.
+
+Explain the problem, resulting behavior, checks actually run and any untested scenarios. Commit prefixes such as `fix:`, `feat:`, `docs:` and `test:` are welcome. Keep unrelated formatting and refactoring out of a fix.
+
+## Licensing and collaboration
+
+Contribute only code you have permission to distribute under this repository's [GPL-3.0-or-later license](LICENSE). Preserve upstream and third-party notices. Keep discussions respectful and focused on facts and code.

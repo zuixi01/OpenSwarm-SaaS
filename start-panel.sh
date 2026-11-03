@@ -6,16 +6,8 @@ cd "$SCRIPT_DIR"
 
 [[ -f "$SCRIPT_DIR/.env" ]] && set -a && source "$SCRIPT_DIR/.env" && set +a
 
-# 若端口 3999 已被占用，先释放（避免复制项目后旧实例占端口导致 EADDRINUSE）
+# 端口冲突交由 Node 报错，不终止其他应用或正在运行的面板。
 PANEL_PORT="${PANEL_WEB_PORT:-3999}"
-if command -v lsof >/dev/null 2>&1; then
-  PIDS=$(lsof -ti :"$PANEL_PORT" 2>/dev/null || true)
-  if [[ -n "$PIDS" ]]; then
-    echo "端口 $PANEL_PORT 已被占用，正在释放..."
-    kill -9 $PIDS 2>/dev/null || true
-    sleep 1
-  fi
-fi
 
 cd panel-web
 # Prefer Homebrew Node 22 for local panel/openclaw compatibility.

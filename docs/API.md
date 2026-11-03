@@ -15,7 +15,7 @@ POST /api/projects/:id/run
 
 任选其一：
 
-1. `Authorization: Bearer <token>`
+1. `Authorization: Bearer $OPENSWARM_RUN_TOKEN
 2. `X-API-Key: <token>`
 
 Token 在项目页「阴 · 控制台」→ API 区块 → 点击「生成 Token」获取。
@@ -51,10 +51,12 @@ Token 在项目页「阴 · 控制台」→ API 区块 → 点击「生成 Token
 
 ## 四、示例
 
+先在当前终端设置 `OPENSWARM_RUN_TOKEN` 为你配置的调用 token；不要把真实 token 写入文档或提交记录。
+
 ```bash
 curl -X POST "http://localhost:3999/api/projects/YOUR_PROJECT_ID/run" \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Authorization: Bearer $OPENSWARM_RUN_TOKEN" \
   -d '{"hexId":"qian","message":"检查今日数据并生成报告"}'
 ```
 

@@ -1664,6 +1664,7 @@ app.use((_req, res) => {
 });
 
 const PORT = Number(process.env.PANEL_WEB_PORT) || 3999;
+const HOST = String(process.env.PANEL_WEB_HOST || '127.0.0.1').trim() || '127.0.0.1';
 
 // 启动前检查：workers.conf 缺失时提示运行 install.sh
 if (!fs.existsSync(WORKERS_CONF)) {
@@ -1681,13 +1682,14 @@ async function startServer() {
       console.warn('[phase2 bootstrap] startup cache warmup failed:', err.message || err);
     }
   }
-  const server = app.listen(PORT, () => {
-    console.log(`\n  OpenSwarm 面板已启动 → http://localhost:${PORT}\n`);
+  const server = app.listen(PORT, HOST, () => {
+    const displayHost = HOST.includes(':') ? `[${HOST}]` : HOST;
+    console.log(`\n  OpenSwarm 面板已启动 → http://${displayHost}:${PORT}\n`);
     triggerService.reloadSchedules();
   });
   server.on('error', (err) => {
     if (err.code === 'EADDRINUSE') {
-      console.error(`\n端口 ${PORT} 已被占用。可先执行: kill -9 $(lsof -ti :${PORT}) 再重新启动面板。\n`);
+      console.error(`\n端口 ${PORT} 已被占用。请停止对应服务，或设置 PANEL_WEB_PORT 后重试。\n`);
       process.exit(1);
     }
     throw err;

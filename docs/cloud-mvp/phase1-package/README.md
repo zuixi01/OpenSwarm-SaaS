@@ -36,14 +36,14 @@ Optional:
 ## Migration
 
 ```bash
-cd /Users/shenwei/Documents/source/openswarm/panel-web
+cd panel-web
 node scripts/db-migrate-phase1.js
 ```
 
 ## Seed First Tenant Account
 
 ```bash
-cd /Users/shenwei/Documents/source/openswarm/panel-web
+cd panel-web
 export PHASE1_BOOTSTRAP_EMAIL=admin@example.com
 export PHASE1_BOOTSTRAP_PASSWORD='replace-me'
 export PHASE1_BOOTSTRAP_TENANT_NAME='Admin Workspace'
@@ -53,7 +53,7 @@ node scripts/phase1-seed-bootstrap.js
 ## Start Service
 
 ```bash
-cd /Users/shenwei/Documents/source/openswarm/panel-web
+cd panel-web
 node server.js
 ```
 

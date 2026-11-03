@@ -17,7 +17,7 @@ DATABASE_URL=postgres://127.0.0.1:5432/openswarm npm run db:migrate:phase2
 
 SQL file:
 
-- `/Users/shenwei/Documents/source/openswarm/docs/cloud-mvp/phase2-package/schema.phase2.sql`
+- `docs/cloud-mvp/phase2-package/schema.phase2.sql`
 
 ## API Updates (`/v1`)
 
